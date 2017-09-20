@@ -12,6 +12,8 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+    
+********************** MODIFIED WITH DEBUGGING AIDS **************************
 */
 
 /**
@@ -35,6 +37,90 @@
 #error "the constant CORTEX_NUM_VECTORS must be between 8 and 240 inclusive"
 #endif
 
+
+/**
+ * @brief   Register values for postmortem debugging.
+ */
+volatile uint32_t postmortem_r0;
+volatile uint32_t postmortem_r1;
+volatile uint32_t postmortem_r2;
+volatile uint32_t postmortem_r3;
+volatile uint32_t postmortem_r12;
+volatile uint32_t postmortem_lr;        /* Link register. */
+volatile uint32_t postmortem_pc;        /* Program counter. */
+volatile uint32_t postmortem_psr;       /* Program status register. */
+volatile uint32_t postmortem_CFSR;
+volatile uint32_t postmortem_HFSR;
+volatile uint32_t postmortem_DFSR;
+volatile uint32_t postmortem_AFSR;
+volatile uint32_t postmortem_BFAR;
+volatile uint32_t postmortem_MMAR;
+volatile uint32_t postmortem_SCB_SHCSR;
+
+uint8_t postmortem_BFSR;            // Bus fault status
+uint8_t postmortem_MMSR;            // MemManage fault status
+
+/**
+ * @brief   Evaluates to TRUE if system runs under debugger control.
+ * @note    This bit resets only by power reset.
+ */
+#define is_under_debugger() (((CoreDebug)->DHCSR) & \
+                            CoreDebug_DHCSR_C_DEBUGEN_Msk)
+
+/**
+ *
+ */
+void prvGetRegistersFromStack(uint32_t *pulFaultStackAddress){
+
+  postmortem_r0  = pulFaultStackAddress[0];
+  postmortem_r1  = pulFaultStackAddress[1];
+  postmortem_r2  = pulFaultStackAddress[2];
+  postmortem_r3  = pulFaultStackAddress[3];
+  postmortem_r12 = pulFaultStackAddress[4];
+  postmortem_lr  = pulFaultStackAddress[5];
+  postmortem_pc  = pulFaultStackAddress[6];
+  postmortem_psr = pulFaultStackAddress[7];
+
+  /* Configurable Fault Status Register. Consists of MMSR (bits 0..7), BFSR (bits 8..15) and UFSR (bits 16..31) */
+  postmortem_CFSR = (*((volatile uint32_t *)(0xE000ED28))) ;
+  postmortem_BFSR = (postmortem_CFSR >> 8) & 0xff;          // Bit 7 indicates whether BFAR valid
+  postmortem_MMSR = postmortem_CFSR & 0xff;
+
+  /* Hard Fault Status Register */
+  postmortem_HFSR = (*((volatile uint32_t *)(0xE000ED2C))) ;
+
+  /* Debug Fault Status Register */
+  postmortem_DFSR = (*((volatile uint32_t *)(0xE000ED30))) ;
+
+  /* Auxiliary Fault Status Register Not implemented on M7) */
+  postmortem_AFSR = (*((volatile uint32_t *)(0xE000ED3C))) ;
+
+  /* Read the Fault Address Registers. These may not contain valid values.
+     Check BFARVALID/MMARVALID to see if they are valid values
+     MemManage Fault Address Register */
+  postmortem_MMAR = (*((volatile uint32_t *)(0xE000ED34))) ;
+  /* Bus Fault Address Register */
+  postmortem_BFAR = (*((volatile uint32_t *)(0xE000ED38))) ;
+
+  postmortem_SCB_SHCSR = SCB->SHCSR;
+
+  if (is_under_debugger()) {
+    uint8_t stepOut = 0;
+    __asm("BKPT #0\n"); // Break into the debugger
+    while (stepOut == 0)
+    {
+      if (stepOut) break;
+    }
+  }
+  else
+  {
+    /* harmless infinite loop */
+    while(1){;}
+  }
+}
+
+
+
 /**
  * @brief   Unhandled exceptions handler.
  * @details Any undefined exception vector points to this function by default.
@@ -43,12 +129,18 @@
  * @notapi
  */
 /*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
-__attribute__((weak))
 void _unhandled_exception(void) {
 /*lint -restore*/
-
-  while (true) {
-  }
+  __asm volatile  (
+    " tst lr, #4                                                \n"
+    " ite eq                                                    \n"
+    " mrseq r0, msp                                             \n"
+    " mrsne r0, psp                                             \n"
+    " ldr r1, [r0, #24]                                         \n"
+    " ldr r2, handler2_address_const                            \n"
+    " bx r2                                                     \n"
+    " handler2_address_const: .word prvGetRegistersFromStack    \n"
+  );
 }
 
 #if !defined(__DOXYGEN__)
