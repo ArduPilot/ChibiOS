@@ -302,8 +302,8 @@ void usbStart(USBDriver *usbp, const USBConfig *config) {
   osalDbgCheck((usbp != NULL) && (config != NULL));
 
   osalSysLock();
-//  osalDbgAssert((usbp->state == USB_READY),
-//                "invalid state");
+  osalDbgAssert((usbp->state == USB_STOP) || (usbp->state == USB_READY),
+                "invalid state");
   usbp->config = config;
   for (i = 0; i <= (unsigned)USB_MAX_ENDPOINTS; i++) {
     usbp->epc[i] = NULL;
