@@ -111,10 +111,10 @@ void chSysInit(void) {
   _tm_init();
 #endif
 #if CH_CFG_USE_MEMCORE == TRUE
-//  _core_init();
+  _core_init();
 #endif
 #if CH_CFG_USE_HEAP == TRUE
-//  _heap_init();
+  _heap_init();
 #endif
 #if CH_DBG_STATISTICS == TRUE
   _stats_init();
