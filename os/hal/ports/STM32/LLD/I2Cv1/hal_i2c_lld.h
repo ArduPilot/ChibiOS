@@ -76,6 +76,15 @@
 #endif
 
 /**
+ * @brief   I2C data transfer use dma switch.
+ * @details If set to @p TRUE the support for I2C DMA is included.
+ * @note    The default is @p FALSE.
+ */
+#if !defined(STM32_I2C_USE_DMA) || defined(__DOXYGEN__)
+#define STM32_I2C_USE_DMA                   TRUE
+#endif
+
+/**
  * @brief   I2C timeout on busy condition in milliseconds.
  */
 #if !defined(STM32_I2C_BUSY_TIMEOUT) || defined(__DOXYGEN__)
@@ -249,6 +258,7 @@
 #error "Invalid IRQ priority assigned to I2C3"
 #endif
 
+#if STM32_I2C_USE_DMA
 #if STM32_I2C_USE_I2C1 &&                                                   \
     !STM32_DMA_IS_VALID_PRIORITY(STM32_I2C_I2C1_DMA_PRIORITY)
 #error "Invalid DMA priority assigned to I2C1"
@@ -319,6 +329,7 @@
 #if !defined(STM32_DMA_REQUIRED)
 #define STM32_DMA_REQUIRED
 #endif
+#endif /* STM32_I2C_USE_DMA */
 
 /* Check clock range. */
 #if defined(STM32F4XX)
@@ -436,6 +447,7 @@ struct I2CDriver {
    * @brief     Current slave address without R/W bit.
    */
   i2caddr_t                 addr;
+#if STM32_I2C_USE_DMA
   /**
    * @brief RX DMA mode bit mask.
    */
@@ -452,6 +464,24 @@ struct I2CDriver {
    * @brief     Transmit DMA channel.
    */
   const stm32_dma_stream_t  *dmatx;
+#else
+  /**
+   * @brief     Receive buffer.
+   */
+  uint8_t                   *rxbuf;
+  /**
+   * @brief     Receive buffer size.
+   */
+  size_t                    rxbytes;
+  /**
+   * @brief     Transmit buffer.
+   */
+  const uint8_t             *txbuf;
+  /**
+   * @brief     Transmit buffer size.
+   */
+  size_t                    txbytes;
+#endif /* STM32_I2C_USE_DMA */
   /**
    * @brief     Pointer to the I2Cx registers block.
    */
