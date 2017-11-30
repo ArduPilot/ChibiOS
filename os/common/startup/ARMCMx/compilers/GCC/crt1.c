@@ -153,7 +153,9 @@ void __core_init(void) {
 __attribute__((weak))
 #endif
 /*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
+#ifndef _ARDUPILOT_
 void __early_init(void) {}
+#endif
 /*lint -restore*/
 
 /**
@@ -167,7 +169,9 @@ void __early_init(void) {}
 __attribute__((weak))
 #endif
 /*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
+#ifndef _ARDUPILOT_
 void __late_init(void) {}
+#endif
 /*lint -restore*/
 
 /**
