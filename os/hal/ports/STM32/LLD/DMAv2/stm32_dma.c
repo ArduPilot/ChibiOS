@@ -499,8 +499,8 @@ void dmaStreamRelease(const stm32_dma_stream_t *dmastp) {
   osalDbgCheck(dmastp != NULL);
 
   /* Check if the streams is not taken.*/
-  osalDbgAssert((dma_streams_mask & (1U << dmastp->selfindex)) != 0U,
-                "not allocated");
+  //osalDbgAssert((dma_streams_mask & (1U << dmastp->selfindex)) != 0U,
+  //              "not allocated");
 
   /* Disables the associated IRQ vector.*/
   nvicDisableVector(dmastp->vector);
