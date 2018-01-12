@@ -177,6 +177,10 @@
 #define HAL_USE_ICU                         FALSE
 #endif
 
+#if !defined(HAL_USE_EICU)
+#define HAL_USE_EICU                        FALSE
+#endif
+
 #if !defined(HAL_USE_MAC)
 #define HAL_USE_MAC                         FALSE
 #endif
@@ -313,6 +317,7 @@ static inline halfreq_t halClockGetPointX(halclkpt_t clkpt) {
 #include "hal_i2c.h"
 #include "hal_i2s.h"
 #include "hal_icu.h"
+#include "hal_eicu.h"
 #include "hal_mac.h"
 #include "hal_pwm.h"
 #include "hal_rtc.h"
