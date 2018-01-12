@@ -114,6 +114,42 @@
 #endif
 
 /**
+ * @brief   EICUD10 driver enable switch.
+ * @details If set to @p TRUE the support for EICUD10 is included.
+ * @note    The default is @p TRUE.
+ */
+#if !defined(STM32_EICU_USE_TIM10) || defined(__DOXYGEN__)
+#define STM32_EICU_USE_TIM10                 FALSE
+#endif
+
+/**
+ * @brief   EICUD11 driver enable switch.
+ * @details If set to @p TRUE the support for EICUD11 is included.
+ * @note    The default is @p TRUE.
+ */
+#if !defined(STM32_EICU_USE_TIM11) || defined(__DOXYGEN__)
+#define STM32_EICU_USE_TIM11                 FALSE
+#endif
+
+/**
+ * @brief   EICUD13 driver enable switch.
+ * @details If set to @p TRUE the support for EICUD13 is included.
+ * @note    The default is @p TRUE.
+ */
+#if !defined(STM32_EICU_USE_TIM13) || defined(__DOXYGEN__)
+#define STM32_EICU_USE_TIM13                 FALSE
+#endif
+
+/**
+ * @brief   EICUD14 driver enable switch.
+ * @details If set to @p TRUE the support for EICUD14 is included.
+ * @note    The default is @p TRUE.
+ */
+#if !defined(STM32_EICU_USE_TIM14) || defined(__DOXYGEN__)
+#define STM32_EICU_USE_TIM14                 FALSE
+#endif
+
+/**
  * @brief   EICUD1 interrupt priority level setting.
  */
 #if !defined(STM32_EICU_TIM1_IRQ_PRIORITY) || defined(__DOXYGEN__)
