@@ -46,6 +46,9 @@ endif
 ifneq ($(findstring HAL_USE_ICU TRUE,$(HALCONF)),)
 HALSRC += $(CHIBIOS)/os/hal/src/hal_icu.c
 endif
+ifneq ($(findstring HAL_USE_EICU TRUE,$(HALCONF)),)
+HALSRC += $(CHIBIOS)/os/hal/src/hal_eicu.c
+endif
 ifneq ($(findstring HAL_USE_MAC TRUE,$(HALCONF)),)
 HALSRC += $(CHIBIOS)/os/hal/src/hal_mac.c
 endif
@@ -107,6 +110,7 @@ HALSRC = $(CHIBIOS)/os/hal/src/hal.c \
          $(CHIBIOS)/os/hal/src/hal_i2c.c \
          $(CHIBIOS)/os/hal/src/hal_i2s.c \
          $(CHIBIOS)/os/hal/src/hal_icu.c \
+         $(CHIBIOS)/os/hal/src/hal_eicu.c \
          $(CHIBIOS)/os/hal/src/hal_mac.c \
          $(CHIBIOS)/os/hal/src/hal_mmc_spi.c \
          $(CHIBIOS)/os/hal/src/hal_pal.c \
