@@ -318,7 +318,7 @@ typedef struct {
   /* Mask to be applied on received frames.*/                               \
   uint8_t                   rxmask;                                         \
   /*Serial Config*/                                                         \
-  SerialConfig              *config;                                        \
+  const SerialConfig              *config;                                  \
 /*===========================================================================*/
 /* Driver macros.                                                            */
 /*===========================================================================*/
