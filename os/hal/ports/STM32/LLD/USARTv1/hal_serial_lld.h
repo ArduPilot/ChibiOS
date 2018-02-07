@@ -436,7 +436,9 @@ typedef struct hal_serial_config {
   /* Clock frequency for the associated USART/UART.*/                       \
   uint32_t                  clock;                                          \
   /* Mask to be applied on received frames.*/                               \
-  uint8_t                   rxmask;
+  uint8_t                   rxmask;                                         \
+  /*Serial Config*/                                                         \
+  const SerialConfig              *config;                                  \
 
 /*===========================================================================*/
 /* Driver macros.                                                            */
