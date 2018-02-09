@@ -155,6 +155,15 @@
 #endif
 
 /**
+ * @brief   PWMD14 driver enable switch.
+ * @details If set to @p TRUE the support for PWMD14 is included.
+ * @note    The default is @p TRUE.
+ */
+#if !defined(STM32_PWM_USE_TIM14) || defined(__DOXYGEN__)
+#define STM32_PWM_USE_TIM14                  FALSE
+#endif
+
+/**
  * @brief   PWMD1 interrupt priority level setting.
  */
 #if !defined(STM32_PWM_TIM1_IRQ_PRIORITY) || defined(__DOXYGEN__)
@@ -301,6 +310,14 @@
 #error "PWMD9 requires TIM9 but the timer is already used"
 #else
 #define STM32_TIM9_IS_USED
+#endif
+#endif
+
+#if STM32_PWM_USE_TIM14
+#if defined(STM32_TIM14_IS_USED)
+#error "PWMD14 requires TIM14 but the timer is already used"
+#else
+#define STM32_TIM14_IS_USED
 #endif
 #endif
 
@@ -519,6 +536,10 @@ extern PWMDriver PWMD8;
 
 #if STM32_PWM_USE_TIM9 && !defined(__DOXYGEN__)
 extern PWMDriver PWMD9;
+#endif
+
+#if STM32_PWM_USE_TIM14 && !defined(__DOXYGEN__)
+extern PWMDriver PWMD14;
 #endif
 
 #ifdef __cplusplus
