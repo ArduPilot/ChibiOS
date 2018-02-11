@@ -155,6 +155,21 @@
                  ((uint32_t)CH_CFG_ST_FREQUENCY)) + 999999UL) / 1000000UL))
 
 /**
+ * @brief   Microseconds to system ticks, with 64 bit calculations
+ * @details Converts from microseconds to system ticks number using
+ *          uint64_t types, making it safe for a wider range of usec values           
+ * @note    The result is rounded upward to the next tick boundary.
+ *
+ * @param[in] usec      number of microseconds
+ * @return              The number of ticks.
+ *
+ * @api
+ */
+#define US2ST64(usec)                                                         \
+  ((systime_t)(((((uint64_t)(usec)) *                                       \
+                 ((uint64_t)CH_CFG_ST_FREQUENCY)) + 999999UL) / 1000000UL))
+
+/**
  * @brief   System ticks to seconds.
  * @details Converts from system ticks number to seconds.
  * @note    The result is rounded up to the next second boundary.
