@@ -133,9 +133,13 @@
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define MS2ST(msec) ((systime_t)((msec)*1000UL))
+#else
 #define MS2ST(msec)                                                         \
   ((systime_t)(((((uint32_t)(msec)) *                                       \
                  ((uint32_t)CH_CFG_ST_FREQUENCY)) + 999UL) / 1000UL))
+#endif
 
 /**
  * @brief   Microseconds to system ticks.
@@ -150,9 +154,13 @@
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define US2ST(usec) ((systime_t)(usec))
+#else
 #define US2ST(usec)                                                         \
   ((systime_t)(((((uint32_t)(usec)) *                                       \
                  ((uint32_t)CH_CFG_ST_FREQUENCY)) + 999999UL) / 1000000UL))
+#endif
 
 /**
  * @brief   Microseconds to system ticks, with 64 bit calculations
@@ -165,9 +173,13 @@
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define US2ST64(usec) ((systime_t)(usec))
+#else
 #define US2ST64(usec)                                                         \
   ((systime_t)(((((uint64_t)(usec)) *                                       \
                  ((uint64_t)CH_CFG_ST_FREQUENCY)) + 999999UL) / 1000000UL))
+#endif
 
 /**
  * @brief   System ticks to seconds.
@@ -197,8 +209,12 @@
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define ST2MS(n) ((n+999UL)/1000UL)
+#else
 #define ST2MS(n) (((n) * 1000UL + CH_CFG_ST_FREQUENCY - 1UL) /              \
                   CH_CFG_ST_FREQUENCY)
+#endif
 
 /**
  * @brief   System ticks to microseconds.
@@ -213,8 +229,13 @@
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define ST2US(n) (n)
+#else
 #define ST2US(n) (((n) * 1000000UL + CH_CFG_ST_FREQUENCY - 1UL) /           \
                   CH_CFG_ST_FREQUENCY)
+#endif
+
 /** @} */
 
 /*===========================================================================*/
