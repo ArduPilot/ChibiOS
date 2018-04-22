@@ -234,15 +234,15 @@ static void start_channels(EICUDriver *eicup) {
   /* Input capture channel 3 (not for TIM 9 and 12) */
   if (eicup->config->iccfgp[2] != NULL) {
     /* Normal capture input input */
-    eicup->tim->CCMR2 |= STM32_TIM_CCMR2_CC3S(1) | (0x03 << 4);
+    eicup->tim->CCMR2 |= STM32_TIM_CCMR2_CC3S(1);
 
     /* Link CCR register */
     eicup->channel[2].ccrp = &eicup->tim->CCR[2];
     /* Set input polarity */
     if (eicup->config->iccfgp[2]->alvl == EICU_INPUT_ACTIVE_HIGH)
-      eicup->tim->CCER |= STM32_TIM_CCER_CC3E | STM32_TIM_CCER_CC3P | STM32_TIM_CCER_CC3NP;
+      eicup->tim->CCER |= STM32_TIM_CCER_CC3E;
     else
-      eicup->tim->CCER |= STM32_TIM_CCER_CC3E | STM32_TIM_CCER_CC3P | STM32_TIM_CCER_CC3NP;
+      eicup->tim->CCER |= STM32_TIM_CCER_CC3E | STM32_TIM_CCER_CC3P;
   }
 
   /* Input capture channel 4 (not for TIM 9 and 12) */
