@@ -523,7 +523,8 @@ void icu_lld_start(ICUDriver *icup) {
     /* Selected input 1.
        CCMR1_CC1S = 01 = CH1 Input on TI1.
        CCMR1_CC2S = 10 = CH2 Input on TI1.*/
-    icup->tim->CCMR1 = STM32_TIM_CCMR1_CC1S(1) | STM32_TIM_CCMR1_CC2S(2);
+    icup->tim->CCMR1 = STM32_TIM_CCMR1_CC1S(1) | STM32_TIM_CCMR1_CC2S(2) |
+                       STM32_TIM_CCMR1_IC1F(2) | STM32_TIM_CCMR1_IC2F(2);
 
     /* SMCR_TS  = 101, input is TI1FP1.
        SMCR_SMS = 100, reset on rising edge.*/
@@ -548,7 +549,8 @@ void icu_lld_start(ICUDriver *icup) {
     /* Selected input 2.
        CCMR1_CC1S = 10 = CH1 Input on TI2.
        CCMR1_CC2S = 01 = CH2 Input on TI2.*/
-    icup->tim->CCMR1 = STM32_TIM_CCMR1_CC1S(2) | STM32_TIM_CCMR1_CC2S(1);
+    icup->tim->CCMR1 = STM32_TIM_CCMR1_CC1S(2) | STM32_TIM_CCMR1_CC2S(1) |
+                       STM32_TIM_CCMR1_IC1F(2) | STM32_TIM_CCMR1_IC2F(2);
 
     /* SMCR_TS  = 110, input is TI2FP2.
        SMCR_SMS = 100, reset on rising edge.*/
