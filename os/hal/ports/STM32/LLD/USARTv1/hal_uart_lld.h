@@ -487,6 +487,10 @@ typedef struct {
    * @brief Receive error callback.
    */
   uartecb_t                 rxerr_cb;
+  /**
+   * @brief UART IRQ Global Handler
+   */
+  uartcb_t                  irq_cb;
   /* End of the mandatory fields.*/
   /**
    * @brief Bit rate.
