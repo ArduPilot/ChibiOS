@@ -301,19 +301,23 @@ static void uart_lld_serve_tx_end_irq(UARTDriver *uartp, uint32_t flags) {
  * @param[in] uartp     pointer to the @p UARTDriver object
  */
 static void serve_usart_irq(UARTDriver *uartp) {
-  uint16_t sr;
-  USART_TypeDef *u = uartp->usart;
-  uint32_t cr1 = u->CR1;
+  if (uartp->config->irq_cb == NULL) {
+    uint16_t sr;
+    USART_TypeDef *u = uartp->usart;
+    uint32_t cr1 = u->CR1;
 
-  sr = u->SR;   /* SR reset step 1.*/
-  (void)u->DR;  /* SR reset step 2.*/
+    sr = u->SR;   /* SR reset step 1.*/
+    (void)u->DR;  /* SR reset step 2.*/
 
-  if (sr & (USART_SR_LBD | USART_SR_ORE | USART_SR_NE |
-            USART_SR_FE  | USART_SR_PE)) {
-    u->SR = ~USART_SR_LBD;
-    _uart_rx_error_isr_code(uartp, translate_errors(sr));
+    if (sr & (USART_SR_LBD | USART_SR_ORE | USART_SR_NE |
+              USART_SR_FE  | USART_SR_PE)) {
+      u->SR = ~USART_SR_LBD;
+      _uart_rx_error_isr_code(uartp, translate_errors(sr));
+    }
+    _uart_tx2_isr_code(uartp);
+  } else {
+    uartp->config->irq_cb(uartp);
   }
-  _uart_tx2_isr_code(uartp);
 
 }
 
