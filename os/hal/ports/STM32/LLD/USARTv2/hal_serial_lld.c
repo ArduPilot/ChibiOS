@@ -126,7 +126,9 @@ static const SerialConfig default_config =
   SERIAL_DEFAULT_BITRATE,
   0,
   USART_CR2_STOP1_BITS,
-  0
+  0,
+  NULL,
+  NULL
 };
 
 #if STM32_SERIAL_USE_USART1 || defined(__DOXYGEN__)
@@ -340,6 +342,10 @@ static void serve_interrupt(SerialDriver *sdp) {
       chnAddFlagsI(sdp, CHN_TRANSMISSION_END);
     u->CR1 = cr1 & ~USART_CR1_TCIE;
     osalSysUnlockFromISR();
+  }
+
+  if (isr & USART_ISR_IDLE) {
+    _serial_irq_code(sdp);
   }
 }
 
@@ -763,6 +769,8 @@ void sd_lld_start(SerialDriver *sdp, const SerialConfig *config) {
 
   if (config == NULL)
     config = &default_config;
+
+  sdp->config = config;
 
   if (sdp->state == SD_STOP) {
 #if STM32_SERIAL_USE_USART1
