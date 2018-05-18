@@ -31,6 +31,18 @@
 
 #if (HAL_USE_MMC_SPI == TRUE) || defined(__DOXYGEN__)
 
+#ifdef HAL_SDCARD_SPI_HOOK
+#include "spi_hook.h"
+#define spiStart spiStartHook
+#define spiStop spiStopHook
+#define spiSelect spiSelectHook
+#define spiUnselect spiUnselectHook
+#define spiIgnore spiIgnoreHook
+#define spiSend spiSendHook
+#define spiReceive spiReceiveHook
+#endif
+
+
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -341,6 +353,7 @@ static bool read_CxD(MMCDriver *mmcp, uint8_t cmd, uint32_t cxd[4]) {
       return HAL_SUCCESS;
     }
   }
+  spiUnselect(mmcp->config->spip);
   return HAL_FAILED;
 }
 
@@ -629,6 +642,7 @@ bool mmcStartSequentialRead(MMCDriver *mmcp, uint32_t startblk) {
   }
 
   if (recvr1(mmcp) != 0x00U) {
+    spiUnselect(mmcp->config->spip);
     spiStop(mmcp->config->spip);
     mmcp->state = BLK_READY;
     return HAL_FAILED;
@@ -737,6 +751,7 @@ bool mmcStartSequentialWrite(MMCDriver *mmcp, uint32_t startblk) {
   }
 
   if (recvr1(mmcp) != 0x00U) {
+    spiUnselect(mmcp->config->spip);
     spiStop(mmcp->config->spip);
     mmcp->state = BLK_READY;
     return HAL_FAILED;
