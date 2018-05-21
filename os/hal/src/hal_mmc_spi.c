@@ -31,6 +31,18 @@
 
 #if (HAL_USE_MMC_SPI == TRUE) || defined(__DOXYGEN__)
 
+#ifdef HAL_SDCARD_SPI_HOOK
+#include "spi_hook.h"
+#define spiStart spiStartHook
+#define spiStop spiStopHook
+#define spiSelect spiSelectHook
+#define spiUnselect spiUnselectHook
+#define spiIgnore spiIgnoreHook
+#define spiSend spiSendHook
+#define spiReceive spiReceiveHook
+#endif
+
+
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -154,6 +166,8 @@ static uint8_t crc7(uint8_t crc, const uint8_t *buffer, size_t len) {
   return crc;
 }
 
+int should_wait = 0;
+
 /**
  * @brief   Waits an idle condition.
  *
@@ -197,7 +211,9 @@ static void send_hdr(MMCDriver *mmcp, uint8_t cmd, uint32_t arg) {
   uint8_t buf[6];
 
   /* Wait for the bus to become idle if a write operation was in progress.*/
-  wait(mmcp);
+  if(should_wait) {
+	wait(mmcp);
+  }
 
   buf[0] = (uint8_t)0x40U | cmd;
   buf[1] = (uint8_t)(arg >> 24U);
@@ -341,6 +357,7 @@ static bool read_CxD(MMCDriver *mmcp, uint8_t cmd, uint32_t cxd[4]) {
       return HAL_SUCCESS;
     }
   }
+  spiUnselect(mmcp->config->spip);
   return HAL_FAILED;
 }
 
@@ -469,6 +486,7 @@ bool mmcConnect(MMCDriver *mmcp) {
   spiIgnore(mmcp->config->spip, 16);
 
   /* SPI mode selection.*/
+  should_wait = 0;
   i = 0;
   while (true) {
     if (send_command_R1(mmcp, MMCSD_CMD_GO_IDLE_STATE, 0) == 0x01U) {
@@ -479,6 +497,7 @@ bool mmcConnect(MMCDriver *mmcp) {
     }
     osalThreadSleepMilliseconds(10);
   }
+  should_wait = 1;
 
   /* Try to detect if this is a high capacity card and switch to block
      addresses if possible.
@@ -629,6 +648,7 @@ bool mmcStartSequentialRead(MMCDriver *mmcp, uint32_t startblk) {
   }
 
   if (recvr1(mmcp) != 0x00U) {
+    spiUnselect(mmcp->config->spip);
     spiStop(mmcp->config->spip);
     mmcp->state = BLK_READY;
     return HAL_FAILED;
@@ -737,6 +757,7 @@ bool mmcStartSequentialWrite(MMCDriver *mmcp, uint32_t startblk) {
   }
 
   if (recvr1(mmcp) != 0x00U) {
+    spiUnselect(mmcp->config->spip);
     spiStop(mmcp->config->spip);
     mmcp->state = BLK_READY;
     return HAL_FAILED;
