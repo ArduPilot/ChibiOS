@@ -237,7 +237,9 @@ static void send_hdr(MMCDriver *mmcp, uint8_t cmd, uint32_t arg) {
   uint8_t buf[6];
 
   /* Wait for the bus to become idle if a write operation was in progress.*/
-  wait(mmcp);
+  if (cmd != MMCSD_CMD_GO_IDLE_STATE) {
+    wait(mmcp);
+  }
 
   buf[0] = (uint8_t)0x40U | cmd;
   buf[1] = (uint8_t)(arg >> 24U);
