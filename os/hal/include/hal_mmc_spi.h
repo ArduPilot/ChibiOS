@@ -34,8 +34,7 @@
 #define MMC_CMD0_RETRY              10U
 #define MMC_CMD1_RETRY              100U
 #define MMC_ACMD41_RETRY            100U
-#define SDCARD_TIMEOUT_READ_MSEC    100
-#define SDCARD_TIMEOUT_WRITE_MSEC   250
+#define MMC_WAIT_DATA               10000U
 
 /*===========================================================================*/
 /* Driver pre-compile time settings.                                         */

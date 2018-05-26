@@ -42,6 +42,8 @@
 #define spiReceive spiReceiveHook
 #endif
 
+#define SDCARD_TIMEOUT_READ_MSEC    1000
+#define SDCARD_TIMEOUT_WRITE_MSEC   1000
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
@@ -506,6 +508,7 @@ bool mmcConnect(MMCDriver *mmcp) {
     if (++i >= MMC_CMD0_RETRY) {
       goto failed;
     }
+    spiIgnore(mmcp->config->spip, 1024);
     osalThreadSleepMilliseconds(10);
   }
 
