@@ -508,6 +508,7 @@ bool mmcConnect(MMCDriver *mmcp) {
     if (++i >= MMC_CMD0_RETRY) {
       goto failed;
     }
+    spiIgnore(mmcp->config->spip, 1024);
     osalThreadSleepMilliseconds(10);
   }
 
