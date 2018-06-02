@@ -313,6 +313,9 @@ struct SDCDriver {
    * @note      Needed for debugging aid.
    */
   SDMMC_TypeDef             *sdmmc;
+
+  // bouncebuffer to support DMA to all memory regions
+  struct bouncebuffer_t *bouncebuffer;
 };
 
 /*===========================================================================*/
