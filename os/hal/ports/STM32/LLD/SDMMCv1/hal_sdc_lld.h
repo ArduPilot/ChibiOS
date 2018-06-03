@@ -341,10 +341,14 @@ struct SDCDriver {
    * @note      Needed for debugging aid.
    */
   SDMMC_TypeDef             *sdmmc;
+
   /**
    * @brief   Buffer for internal operations.
    */
   uint8_t                   buf[MMCSD_BLOCK_SIZE];
+
+  // bouncebuffer to support DMA to all memory regions
+  struct bouncebuffer_t *bouncebuffer;
 };
 
 /*===========================================================================*/
