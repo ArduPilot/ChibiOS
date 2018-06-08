@@ -254,74 +254,85 @@
 #error "Invalid DMA priority assigned to I2C4"
 #endif
 
+/* 
+   Check on the presence of the DMA streams settings in mcuconf.h.
+   We allow for a subset of I2C peripherals to have DMA
+*/
+#if STM32_I2C_USE_I2C1 && defined(STM32_I2C_I2C1_RX_DMA_STREAM) &&        \
+                          defined(STM32_I2C_I2C1_TX_DMA_STREAM)
+#define STM32_I2C_USE_I2C1_DMA TRUE
+#else
+#define STM32_I2C_USE_I2C1_DMA FALSE
+#endif
+
+#if STM32_I2C_USE_I2C2 && defined(STM32_I2C_I2C2_RX_DMA_STREAM) &&        \
+                          defined(STM32_I2C_I2C2_TX_DMA_STREAM)
+#define STM32_I2C_USE_I2C2_DMA TRUE
+#else
+#define STM32_I2C_USE_I2C2_DMA FALSE
+#endif
+
+#if STM32_I2C_USE_I2C3 && defined(STM32_I2C_I2C3_RX_DMA_STREAM) &&        \
+                          defined(STM32_I2C_I2C3_TX_DMA_STREAM)
+#define STM32_I2C_USE_I2C3_DMA TRUE
+#else
+#define STM32_I2C_USE_I2C3_DMA FALSE
+#endif
+
+#if STM32_I2C_USE_I2C4 && defined(STM32_I2C_I2C4_RX_DMA_STREAM) &&        \
+                          defined(STM32_I2C_I2C4_TX_DMA_STREAM)
+#define STM32_I2C_USE_I2C4_DMA TRUE
+#else
+#define STM32_I2C_USE_I2C4_DMA FALSE
+#endif
+
 /* The following checks are only required when there is a DMA able to
    reassign streams to different channels.*/
 #if STM32_ADVANCED_DMA
-/* Check on the presence of the DMA streams settings in mcuconf.h.*/
-#if STM32_I2C_USE_I2C1 && (!defined(STM32_I2C_I2C1_RX_DMA_STREAM) ||        \
-                           !defined(STM32_I2C_I2C1_TX_DMA_STREAM))
-#error "I2C1 DMA streams not defined"
-#endif
-
-#if STM32_I2C_USE_I2C2 && (!defined(STM32_I2C_I2C2_RX_DMA_STREAM) ||        \
-                           !defined(STM32_I2C_I2C2_TX_DMA_STREAM))
-#error "I2C2 DMA streams not defined"
-#endif
-
-#if STM32_I2C_USE_I2C3 && (!defined(STM32_I2C_I2C3_RX_DMA_STREAM) ||        \
-                           !defined(STM32_I2C_I2C3_TX_DMA_STREAM))
-#error "I2C3 DMA streams not defined"
-#endif
-
-#if STM32_I2C_USE_I2C4 && (!defined(STM32_I2C_I2C4_RX_DMA_STREAM) ||        \
-                           !defined(STM32_I2C_I2C4_TX_DMA_STREAM))
-#error "I2C4 DMA streams not defined"
-#endif
-
 /* Check on the validity of the assigned DMA channels.*/
-#if STM32_I2C_USE_I2C1 &&                                                   \
+#if STM32_I2C_USE_I2C1_DMA &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_I2C_I2C1_RX_DMA_STREAM,                    \
                            STM32_I2C1_RX_DMA_MSK)
 #error "invalid DMA stream associated to I2C1 RX"
 #endif
 
-#if STM32_I2C_USE_I2C1 &&                                                   \
+#if STM32_I2C_USE_I2C1_DMA &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_I2C_I2C1_TX_DMA_STREAM,                    \
                            STM32_I2C1_TX_DMA_MSK)
 #error "invalid DMA stream associated to I2C1 TX"
 #endif
 
-#if STM32_I2C_USE_I2C2 &&                                                   \
+#if STM32_I2C_USE_I2C2_DMA &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_I2C_I2C2_RX_DMA_STREAM,                    \
                            STM32_I2C2_RX_DMA_MSK)
 #error "invalid DMA stream associated to I2C2 RX"
 #endif
 
-#if STM32_I2C_USE_I2C2 &&                                                   \
+#if STM32_I2C_USE_I2C2_DMA &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_I2C_I2C2_TX_DMA_STREAM,                    \
                            STM32_I2C2_TX_DMA_MSK)
 #error "invalid DMA stream associated to I2C2 TX"
 #endif
 
-#if STM32_I2C_USE_I2C3 &&                                                   \
+#if STM32_I2C_USE_I2C3_DMA &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_I2C_I2C3_RX_DMA_STREAM,                    \
                            STM32_I2C3_RX_DMA_MSK)
 #error "invalid DMA stream associated to I2C3 RX"
 #endif
 
-#if STM32_I2C_USE_I2C3 &&                                                   \
+#if STM32_I2C_USE_I2C3_DMA &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_I2C_I2C3_TX_DMA_STREAM,                    \
                            STM32_I2C3_TX_DMA_MSK)
 #error "invalid DMA stream associated to I2C3 TX"
 #endif
 
-#if STM32_I2C_USE_I2C4 &&                                                   \
+#if STM32_I2C_USE_I2C4_DMA &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_I2C_I2C4_RX_DMA_STREAM,                    \
                            STM32_I2C4_RX_DMA_MSK)
 #error "invalid DMA stream associated to I2C4 RX"
 #endif
 
-#if STM32_I2C_USE_I2C4 &&                                                   \
+#if STM32_I2C_USE_I2C4_DMA &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_I2C_I2C4_TX_DMA_STREAM,                    \
                            STM32_I2C4_TX_DMA_MSK)
 #error "invalid DMA stream associated to I2C4 TX"
@@ -401,6 +412,7 @@ struct I2CDriver {
    * @brief   Thread waiting for I/O completion.
    */
   thread_reference_t        thread;
+    
 #if (STM32_I2C_USE_DMA == TRUE) || defined(__DOXYGEN__)
   /**
    * @brief RX DMA mode bit mask.
@@ -418,7 +430,14 @@ struct I2CDriver {
    * @brief     Transmit DMA channel.
    */
   const stm32_dma_stream_t  *dmatx;
-#else /* STM32_I2C_USE_DMA == FALSE */
+
+#endif /* STM32_I2C_USE_DMA == FALSE */
+
+  /**
+   * @brief     true when DMA is enabled for this I2C device
+   */
+  bool                      using_dma;
+    
   /**
    * @brief     Pointer to the next TX buffer location.
    */
@@ -435,7 +454,7 @@ struct I2CDriver {
    * @brief     Number of bytes in RX phase.
    */
   size_t                    rxbytes;
-#endif /* STM32_I2C_USE_DMA == FALSE */
+
   /**
    * @brief     Pointer to the I2Cx registers block.
    */
