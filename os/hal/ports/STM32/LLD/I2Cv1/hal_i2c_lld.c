@@ -209,6 +209,42 @@ static void i2c_lld_set_clock(I2CDriver *i2cp) {
 
   dp->CCR = regCCR;
 }
+/**
+ * @brief   Set filter params.
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+static void i2c_lld_set_filter(I2CDriver *i2cp) {
+  I2C_TypeDef *dp = i2cp->i2c;
+  i2cdutycycle_t duty = i2cp->config->duty_cycle;
+  uint8_t filter;
+
+  if (duty == STD_DUTY_CYCLE) {
+    if (I2C_CLK_FREQ <= 5) {
+      filter = 2;
+    } else if (I2C_CLK_FREQ <= 10) {
+      filter = 12;
+    } else {
+      filter = 15;
+    }
+  } else {
+    if (I2C_CLK_FREQ <= 10) {
+      filter = 0;
+    } else if (I2C_CLK_FREQ <= 20) {
+      filter = 1;
+    } else if (I2C_CLK_FREQ <= 30) {
+      filter = 7;
+    } else if (I2C_CLK_FREQ <= 40) {
+      filter = 13;
+    } else {
+      filter = 15;
+    }
+  }
+
+  dp->FLTR = (I2C_FLTR_ANOFF) | (I2C_FLTR_DNF & filter);
+}
 
 /**
  * @brief   Set operation mode of I2C hardware.
@@ -292,6 +328,12 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
     _i2c_wakeup_isr(i2cp);
     break;
   default:
+    if (event & I2C_SR1_TXE)
+      dp->DR =0;
+    if (event & I2C_SR1_BTF)
+      (void)dp->DR;
+    if (event & I2C_SR1_STOPF)
+      dp->CR1 = dp->CR1;
     break;
   }
   /* Clear ADDR flag. */
@@ -653,6 +695,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
 
   /* Setup I2C parameters.*/
   i2c_lld_set_clock(i2cp);
+  i2c_lld_set_filter(i2cp);
   i2c_lld_set_opmode(i2cp);
 
   /* Ready to go.*/
