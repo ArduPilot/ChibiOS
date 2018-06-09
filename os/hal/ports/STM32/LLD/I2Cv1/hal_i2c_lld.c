@@ -717,7 +717,6 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                      uint8_t *rxbuf, size_t rxbytes,
                                      sysinterval_t timeout) {
   I2C_TypeDef *dp = i2cp->i2c;
-  systime_t start, end;
 
 #if defined(STM32F1XX_I2C)
   osalDbgCheck(rxbytes > 1);
@@ -737,26 +736,13 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   dmaStreamSetMemory0(i2cp->dmarx, rxbuf);
   dmaStreamSetTransactionSize(i2cp->dmarx, rxbytes);
 
-  /* Calculating the time window for the timeout on the busy bus condition.*/
-  start = osalOsGetSystemTimeX();
-  end = osalTimeAddX(start, OSAL_MS2I(STM32_I2C_BUSY_TIMEOUT));
+  osalSysLock();
 
-  /* Waits until BUSY flag is reset or, alternatively, for a timeout
-     condition.*/
-  while (true) {
-    osalSysLock();
-
-    /* If the bus is not busy then the operation can continue, note, the
-       loop is exited in the locked state.*/
-    if (!(dp->SR2 & I2C_SR2_BUSY) && !(dp->CR1 & I2C_CR1_STOP))
-      break;
-
-    /* If the system time went outside the allowed window then a timeout
-       condition is returned.*/
-    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end))
+  /* we expect the bus to not be busy when this is called. If it is
+   * busy then immediately fail and let higher level code restart
+   * I2C. Note that we return with lock held. */
+  if ((dp->SR2 & I2C_SR2_BUSY) || (dp->CR1 & I2C_CR1_STOP)) {
       return MSG_TIMEOUT;
-
-    osalSysUnlock();
   }
 
   /* Starts the operation.*/
@@ -797,7 +783,6 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                       uint8_t *rxbuf, size_t rxbytes,
                                       sysinterval_t timeout) {
   I2C_TypeDef *dp = i2cp->i2c;
-  systime_t start, end;
 
 #if defined(STM32F1XX_I2C)
   osalDbgCheck((rxbytes == 0) || ((rxbytes > 1) && (rxbuf != NULL)));
@@ -822,26 +807,13 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   dmaStreamSetMemory0(i2cp->dmarx, rxbuf);
   dmaStreamSetTransactionSize(i2cp->dmarx, rxbytes);
 
-  /* Calculating the time window for the timeout on the busy bus condition.*/
-  start = osalOsGetSystemTimeX();
-  end = osalTimeAddX(start, OSAL_MS2I(STM32_I2C_BUSY_TIMEOUT));
+  osalSysLock();
 
-  /* Waits until BUSY flag is reset or, alternatively, for a timeout
-     condition.*/
-  while (true) {
-    osalSysLock();
-
-    /* If the bus is not busy then the operation can continue, note, the
-       loop is exited in the locked state.*/
-    if (!(dp->SR2 & I2C_SR2_BUSY) && !(dp->CR1 & I2C_CR1_STOP))
-      break;
-
-    /* If the system time went outside the allowed window then a timeout
-       condition is returned.*/
-    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end))
+  /* we expect the bus to not be busy when this is called. If it is
+   * busy then immediately fail and let higher level code restart
+   * I2C. Note that we return with lock held. */
+  if ((dp->SR2 & I2C_SR2_BUSY) || (dp->CR1 & I2C_CR1_STOP)) {
       return MSG_TIMEOUT;
-
-    osalSysUnlock();
   }
 
   /* Starts the operation.*/
