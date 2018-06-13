@@ -225,10 +225,14 @@ typedef uint32_t time_conv_t;
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define TIME_MS2I(msecs)  ((sysinterval_t)((time_conv_t)(msecs))*(time_conv_t)1000)
+#else
 #define TIME_MS2I(msecs)                                                    \
   ((sysinterval_t)((((time_conv_t)(msecs) *                                 \
                      (time_conv_t)CH_CFG_ST_FREQUENCY) +                    \
                     (time_conv_t)999) / (time_conv_t)1000))
+#endif
 
 /**
  * @brief   Microseconds to time interval.
@@ -243,10 +247,14 @@ typedef uint32_t time_conv_t;
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define TIME_US2I(usecs) ((sysinterval_t)(usecs))
+#else
 #define TIME_US2I(usecs)                                                    \
   ((sysinterval_t)((((time_conv_t)(usecs) *                                 \
                      (time_conv_t)CH_CFG_ST_FREQUENCY) +                    \
                     (time_conv_t)999999) / (time_conv_t)1000000))
+#endif
 
 /**
  * @brief   Time interval to seconds.
@@ -279,10 +287,15 @@ typedef uint32_t time_conv_t;
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define TIME_I2MS(interval)                                                 \
+  (time_msecs_t)(((time_conv_t)(interval)+999)/(time_conv_t)1000)
+#else
 #define TIME_I2MS(interval)                                                 \
   (time_msecs_t)((((time_conv_t)(interval) * (time_conv_t)1000) +           \
                   (time_conv_t)CH_CFG_ST_FREQUENCY - (time_conv_t)1) /      \
                  (time_conv_t)CH_CFG_ST_FREQUENCY)
+#endif
 
 /**
  * @brief   Time interval to microseconds.
@@ -297,10 +310,15 @@ typedef uint32_t time_conv_t;
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define TIME_I2US(interval) ((time_usecs_t)(interval))
+#else
 #define TIME_I2US(interval)                                                 \
     (time_msecs_t)((((time_conv_t)(interval) * (time_conv_t)1000000) +      \
                     (time_conv_t)CH_CFG_ST_FREQUENCY - (time_conv_t)1) /    \
                    (time_conv_t)CH_CFG_ST_FREQUENCY)
+#endif
+
 /** @} */
 
 /*===========================================================================*/
