@@ -246,6 +246,7 @@ DRESULT disk_ioctl (
   return RES_PARERR;
 }
 
+#ifndef _ARDUPILOT_
 DWORD get_fattime(void) {
 #if HAL_USE_RTC
     RTCDateTime timespec;
@@ -256,3 +257,4 @@ DWORD get_fattime(void) {
     return ((uint32_t)0 | (1 << 16)) | (1 << 21); /* wrong but valid time */
 #endif
 }
+#endif // _ARDUPILOT_
