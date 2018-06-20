@@ -102,16 +102,47 @@ static const SerialConfig default_config =
  */
 static void usart_init(SerialDriver *sdp, const SerialConfig *config) {
   USART_TypeDef *u = sdp->usart;
-
+  uint32_t integerdivider = 0x00;
+  uint32_t fractionaldivider = 0x00;
+  uint32_t apbclock, tmpreg;
   /* Baud rate setting.*/
 #if STM32_HAS_USART6
   if ((sdp->usart == USART1) || (sdp->usart == USART6))
 #else
   if (sdp->usart == USART1)
 #endif
-    u->BRR = STM32_PCLK2 / config->speed;
+    apbclock = STM32_PCLK2;
   else
-    u->BRR = STM32_PCLK1 / config->speed;
+    apbclock = STM32_PCLK1;
+
+  /* Determine the integer part */
+  if ((u->CR1 & USART_CR1_OVER8) != 0)
+  {
+    /* Integer part computing in case Oversampling mode is 8 Samples */
+    integerdivider = ((25 * apbclock) / (2 * (config->speed)));    
+  }
+  else /* if ((u->CR1 & USART_CR1_OVER8) == 0) */
+  {
+    /* Integer part computing in case Oversampling mode is 16 Samples */
+    integerdivider = ((25 * apbclock) / (4 * (config->speed)));    
+  }
+  tmpreg = (integerdivider / 100) << 4;
+
+  /* Determine the fractional part */
+  fractionaldivider = integerdivider - (100 * (tmpreg >> 4));
+
+  /* Implement the fractional part in the register */
+  if ((u->CR1 & USART_CR1_OVER8) != 0)
+  {
+    tmpreg |= ((((fractionaldivider * 8) + 50) / 100)) & ((uint8_t)0x07);
+  }
+  else /* if ((u->CR1 & USART_CR1_OVER8) == 0) */
+  {
+    tmpreg |= ((((fractionaldivider * 16) + 50) / 100)) & ((uint8_t)0x0F);
+  }
+  
+  /* Write to USART BRR register */
+  u->BRR = (uint16_t)tmpreg;
 
   /* Note that some bits are enforced.*/
   u->CR2 = config->cr2 | USART_CR2_LBDIE;
