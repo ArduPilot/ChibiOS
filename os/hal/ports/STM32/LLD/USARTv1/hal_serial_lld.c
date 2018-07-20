@@ -109,9 +109,9 @@ static void usart_init(SerialDriver *sdp, const SerialConfig *config) {
 #else
   if (sdp->usart == USART1)
 #endif
-    u->BRR = STM32_PCLK2 / config->speed;
+    u->BRR = ((uint32_t)STM32_PCLK2+config->speed/2) / config->speed;
   else
-    u->BRR = STM32_PCLK1 / config->speed;
+    u->BRR = ((uint32_t)STM32_PCLK1+config->speed/2) / config->speed;
 
   /* Note that some bits are enforced.*/
   u->CR2 = config->cr2 | USART_CR2_LBDIE;
