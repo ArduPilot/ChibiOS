@@ -238,12 +238,12 @@ static void usart_init(SerialDriver *sdp, const SerialConfig *config) {
   /* Baud rate setting.*/
 #if STM32_SERIAL_USE_LPUART1
   if ( sdp == &LPSD1 ) {
-    fck = (uint32_t)(((uint64_t)sdp->clock * 256 ) / config->speed);
+    fck = (uint32_t)(((uint64_t)sdp->clock * 256 + config->speed/2) / config->speed);
   }
   else
 #endif
   {
-    fck = (uint32_t)(sdp->clock / config->speed);
+    fck = (uint32_t)((sdp->clock+config->speed/2) / config->speed);
   }
 
   /* Correcting USARTDIV when oversampling by 8 instead of 16.
