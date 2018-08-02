@@ -146,7 +146,7 @@ DRESULT disk_read (
 /*-----------------------------------------------------------------------*/
 /* Write Sector(s)                                                       */
 
-#if !_FS_READONLY
+#if !FF_FS_READONLY
 DRESULT disk_write (
     BYTE pdrv,        /* Physical drive nmuber (0..) */
     const BYTE *buff, /* Data to be written */
@@ -204,12 +204,12 @@ DRESULT disk_ioctl (
     switch (cmd) {
     case CTRL_SYNC:
         return RES_OK;
-#if _MAX_SS > _MIN_SS
+#if FF_MAX_SS > FF_MIN_SS
     case GET_SECTOR_SIZE:
         *((WORD *)buff) = MMCSD_BLOCK_SIZE;
         return RES_OK;
 #endif
-#if _USE_TRIM
+#if FF_USE_TRIM
     case CTRL_TRIM:
         mmcErase(&MMCD1, *((DWORD *)buff), *((DWORD *)buff + 1));
         return RES_OK;
@@ -225,7 +225,7 @@ DRESULT disk_ioctl (
     case GET_SECTOR_COUNT:
         *((DWORD *)buff) = mmcsdGetCardCapacity(&SDCD1);
         return RES_OK;
-#if _MAX_SS > _MIN_SS
+#if FF_MAX_SS > FF_MIN_SS
     case GET_SECTOR_SIZE:
         *((WORD *)buff) = MMCSD_BLOCK_SIZE;
         return RES_OK;
@@ -233,7 +233,7 @@ DRESULT disk_ioctl (
     case GET_BLOCK_SIZE:
         *((DWORD *)buff) = 256; /* 512b blocks in one erase block */
         return RES_OK;
-#if _USE_TRIM
+#if FF_USE_TRIM
     case CTRL_TRIM:
         sdcErase(&SDCD1, *((DWORD *)buff), *((DWORD *)buff + 1));
         return RES_OK;

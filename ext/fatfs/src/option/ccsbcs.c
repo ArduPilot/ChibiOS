@@ -24,7 +24,7 @@
 #include "../ff.h"
 
 
-#if _CODE_PAGE == 437
+#if FF_CODE_PAGE == 437
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP437(0x80-0xFF) to Unicode conversion table */
@@ -38,7 +38,7 @@ const WCHAR Tbl[] = {	/*  CP437(0x80-0xFF) to Unicode conversion table */
 	0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 720
+#elif FF_CODE_PAGE == 720
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP720(0x80-0xFF) to Unicode conversion table */
@@ -52,7 +52,7 @@ const WCHAR Tbl[] = {	/*  CP720(0x80-0xFF) to Unicode conversion table */
 	0x2261, 0x064B, 0x064C, 0x064D, 0x064E, 0x064F, 0x0650, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 737
+#elif FF_CODE_PAGE == 737
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP737(0x80-0xFF) to Unicode conversion table */
@@ -66,7 +66,7 @@ const WCHAR Tbl[] = {	/*  CP737(0x80-0xFF) to Unicode conversion table */
 	0x038F, 0x00B1, 0x2265, 0x2264, 0x03AA, 0x03AB, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 771
+#elif FF_CODE_PAGE == 771
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP771(0x80-0xFF) to Unicode conversion table */
@@ -80,7 +80,7 @@ const WCHAR Tbl[] = {	/*  CP771(0x80-0xFF) to Unicode conversion table */
 	0x0118, 0x0119, 0x0116, 0x0117, 0x012E, 0x012F, 0x0160, 0x0161, 0x0172, 0x0173, 0x016A, 0x016B, 0x017D, 0x017E, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 775
+#elif FF_CODE_PAGE == 775
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP775(0x80-0xFF) to Unicode conversion table */
@@ -94,7 +94,7 @@ const WCHAR Tbl[] = {	/*  CP775(0x80-0xFF) to Unicode conversion table */
 	0x00AD, 0x00B1, 0x201C, 0x00BE, 0x00B6, 0x00A7, 0x00F7, 0x201E, 0x00B0, 0x2219, 0x00B7, 0x00B9, 0x00B3, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 850
+#elif FF_CODE_PAGE == 850
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP850(0x80-0xFF) to Unicode conversion table */
@@ -108,7 +108,7 @@ const WCHAR Tbl[] = {	/*  CP850(0x80-0xFF) to Unicode conversion table */
 	0x00AD, 0x00B1, 0x2017, 0x00BE, 0x00B6, 0x00A7, 0x00F7, 0x00B8, 0x00B0, 0x00A8, 0x00B7, 0x00B9, 0x00B3, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 852
+#elif FF_CODE_PAGE == 852
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP852(0x80-0xFF) to Unicode conversion table */
@@ -122,7 +122,7 @@ const WCHAR Tbl[] = {	/*  CP852(0x80-0xFF) to Unicode conversion table */
 	0x00AD, 0x02DD, 0x02DB, 0x02C7, 0x02D8, 0x00A7, 0x00F7, 0x00B8, 0x00B0, 0x00A8, 0x02D9, 0x0171, 0x0158, 0x0159, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 855
+#elif FF_CODE_PAGE == 855
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP855(0x80-0xFF) to Unicode conversion table */
@@ -136,7 +136,7 @@ const WCHAR Tbl[] = {	/*  CP855(0x80-0xFF) to Unicode conversion table */
 	0x00AD, 0x044B, 0x042B, 0x0437, 0x0417, 0x0448, 0x0428, 0x044D, 0x042D, 0x0449, 0x0429, 0x0447, 0x0427, 0x00A7, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 857
+#elif FF_CODE_PAGE == 857
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP857(0x80-0xFF) to Unicode conversion table */
@@ -150,7 +150,7 @@ const WCHAR Tbl[] = {	/*  CP857(0x80-0xFF) to Unicode conversion table */
 	0x00AD, 0x00B1, 0x0000, 0x00BE, 0x00B6, 0x00A7, 0x00F7, 0x00B8, 0x00B0, 0x00A8, 0x00B7, 0x00B9, 0x00B3, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 860
+#elif FF_CODE_PAGE == 860
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP860(0x80-0xFF) to Unicode conversion table */
@@ -164,7 +164,7 @@ const WCHAR Tbl[] = {	/*  CP860(0x80-0xFF) to Unicode conversion table */
 	0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 861
+#elif FF_CODE_PAGE == 861
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP861(0x80-0xFF) to Unicode conversion table */
@@ -178,7 +178,7 @@ const WCHAR Tbl[] = {	/*  CP861(0x80-0xFF) to Unicode conversion table */
 	0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 862
+#elif FF_CODE_PAGE == 862
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP862(0x80-0xFF) to Unicode conversion table */
@@ -192,7 +192,7 @@ const WCHAR Tbl[] = {	/*  CP862(0x80-0xFF) to Unicode conversion table */
 	0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 863
+#elif FF_CODE_PAGE == 863
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP863(0x80-0xFF) to Unicode conversion table */
@@ -206,7 +206,7 @@ const WCHAR Tbl[] = {	/*  CP863(0x80-0xFF) to Unicode conversion table */
 	0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 864
+#elif FF_CODE_PAGE == 864
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP864(0x80-0xFF) to Unicode conversion table */
@@ -220,7 +220,7 @@ const WCHAR Tbl[] = {	/*  CP864(0x80-0xFF) to Unicode conversion table */
 	0xFE7D, 0x0651, 0xFEE5, 0xFEE9, 0xFEEC, 0xFEF0, 0xFEF2, 0xFED0, 0xFED5, 0xFEF5, 0xFEF6, 0xFEDD, 0xFED9, 0xFEF1, 0x25A0, 0x0000
 };
 
-#elif _CODE_PAGE == 865
+#elif FF_CODE_PAGE == 865
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP865(0x80-0xFF) to Unicode conversion table */
@@ -234,7 +234,7 @@ const WCHAR Tbl[] = {	/*  CP865(0x80-0xFF) to Unicode conversion table */
 	0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 866
+#elif FF_CODE_PAGE == 866
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP866(0x80-0xFF) to Unicode conversion table */
@@ -248,7 +248,7 @@ const WCHAR Tbl[] = {	/*  CP866(0x80-0xFF) to Unicode conversion table */
 	0x0401, 0x0451, 0x0404, 0x0454, 0x0407, 0x0457, 0x040E, 0x045E, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x2116, 0x00A4, 0x25A0, 0x00A0
 };
 
-#elif _CODE_PAGE == 869
+#elif FF_CODE_PAGE == 869
 #define _TBLDEF 1
 static
 const WCHAR Tbl[] = {	/*  CP869(0x80-0xFF) to Unicode conversion table */
@@ -265,7 +265,7 @@ const WCHAR Tbl[] = {	/*  CP869(0x80-0xFF) to Unicode conversion table */
 #endif
 
 
-#if !_TBLDEF || !_USE_LFN
+#if !_TBLDEF || !FF_USE_LFN
 #error This file is not needed at current configuration. Remove from the project.
 #endif
 
@@ -300,8 +300,8 @@ WCHAR ff_convert (	/* Converted character, Returns zero on error */
 
 
 
-WCHAR ff_wtoupper (	/* Returns upper converted character */
-	WCHAR chr		/* Unicode character to be upper converted (BMP only) */
+DWORD ff_wtoupper (	/* Returns upper converted character */
+	DWORD chr		/* Unicode character to be upper converted (BMP only) */
 )
 {
 	/* Compressed upper conversion table */
