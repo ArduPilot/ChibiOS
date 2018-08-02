@@ -235,9 +235,9 @@ static void usart_start(UARTDriver *uartp) {
 #else
   if (uartp->usart == USART1)
 #endif
-    fck = STM32_PCLK2 / uartp->config->speed;
+    fck = (STM32_PCLK2+uartp->config->speed/2) / uartp->config->speed;
   else
-    fck = STM32_PCLK1 / uartp->config->speed;
+    fck = (STM32_PCLK1+uartp->config->speed/2) / uartp->config->speed;
 
   /* Correcting USARTDIV when oversampling by 8 instead of 16.
      Fraction is still 4 bits wide, but only lower 3 bits used.
