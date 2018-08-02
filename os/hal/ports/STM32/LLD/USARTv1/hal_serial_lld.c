@@ -110,9 +110,9 @@ static void usart_init(SerialDriver *sdp, const SerialConfig *config) {
 #else
   if (sdp->usart == USART1)
 #endif
-    fck = STM32_PCLK2 / config->speed;
+    fck = (STM32_PCLK2+config->speed/2) / config->speed;
   else
-    fck = STM32_PCLK1 / config->speed;
+    fck = (STM32_PCLK1+config->speed/2) / config->speed;
 
   /* Correcting USARTDIV when oversampling by 8 instead of 16.
      Fraction is still 4 bits wide, but only lower 3 bits used.
