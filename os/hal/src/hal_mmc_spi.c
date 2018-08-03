@@ -42,8 +42,10 @@
 #define spiReceive spiReceiveHook
 #endif
 
-#define SDCARD_TIMEOUT_READ_MSEC    1000
-#define SDCARD_TIMEOUT_WRITE_MSEC   1000
+#define SDCARD_READ_WAIT_USEC       250
+#define SDCARD_TIMEOUT_READ         (1000000/SDCARD_READ_WAIT_USEC)
+#define SDCARD_WRITE_WAIT_USEC      500
+#define SDCARD_TIMEOUT_WRITE        (1000000/SDCARD_WRITE_WAIT_USEC)
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
@@ -187,13 +189,13 @@ static void wait(MMCDriver *mmcp) {
     }
   }
   /* Looks like it is a long wait.*/
-  for (i = 0; i < SDCARD_TIMEOUT_WRITE_MSEC; i++) {
+  for (i = 0; i < SDCARD_TIMEOUT_WRITE; i++) {
     spiReceive(mmcp->config->spip, 1, buf);
     if (buf[0] == 0xFFU) {
       break;
     }
     /* Trying to be nice with the other threads.*/
-    osalThreadSleepMilliseconds(1);
+    osalThreadSleepMicroseconds(SDCARD_WRITE_WAIT_USEC);
   }
 }
 
@@ -216,13 +218,13 @@ static uint8_t wait_nonidle(MMCDriver *mmcp) {
     }
   }
   /* Looks like it is a long wait.*/
-  for (i = 0; i < SDCARD_TIMEOUT_READ_MSEC; i++) {
+  for (i = 0; i < SDCARD_TIMEOUT_READ; i++) {
     spiReceive(mmcp->config->spip, 1, buf);
     if (buf[0] != 0xFFU) {
       return buf[0];
     }
     /* Trying to be nice with the other threads.*/
-    osalThreadSleepMilliseconds(1);
+    osalThreadSleepMicroseconds(SDCARD_READ_WAIT_USEC);
   }
   return 0xFF;
 }
