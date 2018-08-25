@@ -871,7 +871,7 @@ void eicu_lld_stop(EICUDriver *eicup) {
     if (&EICUD1 == eicup) {
       nvicDisableVector(STM32_TIM1_UP_NUMBER);
       nvicDisableVector(STM32_TIM1_CC_NUMBER);
-      rccDisableTIM1(FALSE);
+      rccDisableTIM1();
     }
 #endif
 #if STM32_EICU_USE_TIM2
