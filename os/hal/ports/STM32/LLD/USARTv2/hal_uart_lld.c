@@ -260,7 +260,7 @@ static void usart_start(UARTDriver *uartp) {
   usart_stop(uartp);
 
   /* Baud rate setting.*/
-  u->BRR = (uint32_t)(uartp->clock / uartp->config->speed);
+  u->BRR = (uint32_t)((uartp->clock+uartp->config->speed/2) / uartp->config->speed);
 
   /* Resetting eventual pending status flags.*/
   u->ICR = 0xFFFFFFFFU;

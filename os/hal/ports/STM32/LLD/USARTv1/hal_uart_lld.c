@@ -208,9 +208,9 @@ static void usart_start(UARTDriver *uartp) {
 #else
   if (uartp->usart == USART1)
 #endif
-    u->BRR = STM32_PCLK2 / uartp->config->speed;
+    u->BRR = (STM32_PCLK2+uartp->config->speed/2) / uartp->config->speed;
   else
-    u->BRR = STM32_PCLK1 / uartp->config->speed;
+    u->BRR = (STM32_PCLK1+uartp->config->speed/2) / uartp->config->speed;
 
   /* Resetting eventual pending status flags.*/
   (void)u->SR;  /* SR reset step 1.*/

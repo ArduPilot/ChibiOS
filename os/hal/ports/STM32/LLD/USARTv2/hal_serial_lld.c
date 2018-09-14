@@ -221,11 +221,11 @@ static void usart_init(SerialDriver *sdp, const SerialConfig *config) {
 #if STM32_SERIAL_USE_LPUART1
   if ( sdp == &LPSD1 )
   {
-      u->BRR = (uint32_t)( ( (uint64_t)sdp->clock * 256 ) / config->speed);
+      u->BRR = (uint32_t)( ( (uint64_t)sdp->clock * 256 + config->speed/2) / config->speed);
   }
   else
 #endif
-  u->BRR = (uint32_t)(sdp->clock / config->speed);
+  u->BRR = (uint32_t)((sdp->clock + config->speed/2) / config->speed);
 
   /* Note that some bits are enforced.*/
   u->CR2 = config->cr2 | USART_CR2_LBDIE;
