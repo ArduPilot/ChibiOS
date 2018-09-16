@@ -24,6 +24,7 @@ endif
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/CANv1/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/DMAv1/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/GPIOv3/driver.mk
+include $(CHIBIOS)/os/hal/ports/STM32/LLD/I2Cv3/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/RTCv2/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/SPIv2/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/TIMv1/driver.mk
