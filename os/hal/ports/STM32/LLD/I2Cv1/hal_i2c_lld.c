@@ -214,6 +214,7 @@ static void i2c_lld_set_clock(I2CDriver *i2cp) {
  * @notapi
  */
 static void i2c_lld_set_filter(I2CDriver *i2cp) {
+#ifdef I2C_FLTR_ANOFF
   I2C_TypeDef *dp = i2cp->i2c;
   i2cdutycycle_t duty = i2cp->config->duty_cycle;
   uint8_t filter;
@@ -241,6 +242,7 @@ static void i2c_lld_set_filter(I2CDriver *i2cp) {
   }
 
   dp->FLTR = (I2C_FLTR_ANOFF) | (I2C_FLTR_DNF & filter);
+#endif // I2C_FLTR_ANOFF
 }
 
 /**
