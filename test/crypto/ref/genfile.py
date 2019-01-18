@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys,getopt,string
 
 filenames = None
@@ -24,13 +25,13 @@ license ='/*\n'\
 
 opts,args = getopt.getopt(sys.argv[1:],'f:o:p:')
 for o,a in opts:
-	if o == '-f':
-		filenames = a
-	if o == '-o':
-		fileOut = a
-	if o == '-p':
-		filePath = a
-	
+    if o == '-f':
+        filenames = a
+    if o == '-o':
+        fileOut = a
+    if o == '-p':
+        filePath = a
+    
 
 filenames = filenames.split(",")
 
@@ -41,28 +42,25 @@ fc.write("\n#include \"hal.h\"\n\n")
 fh.write(license)
 fh.write("#ifndef TEST_"+fileOut.upper()+"_H_\n")
 fh.write("#define TEST_"+fileOut.upper()+"_H_\n\n")
-	
+    
 for fn in filenames:
-	print "opening ",fn
-	i = 0
-	f = open(fn+".enc","rb")
-	block = f.read(blocksize)
-	d = fn.split("_")
+    print("opening ",fn)
+    i = 0
+    f = open(fn+".enc","rb")
+    block = f.read(blocksize)
+    d = fn.split("_")
 
 
-	
-	fc.write("const uint8_t ref"+d[0].upper()+"_"+d[1].upper()+"_"+d[2].upper()+"[]={\n")
-	fh.write("extern const uint8_t ref"+d[0].upper()+"_"+d[1].upper()+"_"+d[2].upper()+"[];\n")
-	str = ""
-	for ch in block:
-		i   += 1
-		str += "0x"+format(ord(ch), '02X')+","
-		if i == 10:
-			str += "\n"
-			i = 0
-	fc.write(str)
-	fc.write("\n};\n")
+    
+    fc.write("const uint8_t ref"+d[0].upper()+"_"+d[1].upper()+"_"+d[2].upper()+"[]={\n")
+    fh.write("extern const uint8_t ref"+d[0].upper()+"_"+d[1].upper()+"_"+d[2].upper()+"[];\n")
+    str = ""
+    for ch in block:
+        i   += 1
+        str += "0x"+format(ord(ch), '02X')+","
+        if i == 10:
+            str += "\n"
+            i = 0
+    fc.write(str)
+    fc.write("\n};\n")
 fh.write("#endif //TEST_"+fileOut.upper()+"_H_\n")
-	
-	
-
