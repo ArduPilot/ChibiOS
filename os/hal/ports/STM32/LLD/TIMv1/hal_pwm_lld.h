@@ -155,6 +155,15 @@
 #endif
 
 /**
+ * @brief   PWMD12 driver enable switch.
+ * @details If set to @p TRUE the support for PWMD12 is included.
+ * @note    The default is @p TRUE.
+ */
+#if !defined(STM32_PWM_USE_TIM12) || defined(__DOXYGEN__)
+#define STM32_PWM_USE_TIM12                 FALSE
+#endif
+
+/**
  * @brief   PWMD14 driver enable switch.
  * @details If set to @p TRUE the support for PWMD14 is included.
  * @note    The default is @p TRUE.
@@ -240,6 +249,13 @@
 #endif
 
 /**
+ * @brief   PWMD12 interrupt priority level setting.
+ */
+#if !defined(STM32_PWM_TIM12_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define STM32_PWM_TIM12_IRQ_PRIORITY        7
+#endif
+
+/**
  * @brief   PWMD14 interrupt priority level setting.
  */
 #if !defined(STM32_PWM_TIM14_IRQ_PRIORITY) || defined(__DOXYGEN__)
@@ -300,6 +316,10 @@
 #define STM32_HAS_TIM9                      FALSE
 #endif
 
+#if !defined(STM32_HAS_TIM12)
+#define STM32_HAS_TIM12                     FALSE
+#endif
+
 #if !defined(STM32_HAS_TIM14)
 #define STM32_HAS_TIM14                     FALSE
 #endif
@@ -344,6 +364,10 @@
 #error "TIM9 not present in the selected device"
 #endif
 
+#if STM32_PWM_USE_TIM12 && !STM32_HAS_TIM12
+#error "TIM12 not present in the selected device"
+#endif
+
 #if STM32_PWM_USE_TIM14 && !STM32_HAS_TIM14
 #error "TIM14 not present in the selected device"
 #endif
@@ -363,7 +387,7 @@
 #if !STM32_PWM_USE_TIM1  && !STM32_PWM_USE_TIM2  &&                         \
     !STM32_PWM_USE_TIM3  && !STM32_PWM_USE_TIM4  &&                         \
     !STM32_PWM_USE_TIM5  && !STM32_PWM_USE_TIM8  &&                         \
-    !STM32_PWM_USE_TIM14 &&                         \
+    !STM32_PWM_USE_TIM12 && !STM32_PWM_USE_TIM14 &&                         \
     !STM32_PWM_USE_TIM9  && !STM32_PWM_USE_TIM15 &&                         \
     !STM32_PWM_USE_TIM16 && !STM32_PWM_USE_TIM17
 #error "PWM driver activated but no TIM peripheral assigned"
@@ -427,6 +451,14 @@
 #error "PWMD9 requires TIM9 but the timer is already used"
 #else
 #define STM32_TIM9_IS_USED
+#endif
+#endif
+
+#if STM32_PWM_USE_TIM12
+#if defined(STM32_TIM12_IS_USED)
+#error "PWMD12 requires TIM12 but the timer is already used"
+#else
+#define STM32_TIM12_IS_USED
 #endif
 #endif
 
@@ -496,6 +528,11 @@
 #if STM32_PWM_USE_TIM9 && !defined(STM32_TIM9_SUPPRESS_ISR) &&              \
     !OSAL_IRQ_IS_VALID_PRIORITY(STM32_PWM_TIM9_IRQ_PRIORITY)
 #error "Invalid IRQ priority assigned to TIM9"
+#endif
+
+#if STM32_PWM_USE_TIM12 && !defined(STM32_TIM12_SUPPRESS_ISR) &&            \
+    !OSAL_IRQ_IS_VALID_PRIORITY(STM32_PWM_TIM12_IRQ_PRIORITY)
+#error "Invalid IRQ priority assigned to TIM12"
 #endif
 
 #if STM32_PWM_USE_TIM14 && !defined(STM32_TIM14_SUPPRESS_ISR) &&            \
@@ -697,6 +734,10 @@ extern PWMDriver PWMD8;
 
 #if STM32_PWM_USE_TIM9 && !defined(__DOXYGEN__)
 extern PWMDriver PWMD9;
+#endif
+
+#if STM32_PWM_USE_TIM12 && !defined(__DOXYGEN__)
+extern PWMDriver PWMD12;
 #endif
 
 #if STM32_PWM_USE_TIM14 && !defined(__DOXYGEN__)
