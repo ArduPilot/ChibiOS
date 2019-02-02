@@ -246,7 +246,14 @@ typedef struct {
    * @brief   Bus width.
    */
   sdcbusmode_t  bus_width;
+
   /* End of the mandatory fields.*/
+
+  /**
+   * @brief bus slowdown
+   * This is an additional slowdown applied to high speed bus operation
+   */
+  uint8_t slowdown;
 } SDCConfig;
 
 /**

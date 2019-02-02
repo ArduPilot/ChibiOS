@@ -64,7 +64,8 @@ static union {
  */
 static const SDCConfig sdc_default_cfg = {
   NULL,
-  SDC_MODE_4BIT
+  SDC_MODE_4BIT,
+  0
 };
 
 /*===========================================================================*/
@@ -453,18 +454,18 @@ void sdc_lld_start_clk(SDCDriver *sdcp) {
  * @notapi
  */
 void sdc_lld_set_data_clk(SDCDriver *sdcp, sdcbusclk_t clk) {
-
+  uint8_t clkdiv_hs = STM32_SDIO_DIV_HS + sdcp->config->slowdown;
 #if STM32_SDC_SDIO_50MHZ
   if (SDC_CLK_50MHz == clk) {
-    sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | STM32_SDIO_DIV_HS
+	sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | clkdiv_hs |
                                                           | SDIO_CLKCR_BYPASS;
   }
   else
-    sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | STM32_SDIO_DIV_HS;
+	sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
 #else
   (void)clk;
 
-  sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | STM32_SDIO_DIV_HS;
+  sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
 #endif
 }
 
