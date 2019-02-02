@@ -94,7 +94,8 @@ SDCDriver SDCD2;
  * @brief   SDIO default configuration.
  */
 static const SDCConfig sdc_default_cfg = {
-  SDC_MODE_4BIT
+  SDC_MODE_4BIT,
+  0
 };
 
 /*===========================================================================*/
@@ -539,33 +540,33 @@ void sdc_lld_start_clk(SDCDriver *sdcp) {
  * @notapi
  */
 void sdc_lld_set_data_clk(SDCDriver *sdcp, sdcbusclk_t clk) {
-
+  uint8_t clkdiv_hs = SDMMC_CLKDIV_HS + sdcp->config->slowdown;
 #if STM32_SDC_SDMMC_50MHZ
   if (SDC_CLK_50MHz == clk) {
     sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
 #if STM32_SDC_SDMMC_PWRSAV
-                         SDMMC_CLKDIV_HS | SDMMC_CLKCR_BYPASS |
+                         clkdiv_hs | SDMMC_CLKCR_BYPASS |
                          SDMMC_CLKCR_PWRSAV;
 #else
-                         SDMMC_CLKDIV_HS | SDMMC_CLKCR_BYPASS;
+                         clkdiv_hs | SDMMC_CLKCR_BYPASS;
 #endif
   }
   else {
 #if STM32_SDC_SDMMC_PWRSAV
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | SDMMC_CLKDIV_HS |
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs |
                          SDMMC_CLKCR_PWRSAV;
 #else
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | SDMMC_CLKDIV_HS;
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
 #endif
   }
 #else
   (void)clk;
 
 #if STM32_SDC_SDMMC_PWRSAV
-  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | SDMMC_CLKDIV_HS |
+  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs |
                        SDMMC_CLKCR_PWRSAV;
 #else
-  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | SDMMC_CLKDIV_HS;
+  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
 #endif
 #endif
 }
