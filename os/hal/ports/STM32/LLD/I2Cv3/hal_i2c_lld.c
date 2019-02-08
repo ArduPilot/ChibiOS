@@ -993,9 +993,9 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 #if defined(STM32_I2C_DMA_REQUIRED)
     {
       dmaStreamFreeI(i2cp->rx.dma);
-      i2cp->rx.bdma = NULL;
+      i2cp->rx.dma = NULL;
       dmaStreamFreeI(i2cp->tx.dma);
-      i2cp->tx.bdma = NULL;
+      i2cp->tx.dma = NULL;
     }
 #endif
 
