@@ -138,6 +138,10 @@
 #define HAL_USE_SERIAL                      TRUE
 #endif
 
+#ifndef STM32_SERIAL_USE_UART7 
+#define STM32_SERIAL_USE_UART7  TRUE
+#endif
+
 /**
  * @brief   Enables the SERIAL over USB subsystem.
  */
