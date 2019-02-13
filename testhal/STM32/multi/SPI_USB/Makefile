@@ -3,12 +3,12 @@
 #
 
 all:
-	@echo === Building for STM32H743-Nucleo144 ===============================
-	@make --no-print-directory -f ./make/stm32h743_nucleo144.make all
+	@echo === Building for ArduPilot_H743 ===============================
+	@make --no-print-directory -f ./make/ArduPilot_H743.make all
 	@echo ====================================================================
 
 clean:
-	-@make --no-print-directory -f ./make/stm32h743_nucleo144.make clean
+	-@make --no-print-directory -f ./make/ArduPilot_H743.make clean
 
 #
 ##############################################################################
