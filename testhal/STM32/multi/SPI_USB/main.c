@@ -72,8 +72,8 @@ static void spi_transfer(ioline_t nss,
         memcpy(txbuf, send, send_len);
     }
 
-    cacheBufferFlush(txbuf, len);
-    cacheBufferInvalidate(rxbuf, len);
+    cacheBufferFlush(txbuf, (len+31)&~31);
+    cacheBufferInvalidate(rxbuf, (len+31)&~31);
 
     palWriteLine(nss, 0);
 
@@ -86,6 +86,7 @@ static void spi_transfer(ioline_t nss,
     }
 
     spiReleaseBus(&PORTAB_SPI1);
+    spiStop(&PORTAB_SPI1);
 }
 
 /*
@@ -240,6 +241,10 @@ static void read_mpu9250(void)
 
     spi_transfer(PORTAB_SPI1_NSS, &cmd, 1, val, sizeof(val));
 
+    // a larger junk transfer to simulate reading the fifo
+    uint8_t val2[11*14];
+    spi_transfer(PORTAB_SPI1_NSS, &cmd, 1, val2, sizeof(val2));
+
     int16_t temperature = (int16_t)((val[6]<<8) | val[7]);
     const float temp_sensitivity = 1.0/340;
     const float temp_zero = 21;
@@ -302,6 +307,36 @@ static void print_result(void)
             results.ax, results.ay, results.az);
 }
 
+#define TEST_MEM_CHUNKS 500
+#define TEST_CHUNK_SIZE (1024/4)
+
+uint32_t *mem_chunks[TEST_MEM_CHUNKS];
+
+static uint32_t test_value(uint32_t chunk, uint32_t index)
+{
+    return chunk * 1753 + index * 37271;
+}
+
+static void check_corruption(void)
+{
+    static uint32_t counter;
+    for (uint32_t i=0; i<TEST_MEM_CHUNKS; i++) {
+        for (uint32_t j=0; j<TEST_CHUNK_SIZE; j++) {
+            if (mem_chunks[i][j] != test_value(i, j)) {
+                uprintf("Corruption 0x%08x should be 0x%08x at %u/%u\n",
+                        mem_chunks[i][j], test_value(i, j),
+                        i, j);
+                break;
+            }
+        }
+    }
+    // pick one row to re-init, so we get some write activity to memory
+    uint32_t i = (counter++) % TEST_MEM_CHUNKS;
+    for (uint32_t j=0; j<TEST_CHUNK_SIZE; j++) {
+        mem_chunks[i][j] = test_value(i, j);
+    }
+}
+
 /*
  * Application entry point.
  */
@@ -327,12 +362,25 @@ int main(void) {
   chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa),
                     NORMALPRIO + 1, spi_thread, NULL);
 
+  for (uint32_t i=0; i<TEST_MEM_CHUNKS; i++) {
+      mem_chunks[i] = chHeapAllocAligned(NULL, TEST_CHUNK_SIZE*4, 8);
+      if (!mem_chunks[i]) {
+          uprintf("malloc failed at %u\n", i);
+      }
+      for (uint32_t j=0; j<TEST_CHUNK_SIZE; j++) {
+          mem_chunks[i][j] = test_value(i, j);
+      }
+  }
+  
   /*
     print results at 10Hz
    */
   while (true) {
-    chThdSleepMilliseconds(1000);
     print_result();
+    for (uint16_t i=0; i<100; i++) {
+        check_corruption();
+        chThdSleepMilliseconds(1);
+    }
   }
   return 0;
 }
