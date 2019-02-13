@@ -38,21 +38,37 @@
  */
 /*===========================================================================*/
 
+#if !defined(FALSE)
+#define FALSE                               0
+#endif
+
+#if !defined(TRUE)
+#define TRUE                                1
+#endif
+
+#if 1
+#define CH_DBG_ENABLE_ASSERTS TRUE
+#define CH_DBG_ENABLE_CHECKS TRUE
+#define CH_DBG_SYSTEM_STATE_CHECK TRUE
+#define CH_DBG_ENABLE_STACK_CHECK TRUE
+#endif
+
 /**
  * @brief   System time counter resolution.
  * @note    Allowed values are 16 or 32 bits.
  */
-#if !defined(CH_CFG_ST_RESOLUTION)
+#ifndef CH_CFG_ST_RESOLUTION
 #define CH_CFG_ST_RESOLUTION                32
 #endif
 
 /**
  * @brief   System tick frequency.
  * @details Frequency of the system timer that drives the system ticks. This
- *          setting also defines the system tick time unit.
+ *          setting also defines the system tick time unit. We set this to 1000000
+ *          in ArduPilot so we get maximum resolution for timing of delays
  */
-#if !defined(CH_CFG_ST_FREQUENCY)
-#define CH_CFG_ST_FREQUENCY                 10000
+#ifndef CH_CFG_ST_FREQUENCY
+#define CH_CFG_ST_FREQUENCY                 1000000
 #endif
 
 /**
@@ -79,9 +95,20 @@
  *          The value one is not valid, timeouts are rounded up to
  *          this value.
  */
-#if !defined(CH_CFG_ST_TIMEDELTA)
+#ifndef CH_CFG_ST_TIMEDELTA
 #define CH_CFG_ST_TIMEDELTA                 2
 #endif
+
+/*
+  default to a large interrupt stack for now. We may trim this later
+  if we become confident of our interrupt handler requirements. Note
+  that we pay for this stack size in every thread, so it is quite
+  expensive in memory
+ */
+#ifndef PORT_INT_REQUIRED_STACK
+#define PORT_INT_REQUIRED_STACK 256
+#endif
+
 
 /** @} */
 
@@ -172,7 +199,7 @@
  * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_TM)
-#define CH_CFG_USE_TM                       FALSE
+#define CH_CFG_USE_TM                       TRUE
 #endif
 
 /**
@@ -360,7 +387,7 @@
 #endif
 
 /**
- * @brief   Objects FIFOs APIs.
+ * @brief  Objects FIFOs APIs.
  * @details If enabled then the objects FIFOs APIs are included
  *          in the kernel.
  *
@@ -378,7 +405,7 @@
  * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_PIPES)
-#define CH_CFG_USE_PIPES                    TRUE
+#define CH_CFG_USE_PIPES                    FALSE
 #endif
 
 /**
@@ -462,7 +489,7 @@
  * @brief   Enables factory for Pipes.
  */
 #if !defined(CH_CFG_FACTORY_PIPES) || defined(__DOXYGEN__)
-#define CH_CFG_FACTORY_PIPES                TRUE
+#define CH_CFG_FACTORY_PIPES                FALSE
 #endif
 
 /** @} */
@@ -480,7 +507,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_DBG_STATISTICS)
-#define CH_DBG_STATISTICS                   FALSE
+#define CH_DBG_STATISTICS                   TRUE
 #endif
 
 /**
@@ -491,7 +518,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_DBG_SYSTEM_STATE_CHECK)
-#define CH_DBG_SYSTEM_STATE_CHECK           TRUE
+#define CH_DBG_SYSTEM_STATE_CHECK           FALSE
 #endif
 
 /**
@@ -502,7 +529,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_DBG_ENABLE_CHECKS)
-#define CH_DBG_ENABLE_CHECKS                TRUE
+#define CH_DBG_ENABLE_CHECKS                FALSE
 #endif
 
 /**
@@ -514,7 +541,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_DBG_ENABLE_ASSERTS)
-#define CH_DBG_ENABLE_ASSERTS               TRUE
+#define CH_DBG_ENABLE_ASSERTS               FALSE
 #endif
 
 /**
@@ -524,7 +551,7 @@
  * @note    The default is @p CH_DBG_TRACE_MASK_DISABLED.
  */
 #if !defined(CH_DBG_TRACE_MASK)
-#define CH_DBG_TRACE_MASK                   CH_DBG_TRACE_MASK_ALL
+#define CH_DBG_TRACE_MASK                   CH_DBG_TRACE_MASK_DISABLED
 #endif
 
 /**
@@ -547,7 +574,7 @@
  *          @p panic_msg variable set to @p NULL.
  */
 #if !defined(CH_DBG_ENABLE_STACK_CHECK)
-#define CH_DBG_ENABLE_STACK_CHECK           TRUE
+#define CH_DBG_ENABLE_STACK_CHECK           FALSE
 #endif
 
 /**
@@ -689,10 +716,14 @@
  * @brief   System halt hook.
  * @details This hook is invoked in case to a system halting error before
  *          the system is halted.
+ *
+ * We flush all memory on STM32F7 to allow gdb to access variables currently
+ * in the dcache
  */
-#define CH_CFG_SYSTEM_HALT_HOOK(reason) {                                   \
-  /* System halt code here.*/                                               \
-}
+#ifndef CH_CFG_SYSTEM_HALT_HOOK
+#define CH_CFG_SYSTEM_HALT_HOOK(reason) do {                               \
+} while(0)
+#endif
 
 /**
  * @brief   Trace hook.
@@ -708,6 +739,9 @@
 /*===========================================================================*/
 /* Port-specific settings (override port settings defaulted in chcore.h).    */
 /*===========================================================================*/
+
+
+/** @} */
 
 #endif  /* CHCONF_H */
 
