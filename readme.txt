@@ -74,6 +74,8 @@
 *****************************************************************************
 
 *** 19.1.1 ***
+- FIX: Fixed invalid call to dmaStreamRelease() in STM32 SDIOv1 driver
+       (bug #1012).
 - FIX: Fixed wrong license restriction check in Nil (bug #1011).
 - FIX: Fixed uninitialized variables in STM32 DMA drivers (bug #1010).
 - FIX: Fixed wrong mcuconf.h in some testex demos related to STM32F407 
