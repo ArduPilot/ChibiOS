@@ -74,6 +74,7 @@
 *****************************************************************************
 
 *** 19.1.1 ***
+- FIX: Fixed invalid ADCD3 initialization in STM32 ADCv3 driver (bug #1013).
 - FIX: Fixed invalid call to dmaStreamRelease() in STM32 SDIOv1 driver
        (bug #1012).
 - FIX: Fixed wrong license restriction check in Nil (bug #1011).
