@@ -74,6 +74,7 @@
 *****************************************************************************
 
 *** 19.1.1 ***
+- NEW: Extra timer checks in STM32 ST driver.
 - FIX: Fixed invalid AXI errata fix for STM32H7xx (bug #1014).
 - FIX: Fixed invalid ADCD3 initialization in STM32 ADCv3 driver (bug #1013).
 - FIX: Fixed invalid call to dmaStreamRelease() in STM32 SDIOv1 driver
