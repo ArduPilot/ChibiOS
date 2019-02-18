@@ -1079,8 +1079,15 @@ uint32_t spi_lld_polled_exchange(SPIDriver *spip, uint32_t frame) {
   uint32_t dsize = (spip->spi->CFG1 & SPI_CFG1_DSIZE_Msk) + 1U;
   uint32_t rxframe;
 
+  // force off DMA for polled exchange
+  spip->spi->CFG1 &= ~(SPI_CFG1_RXDMAEN | SPI_CFG1_TXDMAEN);
+
   spip->spi->CR1 |= SPI_CR1_CSTART;
 
+  // wait for room in TX FIFO
+  while ((spip->spi->SR & SPI_SR_TXP) == 0U)
+      ;
+  
   /* Data register must be accessed with the appropriate data size.
      Byte size access (uint8_t *) for transactions that are <= 8-bit etc.*/
   if (dsize <= 8U) {
@@ -1108,8 +1115,6 @@ uint32_t spi_lld_polled_exchange(SPIDriver *spip, uint32_t frame) {
       ;
     rxframe = spip->spi->RXDR;
   }
-
-  spip->spi->CR1 |= SPI_CR1_CSUSP;
 
   return rxframe;
 }
