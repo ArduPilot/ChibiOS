@@ -299,7 +299,7 @@
 #define STM32_TIM14_HANDLER                 VectorF4
 #define STM32_TIM14_NUMBER                  45
 
-#define STM32_HAS_TIM15                     FALSE
+#define STM32_HAS_TIM15                     TRUE
 #define STM32_TIM15_IS_32BITS               FALSE
 #define STM32_TIM15_CHANNELS                2
 #define STM32_TIM15_HANDLER                 Vector210
