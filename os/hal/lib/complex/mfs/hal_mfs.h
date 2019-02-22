@@ -48,7 +48,7 @@
  */
 /**
  * @brief   Maximum number of indexed records in the managed storage.
- * @note    Record indexes go from 0 to @p MFS_CFG_MAX_RECORDS - 1.
+ * @note    Record indexes go from 1 to @p MFS_CFG_MAX_RECORDS.
  */
 #if !defined(MFS_CFG_MAX_RECORDS) || defined(__DOXYGEN__)
 #define MFS_CFG_MAX_RECORDS                 32
