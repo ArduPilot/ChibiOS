@@ -430,6 +430,7 @@ static mfs_error_t mfs_bank_write_header(MFSDriver *mfsp,
 static mfs_error_t mfs_bank_scan_records(MFSDriver *mfsp,
                                          mfs_bank_t bank,
                                          mfs_bank_state_t *statep) {
+  /* TODO, the loop could be optimized.*/
   flash_offset_t hdr_offset, start_offset, end_offset;
   mfs_record_state_t sts;
   bool warning = false;
@@ -441,6 +442,8 @@ static mfs_error_t mfs_bank_scan_records(MFSDriver *mfsp,
   hdr_offset = start_offset + (flash_offset_t)sizeof(mfs_bank_header_t);
   while (hdr_offset < end_offset) {
     uint32_t size;
+
+    /* TODO: Check space left.*/
 
     /* Reading the current record header.*/
     RET_ON_ERROR(mfs_flash_read(mfsp, hdr_offset,
@@ -593,6 +596,7 @@ static mfs_error_t mfs_bank_mount(MFSDriver *mfsp,
 
   /* Resetting the bank state, then reading the required header data.*/
   mfs_state_reset(mfsp);
+  /* TODO: Can be removed.*/
   RET_ON_ERROR(mfs_bank_get_state(mfsp, bank, statep, &mfsp->current_counter));
   mfsp->current_bank = bank;
 
@@ -885,7 +889,7 @@ void mfsStop(MFSDriver *mfsp) {
  *
  * @param[in] mfsp      pointer to the @p MFSDriver object
  * @return              The operation status.
- * @retval MFS_ERR_INV_STATE if the driver is in not in @p MSG_READY state.
+ * @retval MFS_ERR_INV_STATE if the driver is in not in @p MFS_READY state.
  * @retval MFS_NO_ERROR if the operation has been successfully completed.
  * @retval MFS_ERR_FLASH_FAILURE if the flash memory is unusable because HW
  *                      failures. Makes the driver enter the @p MFS_ERROR state.
@@ -918,7 +922,7 @@ mfs_error_t mfsErase(MFSDriver *mfsp) {
  * @param[out] buffer   pointer to a buffer for record data
  * @return              The operation status.
  * @retval MFS_NO_ERROR if the operation has been successfully completed.
- * @retval MFS_ERR_INV_STATE if the driver is in not in @p MSG_READY state.
+ * @retval MFS_ERR_INV_STATE if the driver is in not in @p MFS_READY state.
  * @retval MFS_ERR_INV_SIZE if the passed buffer is not large enough to
  *                      contain the record data.
  * @retval MFS_ERR_NOT_FOUND if the specified id does not exists.
@@ -984,7 +988,7 @@ mfs_error_t mfsReadRecord(MFSDriver *mfsp, mfs_id_t id,
  * @return              The operation status.
  * @retval MFS_NO_ERROR if the operation has been successfully completed.
  * @retval MFS_WARN_GC  if the operation triggered a garbage collection.
- * @retval MFS_ERR_INV_STATE if the driver is in not in @p MSG_READY state.
+ * @retval MFS_ERR_INV_STATE if the driver is in not in @p MFS_READY state.
  * @retval MFS_ERR_OUT_OF_MEM if there is not enough flash space for the
  *                      operation.
  * @retval MFS_ERR_FLASH_FAILURE if the flash memory is unusable because HW
@@ -1074,7 +1078,7 @@ mfs_error_t mfsWriteRecord(MFSDriver *mfsp, mfs_id_t id,
  * @return              The operation status.
  * @retval MFS_NO_ERROR if the operation has been successfully completed.
  * @retval MFS_WARN_GC  if the operation triggered a garbage collection.
- * @retval MFS_ERR_INV_STATE if the driver is in not in @p MSG_READY state.
+ * @retval MFS_ERR_INV_STATE if the driver is in not in @p MFS_READY state.
  * @retval MFS_ERR_FLASH_FAILURE if the flash memory is unusable because HW
  *                      failures. Makes the driver enter the @p MFS_ERROR state.
  * @retval MFS_ERR_INTERNAL if an internal logic failure is detected.
@@ -1143,7 +1147,7 @@ mfs_error_t mfsEraseRecord(MFSDriver *mfsp, mfs_id_t id) {
  * @param[in] mfsp      pointer to the @p MFSDriver object
  * @return              The operation status.
  * @retval MFS_NO_ERROR if the operation has been successfully completed.
- * @retval MFS_ERR_INV_STATE if the driver is in not in @p MSG_READY state.
+ * @retval MFS_ERR_INV_STATE if the driver is in not in @p MFS_READY state.
  * @retval MFS_ERR_FLASH_FAILURE if the flash memory is unusable because HW
  *                      failures. Makes the driver enter the @p MFS_ERROR state.
  * @retval MFS_ERR_INTERNAL if an internal logic failure is detected.
