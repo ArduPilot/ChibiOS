@@ -1031,13 +1031,6 @@
 #endif
 
 /**
- * @brief   SDMMC clock source.
- */
-#if !defined(STM32_SDMMCSEL) || defined(__DOXYGEN__)
-#define STM32_SDMMCSEL                      STM32_SDMMCSEL_PLL1_Q_CK
-#endif
-
-/**
  * @brief   QSPI clock source.
  */
 #if !defined(STM32_QSPISEL) || defined(__DOXYGEN__)
@@ -2884,6 +2877,17 @@
 #define STM32_ADCCLK                0
 #else
 #error "invalid source selected for STM32_ADCSEL clock"
+#endif
+
+/**
+ * @brief   SDMMC frequency (applies to both SDMMC1 and SDMMC2)
+ */
+#if (STM32_SDMMCSEL == STM32_SDMMCSEL_PLL1_Q_CK) || defined(__DOXYGEN__)
+#define STM32_SDMMCCLK              STM32_PLL1_Q_CK
+#elif STM32_SDMMCSEL == STM32_SDMMCSEL_PLL2_R_CK
+#define STM32_SDMMCCLK              STM32_PLL2_R_CK
+#else
+#error "invalid source selected for SDMMC clock"
 #endif
 
 /*===========================================================================*/
