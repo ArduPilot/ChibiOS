@@ -142,6 +142,8 @@
 #define STM32_I2C_DMA_ERROR_HOOK(i2cp)      osalSysHalt("DMA failure")
 #endif
 
+#if !defined(_ARDUPILOT_)
+
 #if STM32_ADVANCED_DMA || defined(__DOXYGEN__)
 
 /**
@@ -202,6 +204,8 @@
 #define STM32_I2C_I2C2_TX_DMA_STREAM        STM32_DMA_STREAM_ID(1, 4)
 
 #endif /* !STM32_ADVANCED_DMA*/
+
+#endif // !_ARDUPILOT_
 
 /* Flag for the whole STM32F1XX family. */
 #if defined(STM32F10X_LD_VL) || defined(STM32F10X_MD_VL) || \
