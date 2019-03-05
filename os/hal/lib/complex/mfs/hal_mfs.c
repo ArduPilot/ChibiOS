@@ -44,6 +44,18 @@
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
+/**
+ * @brief   Data record size aligned.
+ */
+#define ALIGNED_REC_SIZE(n)                                                 \
+  (flash_offset_t)MFS_ALIGN_NEXT(sizeof (mfs_data_header_t) + (size_t)(n))
+
+/**
+ * @brief   Data record header size aligned.
+ */
+#define ALIGNED_DHDR_SIZE                                                   \
+  ALIGNED_REC_SIZE(0)
+
 #define PAIR(a, b) (((unsigned)(a) << 2U) | (unsigned)(b))
 
 /**
@@ -245,52 +257,6 @@ static mfs_error_t mfs_flash_copy(MFSDriver *mfsp,
 }
 
 /**
- * @brief   Verifies integrity of a record.
- *
- * @param[in] mfsp      pointer to the @p MFSDriver object
- * @param[in] dhdrp     pointer to the header to be checked
- * @param[in] offset    flash offset of the header to be checked
- * @param[in] limit     flash limit offset
- * @param[out] sts      assessed record state
- * @return              The operation status.
- *
- * @notapi
- */
-static mfs_error_t mfs_record_check(MFSDriver *mfsp,
-                                    mfs_data_header_t *dhdrp,
-                                    flash_offset_t offset,
-                                    flash_offset_t limit,
-                                    mfs_record_state_t *sts) {
-  unsigned i;
-
-  for (i = 0; i < 3; i++) {
-    if (dhdrp->hdr32[i] != mfsp->config->erased) {
-      /* Not erased must verify the header.*/
-      if ((dhdrp->fields.magic != MFS_HEADER_MAGIC) ||
-          (dhdrp->fields.id < (uint16_t)1) ||
-          (dhdrp->fields.id > (uint16_t)MFS_CFG_MAX_RECORDS) ||
-          (dhdrp->fields.size + sizeof (mfs_data_header_t) > limit - offset)) {
-        *sts = MFS_RECORD_GARBAGE;
-        return MFS_NO_ERROR;
-      }
-#if MFS_CFG_STRONG_CHECKING == TRUE
-      {
-        /* TODO: Checking the CRC while reading the record data.*/
-/*        *sts = MFS_RECORD_CRC;
-        return MFS_NO_ERROR;*/
-      }
-#endif
-      *sts = MFS_RECORD_OK;
-      return MFS_NO_ERROR;
-    }
-  }
-
-  /* It is fully erased.*/
-  *sts = MFS_RECORD_ERASED;
-  return MFS_NO_ERROR;
-}
-
-/**
  * @brief   Erases and verifies all sectors belonging to a bank.
  *
  * @param[in] mfsp      pointer to the @p MFSDriver object
@@ -418,10 +384,7 @@ static mfs_error_t mfs_bank_write_header(MFSDriver *mfsp,
  *
  * @param[in] mfsp      pointer to the @p MFSDriver object
  * @param[in] bank      the bank identifier
- * @param[out] statep   bank state, it can be:
- *                      - MFS_BANK_PARTIAL
- *                      - MFS_BANK_OK
- *                      .
+ * @param[out] wflagp   warning flag on anomalies
  *
  * @return              The operation status.
  *
@@ -429,77 +392,89 @@ static mfs_error_t mfs_bank_write_header(MFSDriver *mfsp,
  */
 static mfs_error_t mfs_bank_scan_records(MFSDriver *mfsp,
                                          mfs_bank_t bank,
-                                         mfs_bank_state_t *statep) {
-  /* TODO, the loop could be optimized.*/
+                                         bool *wflagp) {
   flash_offset_t hdr_offset, start_offset, end_offset;
-  mfs_record_state_t sts;
-  bool warning = false;
 
+  /* No warning by default.*/
+  *wflagp = false;
+
+  /* Boundaries.*/
   start_offset = mfs_flash_get_bank_offset(mfsp, bank);
+  hdr_offset   = start_offset + (flash_offset_t)sizeof(mfs_bank_header_t);
   end_offset   = start_offset + mfsp->config->bank_size;
 
-  /* Scanning records.*/
-  hdr_offset = start_offset + (flash_offset_t)sizeof(mfs_bank_header_t);
-  while (hdr_offset < end_offset) {
-    uint32_t size;
-
-    /* TODO: Check space left.*/
+  /* Scanning records until there is there is not enough space left for an
+     header.*/
+  while (hdr_offset < end_offset - ALIGNED_DHDR_SIZE) {
+    mfs_data_header_t dhdr;
+    uint16_t crc;
 
     /* Reading the current record header.*/
     RET_ON_ERROR(mfs_flash_read(mfsp, hdr_offset,
                                 sizeof (mfs_data_header_t),
-                                (void *)&mfsp->buffer.dhdr));
+                                (uint8_t *)&dhdr));
 
-    /* Checking header/data integrity.*/
-    RET_ON_ERROR(mfs_record_check(mfsp, &mfsp->buffer.dhdr,
-                                  hdr_offset, end_offset, &sts));
-    if (sts == MFS_RECORD_ERASED) {
-      /* Record area fully erased, stopping scan.*/
+    /* Checking if the found header is in erased state.*/
+    if ((dhdr.hdr32[0] == mfsp->config->erased) &&
+        (dhdr.hdr32[1] == mfsp->config->erased) &&
+        (dhdr.hdr32[2] == mfsp->config->erased)) {
       break;
     }
-    else if (sts == MFS_RECORD_OK) {
-      /* Record OK.*/
-      size = mfsp->buffer.dhdr.fields.size;
 
-      /* Zero-sized records are erase markers.*/
-      if (size == 0U) {
-        mfsp->descriptors[mfsp->buffer.dhdr.fields.id - 1U].offset = 0U;
-        mfsp->descriptors[mfsp->buffer.dhdr.fields.id - 1U].size   = 0U;
-      }
-      else {
-        mfsp->descriptors[mfsp->buffer.dhdr.fields.id - 1U].offset = hdr_offset;
-        mfsp->descriptors[mfsp->buffer.dhdr.fields.id - 1U].size   = size;
+    /* It is not erased so checking for integrity.*/
+    if ((dhdr.fields.magic != MFS_HEADER_MAGIC) ||
+        (dhdr.fields.id < 1U) ||
+        (dhdr.fields.id > (uint32_t)MFS_CFG_MAX_RECORDS) ||
+        (dhdr.fields.size > end_offset - hdr_offset)) {
+      *wflagp = true;
+      break;
+    }
+
+    /* Finally checking the CRC, we need to perform it in chunks because
+       we have a limited buffer.*/
+    crc = 0xFFFFU;
+    if (dhdr.fields.size > 0U) {
+      flash_offset_t data = hdr_offset + sizeof (mfs_data_header_t);
+      uint32_t total = dhdr.fields.size;
+
+      while (total > 0U) {
+        uint32_t chunk = total > MFS_CFG_BUFFER_SIZE ? MFS_CFG_BUFFER_SIZE :
+                                                       total;
+
+        /* Reading the data chunk.*/
+        RET_ON_ERROR(mfs_flash_read(mfsp, data, chunk, &mfsp->buffer.data8[0]));
+
+        /* CRC on the read data chunk.*/
+        crc = crc16(crc, &mfsp->buffer.data8[0], chunk);
+
+        /* Next chunk.*/
+        data  += chunk;
+        total -= chunk;
       }
     }
-    else if (sts == MFS_RECORD_CRC) {
-      /* Record payload corrupted, scan can continue because the header
-         is OK.*/
-      size = mfsp->buffer.dhdr.fields.size;
-      warning = true;
+    if (crc != dhdr.fields.crc) {
+      /* If the CRC is invalid then this record is ignored but scanning
+         continues because there could be more valid records afterward.*/
+      *wflagp = true;
     }
     else {
-      /* Unrecognized header, scanning cannot continue.*/
-      warning = true;
-      break;
+      /* Zero-sized records are erase markers.*/
+      if (dhdr.fields.size == 0U) {
+        mfsp->descriptors[dhdr.fields.id - 1U].offset = 0U;
+        mfsp->descriptors[dhdr.fields.id - 1U].size   = 0U;
+      }
+      else {
+        mfsp->descriptors[dhdr.fields.id - 1U].offset = hdr_offset;
+        mfsp->descriptors[dhdr.fields.id - 1U].size   = dhdr.fields.size;
+      }
     }
-    hdr_offset = hdr_offset +
-                 (flash_offset_t)sizeof(mfs_data_header_t) +
-                 (flash_offset_t)size;
+
+    /* On the next header.*/
+    hdr_offset = hdr_offset + ALIGNED_REC_SIZE(dhdr.fields.size);
   }
 
-  if (hdr_offset > end_offset) {
-    return MFS_ERR_INTERNAL;
-  }
-
-  /* Final.*/
+  /* Next writable offset.*/
   mfsp->next_offset = hdr_offset;
-
-  if (warning) {
-    *statep = MFS_BANK_PARTIAL;
-  }
-  else {
-    *statep = MFS_BANK_OK;
-  }
 
   return MFS_NO_ERROR;
 }
@@ -579,35 +554,28 @@ static mfs_error_t mfs_bank_get_state(MFSDriver *mfsp,
  *
  * @param[in] mfsp      pointer to the @p MFSDriver object
  * @param[in] bank      bank to be scanned
- * @param[out] statep   bank state, it can be:
- *                      - MFS_BANK_ERASED
- *                      - MFS_BANK_GARBAGE
- *                      - MFS_BANK_PARTIAL
- *                      - MFS_BANK_OK
- *                      .
+ * @param[out] wflagp   warning flag on anomalies
  * @return              The operation status.
  *
  * @notapi
  */
 static mfs_error_t mfs_bank_mount(MFSDriver *mfsp,
                                   mfs_bank_t bank,
-                                  mfs_bank_state_t *statep) {
+                                  bool *wflagp) {
   unsigned i;
 
   /* Resetting the bank state, then reading the required header data.*/
   mfs_state_reset(mfsp);
-  /* TODO: Can be removed.*/
-  RET_ON_ERROR(mfs_bank_get_state(mfsp, bank, statep, &mfsp->current_counter));
   mfsp->current_bank = bank;
 
   /* Scanning for the most recent instance of all records.*/
-  RET_ON_ERROR(mfs_bank_scan_records(mfsp, bank, statep));
+  RET_ON_ERROR(mfs_bank_scan_records(mfsp, bank, wflagp));
 
   /* Calculating the effective used size.*/
   mfsp->used_space = sizeof (mfs_bank_header_t);
   for (i = 0; i < MFS_CFG_MAX_RECORDS; i++) {
     if (mfsp->descriptors[i].offset != 0U) {
-      mfsp->used_space += mfsp->descriptors[i].size + sizeof (mfs_data_header_t);
+      mfsp->used_space += ALIGNED_REC_SIZE(mfsp->descriptors[i].size);
     }
   }
 
@@ -642,7 +610,7 @@ static mfs_error_t mfs_garbage_collect(MFSDriver *mfsp) {
 
   /* Copying the most recent record instances only.*/
   for (i = 0; i < MFS_CFG_MAX_RECORDS; i++) {
-    uint32_t totsize = mfsp->descriptors[i].size + sizeof (mfs_data_header_t);
+    uint32_t totsize = ALIGNED_REC_SIZE(mfsp->descriptors[i].size);
     if (mfsp->descriptors[i].offset != 0) {
       RET_ON_ERROR(mfs_flash_copy(mfsp, dest_offset,
                                   mfsp->descriptors[i].offset,
@@ -675,10 +643,10 @@ static mfs_error_t mfs_garbage_collect(MFSDriver *mfsp) {
  * @api
  */
 static mfs_error_t mfs_try_mount(MFSDriver *mfsp) {
-  mfs_bank_state_t sts, sts0, sts1;
+  mfs_bank_state_t sts0, sts1;
   mfs_bank_t bank;
   uint32_t cnt0 = 0, cnt1 = 0;
-  bool warning = false;
+  bool w1 = false, w2 = false;
 
   /* Assessing the state of the two banks.*/
   RET_ON_ERROR(mfs_bank_get_state(mfsp, MFS_BANK_0, &sts0, &cnt0));
@@ -707,7 +675,7 @@ static mfs_error_t mfs_try_mount(MFSDriver *mfsp) {
       RET_ON_ERROR(mfs_bank_erase(mfsp, MFS_BANK_0));
       bank = MFS_BANK_1;
     }
-    warning = true;
+    w1 = true;
     break;
 
   case PAIR(MFS_BANK_GARBAGE, MFS_BANK_GARBAGE):
@@ -716,7 +684,7 @@ static mfs_error_t mfs_try_mount(MFSDriver *mfsp) {
     RET_ON_ERROR(mfs_bank_erase(mfsp, MFS_BANK_1));
     RET_ON_ERROR(mfs_bank_write_header(mfsp, MFS_BANK_0, 1));
     bank = MFS_BANK_0;
-    warning = true;
+    w1 = true;
     break;
 
   case PAIR(MFS_BANK_ERASED, MFS_BANK_OK):
@@ -734,7 +702,7 @@ static mfs_error_t mfs_try_mount(MFSDriver *mfsp) {
     RET_ON_ERROR(mfs_bank_erase(mfsp, MFS_BANK_1));
     RET_ON_ERROR(mfs_bank_write_header(mfsp, MFS_BANK_0, 1));
     bank = MFS_BANK_0;
-    warning = true;
+    w1 = true;
     break;
 
   case PAIR(MFS_BANK_GARBAGE, MFS_BANK_ERASED):
@@ -742,21 +710,21 @@ static mfs_error_t mfs_try_mount(MFSDriver *mfsp) {
     RET_ON_ERROR(mfs_bank_erase(mfsp, MFS_BANK_0));
     RET_ON_ERROR(mfs_bank_write_header(mfsp, MFS_BANK_1, 1));
     bank = MFS_BANK_1;
-    warning = true;
+    w1 = true;
     break;
 
   case PAIR(MFS_BANK_OK, MFS_BANK_GARBAGE):
     /* Bank zero is normal, bank one is unreadable.*/
     RET_ON_ERROR(mfs_bank_erase(mfsp, MFS_BANK_1));
     bank = MFS_BANK_0;
-    warning = true;
+    w1 = true;
     break;
 
   case PAIR(MFS_BANK_GARBAGE, MFS_BANK_OK):
     /* Bank zero is unreadable, bank one is normal.*/
     RET_ON_ERROR(mfs_bank_erase(mfsp, MFS_BANK_0));
     bank = MFS_BANK_1;
-    warning = true;
+    w1 = true;
     break;
 
   default:
@@ -764,21 +732,15 @@ static mfs_error_t mfs_try_mount(MFSDriver *mfsp) {
   }
 
   /* Mounting the bank.*/
-  RET_ON_ERROR(mfs_bank_mount(mfsp, bank, &sts));
-
-  /* This condition should not occur, the bank has just been repaired.*/
-  if ((sts == MFS_BANK_ERASED) || (sts == MFS_BANK_GARBAGE)) {
-    return MFS_ERR_INTERNAL;
-  }
+  RET_ON_ERROR(mfs_bank_mount(mfsp, bank, &w2));
 
   /* In case of detected problems then a garbage collection is performed in
      order to repair/remove anomalies.*/
-  if (sts == MFS_BANK_PARTIAL) {
+  if (w2) {
     RET_ON_ERROR(mfs_garbage_collect(mfsp));
-    warning = true;
   }
 
-  return warning ? MFS_WARN_REPAIR : MFS_NO_ERROR;
+  return (w1 || w2) ? MFS_WARN_REPAIR : MFS_NO_ERROR;
 }
 
 /**
@@ -999,7 +961,7 @@ mfs_error_t mfsReadRecord(MFSDriver *mfsp, mfs_id_t id,
  */
 mfs_error_t mfsWriteRecord(MFSDriver *mfsp, mfs_id_t id,
                            size_t n, const uint8_t *buffer) {
-  flash_offset_t free, required;
+  flash_offset_t free, asize, rsize;
   bool warning = false;
 
   osalDbgCheck((mfsp != NULL) &&
@@ -1014,16 +976,16 @@ mfs_error_t mfsWriteRecord(MFSDriver *mfsp, mfs_id_t id,
      size then an error is returned.
      NOTE: The space for one extra header is reserved in order to allow
      for an erase operation after the space has been fully allocated.*/
-  required = ((flash_offset_t)sizeof (mfs_data_header_t) * 2U) +
-             (flash_offset_t)n;
-  if (required > mfsp->config->bank_size - mfsp->used_space) {
+  asize = ALIGNED_REC_SIZE(n);
+  rsize = ALIGNED_DHDR_SIZE + asize;
+  if (rsize > mfsp->config->bank_size - mfsp->used_space) {
     return MFS_ERR_OUT_OF_MEM;
   }
 
   /* Checking for immediately (not compacted) available space.*/
   free = (mfs_flash_get_bank_offset(mfsp, mfsp->current_bank) +
           mfsp->config->bank_size) - mfsp->next_offset;
-  if (required > free) {
+  if (rsize > free) {
     /* We need to perform a garbage collection, there is enough space
        but it has to be freed.*/
     warning = true;
@@ -1056,15 +1018,14 @@ mfs_error_t mfsWriteRecord(MFSDriver *mfsp, mfs_id_t id,
   /* The size of the old record instance, if present, must be subtracted
      to the total used size.*/
   if (mfsp->descriptors[id - 1U].offset != 0U) {
-    mfsp->used_space -= sizeof (mfs_data_header_t) +
-                        mfsp->descriptors[id - 1U].size;
+    mfsp->used_space -= ALIGNED_REC_SIZE(mfsp->descriptors[id - 1U].size);
   }
 
   /* Adjusting bank-related metadata.*/
   mfsp->descriptors[id - 1U].offset = mfsp->next_offset;
   mfsp->descriptors[id - 1U].size   = (uint32_t)n;
-  mfsp->next_offset += sizeof (mfs_data_header_t) + n;
-  mfsp->used_space  += sizeof (mfs_data_header_t) + n;
+  mfsp->next_offset += asize;
+  mfsp->used_space  += asize;
 
   return warning ? MFS_WARN_GC : MFS_NO_ERROR;
 }
@@ -1086,7 +1047,7 @@ mfs_error_t mfsWriteRecord(MFSDriver *mfsp, mfs_id_t id,
  * @api
  */
 mfs_error_t mfsEraseRecord(MFSDriver *mfsp, mfs_id_t id) {
-  flash_offset_t free, required;
+  flash_offset_t free, rsize;
   bool warning = false;
 
   osalDbgCheck((mfsp != NULL) &&
@@ -1103,15 +1064,15 @@ mfs_error_t mfsEraseRecord(MFSDriver *mfsp, mfs_id_t id) {
 
   /* If the required space is beyond the available (compacted) block
      size then an internal error is returned, it should never happen.*/
-  required = (flash_offset_t)sizeof (mfs_data_header_t);
-  if (required > mfsp->config->bank_size - mfsp->used_space) {
+  rsize = ALIGNED_DHDR_SIZE;
+  if (rsize > mfsp->config->bank_size - mfsp->used_space) {
     return MFS_ERR_INTERNAL;
   }
 
   /* Checking for immediately (not compacted) available space.*/
   free = (mfs_flash_get_bank_offset(mfsp, mfsp->current_bank) +
           mfsp->config->bank_size) - mfsp->next_offset;
-  if (required > free) {
+  if (rsize > free) {
     /* We need to perform a garbage collection, there is enough space
        but it has to be freed.*/
     warning = true;
@@ -1123,15 +1084,14 @@ mfs_error_t mfsEraseRecord(MFSDriver *mfsp, mfs_id_t id) {
   mfsp->buffer.dhdr.fields.magic = (uint32_t)MFS_HEADER_MAGIC;
   mfsp->buffer.dhdr.fields.id    = (uint16_t)id;
   mfsp->buffer.dhdr.fields.size  = (uint32_t)0;
-  mfsp->buffer.dhdr.fields.crc   = (uint16_t)0;
+  mfsp->buffer.dhdr.fields.crc   = (uint16_t)0xFFFF;
   RET_ON_ERROR(mfs_flash_write(mfsp,
                                mfsp->next_offset,
                                sizeof (mfs_data_header_t),
                                mfsp->buffer.data8));
 
   /* Adjusting bank-related metadata.*/
-  mfsp->used_space  -= sizeof (mfs_data_header_t) +
-                       mfsp->descriptors[id - 1U].size;
+  mfsp->used_space  -= ALIGNED_REC_SIZE(mfsp->descriptors[id - 1U].size);
   mfsp->next_offset += sizeof (mfs_data_header_t);
   mfsp->descriptors[id - 1U].offset = 0U;
   mfsp->descriptors[id - 1U].size   = 0U;
