@@ -103,7 +103,7 @@
  *          will be written after data.
  */
 #if !defined(MFS_CFG_MEMORY_ALIGNMENT) || defined(__DOXYGEN__)
-#define MFS_CFG_MEMORY_ALIGNMENT            1
+#define MFS_CFG_MEMORY_ALIGNMENT            2
 #endif
 /** @} */
 
@@ -127,7 +127,7 @@
 #error "MFS_CFG_BUFFER_SIZE is not a power of two"
 #endif
 
-#if MFS_CFG_MEMORY_ALIGNMENT < 1
+#if (MFS_CFG_MEMORY_ALIGNMENT < 1) || (MFS_CFG_MEMORY_ALIGNMENT > MFS_CFG_BUFFER_SIZE)
 #error "invalid MFS_CFG_MEMORY_ALIGNMENT value"
 #endif
 
@@ -181,19 +181,8 @@ typedef enum {
 typedef enum {
   MFS_BANK_ERASED = 0,
   MFS_BANK_OK = 1,
-  MFS_BANK_PARTIAL = 2,
-  MFS_BANK_GARBAGE = 3
+  MFS_BANK_GARBAGE = 2
 } mfs_bank_state_t;
-
-/**
- * @brief   Type of a record state assessment.
- */
-typedef enum {
-  MFS_RECORD_ERASED = 0,
-  MFS_RECORD_OK = 1,
-  MFS_RECORD_CRC = 2,
-  MFS_RECORD_GARBAGE = 3
-} mfs_record_state_t;
 
 /**
  * @brief   Type of a record identifier.
