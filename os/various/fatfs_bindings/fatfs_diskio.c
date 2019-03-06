@@ -33,6 +33,15 @@ extern RTCDriver RTCD1;
 /*-----------------------------------------------------------------------*/
 /* Correspondence between physical drive number and physical drive.      */
 
+#define MMC     0
+#define SDC     0
+
+/*
+  retry all disk operations up to 5 times to reduce the impact of poor
+  hardware
+ */
+#define FATFS_NUM_RETRIES 5
+#define FATFS_RETRY(x) do { uint8_t ii; for (ii=0; ii<FATFS_NUM_RETRIES; ii++) {if ((x)==0) break; else if (ii==FATFS_NUM_RETRIES-1) return RES_ERROR;}} while(0)
 
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
@@ -96,9 +105,21 @@ DRESULT disk_read (
   case 0:
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
-    if (blkRead(&FATFS_HAL_DEVICE, sector, buff, count))
-      return RES_ERROR;
-    return RES_OK;
+	FATFS_RETRY(mmcStartSequentialRead(&FATFS_HAL_DEVICE, sector));
+	while (count > 0) {
+	  FATFS_RETRY(mmcSequentialRead(&FATFS_HAL_DEVICE, buff));
+	  buff += MMCSD_BLOCK_SIZE;
+      count--;
+    }
+	FATFS_RETRY(mmcStopSequentialRead(&FATFS_HAL_DEVICE));
+	return RES_OK;
+#else
+  case SDC:
+    if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
+      return RES_NOTRDY;
+	FATFS_RETRY(sdcRead(&FATFS_HAL_DEVICE, sector, buff, count));
+	return RES_OK;
+#endif
   }
   return RES_PARERR;
 }
@@ -117,11 +138,25 @@ DRESULT disk_write (
 )
 {
   switch (pdrv) {
-  case 0:
+#if HAL_USE_MMC_SPI
+  case MMC:
+    if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
+        return RES_NOTRDY;
+    if (mmcIsWriteProtected(&FATFS_HAL_DEVICE))
+        return RES_WRPRT;
+	FATFS_RETRY(mmcStartSequentialWrite(&FATFS_HAL_DEVICE, sector));
+	while (count > 0) {
+	  FATFS_RETRY(mmcSequentialWrite(&FATFS_HAL_DEVICE, buff));
+	  buff += MMCSD_BLOCK_SIZE;
+	  count--;
+    }
+	FATFS_RETRY(mmcStopSequentialWrite(&FATFS_HAL_DEVICE));
+	return RES_OK;
+#else
+  case SDC:
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
-    if (blkWrite(&FATFS_HAL_DEVICE, sector, buff, count))
-      return RES_ERROR;
+	FATFS_RETRY(sdcWrite(&FATFS_HAL_DEVICE, sector, buff, count));
     return RES_OK;
   }
   return RES_PARERR;
