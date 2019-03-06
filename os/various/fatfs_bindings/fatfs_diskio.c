@@ -40,7 +40,12 @@ extern RTCDriver RTCD1;
 #define MMC     0
 #define SDC     0
 
-
+/*
+  retry all disk operations up to 5 times to reduce the impact of poor
+  hardware
+ */
+#define FATFS_NUM_RETRIES 5
+#define FATFS_RETRY(x) do { uint8_t ii; for (ii=0; ii<FATFS_NUM_RETRIES; ii++) {if ((x)==0) break; else if (ii==FATFS_NUM_RETRIES-1) return RES_ERROR;}} while(0)
 
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
@@ -127,24 +132,20 @@ DRESULT disk_read (
   case MMC:
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
-    if (mmcStartSequentialRead(&FATFS_HAL_DEVICE, sector))
-      return RES_ERROR;
-    while (count > 0) {
-      if (mmcSequentialRead(&FATFS_HAL_DEVICE, buff))
-        return RES_ERROR;
-      buff += MMCSD_BLOCK_SIZE;
+	FATFS_RETRY(mmcStartSequentialRead(&FATFS_HAL_DEVICE, sector));
+	while (count > 0) {
+	  FATFS_RETRY(mmcSequentialRead(&FATFS_HAL_DEVICE, buff));
+	  buff += MMCSD_BLOCK_SIZE;
       count--;
     }
-    if (mmcStopSequentialRead(&FATFS_HAL_DEVICE))
-        return RES_ERROR;
-    return RES_OK;
+	FATFS_RETRY(mmcStopSequentialRead(&FATFS_HAL_DEVICE));
+	return RES_OK;
 #else
   case SDC:
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
-    if (sdcRead(&FATFS_HAL_DEVICE, sector, buff, count))
-      return RES_ERROR;
-    return RES_OK;
+	FATFS_RETRY(sdcRead(&FATFS_HAL_DEVICE, sector, buff, count));
+	return RES_OK;
 #endif
   }
   return RES_PARERR;
@@ -170,24 +171,20 @@ DRESULT disk_write (
         return RES_NOTRDY;
     if (mmcIsWriteProtected(&FATFS_HAL_DEVICE))
         return RES_WRPRT;
-    if (mmcStartSequentialWrite(&FATFS_HAL_DEVICE, sector))
-        return RES_ERROR;
-    while (count > 0) {
-        if (mmcSequentialWrite(&FATFS_HAL_DEVICE, buff))
-            return RES_ERROR;
-        buff += MMCSD_BLOCK_SIZE;
-        count--;
+	FATFS_RETRY(mmcStartSequentialWrite(&FATFS_HAL_DEVICE, sector));
+	while (count > 0) {
+	  FATFS_RETRY(mmcSequentialWrite(&FATFS_HAL_DEVICE, buff));
+	  buff += MMCSD_BLOCK_SIZE;
+	  count--;
     }
-    if (mmcStopSequentialWrite(&FATFS_HAL_DEVICE))
-        return RES_ERROR;
-    return RES_OK;
+	FATFS_RETRY(mmcStopSequentialWrite(&FATFS_HAL_DEVICE));
+	return RES_OK;
 #else
   case SDC:
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
-    if (sdcWrite(&FATFS_HAL_DEVICE, sector, buff, count))
-      return RES_ERROR;
-    return RES_OK;
+	FATFS_RETRY(sdcWrite(&FATFS_HAL_DEVICE, sector, buff, count));
+	return RES_OK;
 #endif
   }
   return RES_PARERR;
