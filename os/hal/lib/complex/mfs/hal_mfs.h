@@ -95,16 +95,11 @@
  *          for records in the flash array. This is required when alignment
  *          constraints exist, for example when using a DTR mode on OSPI
  *          devices.
- * @note    When enforcing an alignment you need to use buffers with size
- *          aligned to the specified value. For example, if you need to
- *          write a 5 bytes object with alignment of 4 then you need to
- *          use a 8 bytes data buffer, the last 3 bytes are used as filler
- *          so ==initialize== those to zero (buffer->DDDDD000) or garbage
- *          will be written after data.
  */
 #if !defined(MFS_CFG_MEMORY_ALIGNMENT) || defined(__DOXYGEN__)
 #define MFS_CFG_MEMORY_ALIGNMENT            2
 #endif
+
 /** @} */
 
 /*===========================================================================*/
@@ -115,7 +110,8 @@
 #error "invalid MFS_CFG_MAX_RECORDS value"
 #endif
 
-#if (MFS_CFG_MAX_REPAIR_ATTEMPTS < 1) || (MFS_CFG_MAX_REPAIR_ATTEMPTS > 10)
+#if (MFS_CFG_MAX_REPAIR_ATTEMPTS < 1) ||                                    \
+    (MFS_CFG_MAX_REPAIR_ATTEMPTS > 10)
 #error "invalid MFS_MAX_REPAIR_ATTEMPTS value"
 #endif
 
@@ -127,7 +123,8 @@
 #error "MFS_CFG_BUFFER_SIZE is not a power of two"
 #endif
 
-#if (MFS_CFG_MEMORY_ALIGNMENT < 1) || (MFS_CFG_MEMORY_ALIGNMENT > MFS_CFG_BUFFER_SIZE)
+#if (MFS_CFG_MEMORY_ALIGNMENT < 1) ||                                       \
+    (MFS_CFG_MEMORY_ALIGNMENT > MFS_CFG_BUFFER_SIZE)
 #error "invalid MFS_CFG_MEMORY_ALIGNMENT value"
 #endif
 
