@@ -916,6 +916,244 @@ test_assert(bank_verify_erased(MFS_BANK_0) == FLASH_NO_ERROR, "bank 0 not erased
               <value>Internal Tests</value>
             </type>
             <brief>
+              <value>Transaction Mode tests.</value>
+            </brief>
+            <description>
+              <value>This sequence tests the MFS behavior when used in transaction mode, correct cases and expected error cases are tested.</value>
+            </description>
+            <condition>
+              <value />
+            </condition>
+            <shared_code>
+              <value><![CDATA[#include <string.h>
+#include "hal_mfs.h"
+
+static const uint8_t pattern1[] = {
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+};
+
+static const uint8_t pattern2[] = {
+  15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+};]]></value>
+            </shared_code>
+            <cases>
+              <case>
+                <brief>
+                  <value>Committing a transaction</value>
+                </brief>
+                <description>
+                  <value>A set of new/existing records are written/erased within a transaction then the transaction is committed, the state is checked afterward.</value>
+                </description>
+                <condition>
+                  <value />
+                </condition>
+                <various_code>
+                  <setup_code>
+                    <value><![CDATA[bank_erase(MFS_BANK_0);
+bank_erase(MFS_BANK_1);
+mfsStart(&mfs1, &mfscfg1);]]></value>
+                  </setup_code>
+                  <teardown_code>
+                    <value><![CDATA[mfsStop(&mfs1);]]></value>
+                  </teardown_code>
+                  <local_variables>
+                    <value />
+                  </local_variables>
+                </various_code>
+                <steps>
+                  <step>
+                    <description>
+                      <value>Records 1, 2 and 3 are created, MFS_NO_ERROR is expected.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+
+err = mfsWriteRecord(&mfs1, 1, sizeof pattern1, pattern1);
+test_assert(err == MFS_NO_ERROR, "error creating record 1");
+err = mfsWriteRecord(&mfs1, 2, sizeof pattern1, pattern1);
+test_assert(err == MFS_NO_ERROR, "error creating record 2");
+err = mfsWriteRecord(&mfs1, 3, sizeof pattern1, pattern1);
+test_assert(err == MFS_NO_ERROR, "error creating record 3");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Presence of records 1, 2 and 3 is verified, MFS_NO_ERROR is expected.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+size_t size;
+
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 2, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Starting a transaction with sufficient pre-allocated space, MFS_NO_ERROR is expected.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+
+err = mfsStartTransaction(&mfs1, 3U, 1024U);
+test_assert(err == MFS_NO_ERROR, "error starting transaction");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Atomically erasing record 1, updating record 2, reading record 3.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+size_t size;
+
+err = mfsEraseRecord(&mfs1, 1);
+test_assert(err == MFS_NO_ERROR, "error erasing record 1");
+err = mfsWriteRecord(&mfs1, 2, sizeof pattern2, pattern2);
+test_assert(err == MFS_NO_ERROR, "error writing record 2");
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+test_assert(size == sizeof pattern1, "unexpected record length");
+test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Committing the transaction, MFS_NO_ERROR is expected.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+
+err = mfsCommitTransaction(&mfs1);
+test_assert(err == MFS_NO_ERROR, "error committing transaction");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Testing outcome, records 1 must not be present, record 2 must contain the new value and record 3 must be unchanged.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+size_t size;
+
+/* Record 1 must not be present.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
+test_assert(err == MFS_ERR_NOT_FOUND, "record found");
+
+/* Record 2 must contain the new value.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 2, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+test_assert(size == sizeof pattern2, "unexpected record length");
+test_assert(memcmp(pattern2, mfs_buffer, size) == 0, "wrong record content");
+
+/* Record 3 must be unchanged.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+test_assert(size == sizeof pattern1, "unexpected record length");
+test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");]]></value>
+                    </code>
+                  </step>
+                </steps>
+              </case>
+              <case>
+                <brief>
+                  <value>Rolling back a transaction.</value>
+                </brief>
+                <description>
+                  <value>A set of new/existing records are written/erased within a transaction then the transaction is rolled back, the state is checked afterward.</value>
+                </description>
+                <condition>
+                  <value />
+                </condition>
+                <various_code>
+                  <setup_code>
+                    <value><![CDATA[bank_erase(MFS_BANK_0);
+bank_erase(MFS_BANK_1);
+mfsStart(&mfs1, &mfscfg1);]]></value>
+                  </setup_code>
+                  <teardown_code>
+                    <value><![CDATA[mfsStop(&mfs1);]]></value>
+                  </teardown_code>
+                  <local_variables>
+                    <value />
+                  </local_variables>
+                </various_code>
+                <steps>
+                  <step>
+                    <description>
+                      <value>Description.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[
+]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Description.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[
+]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Description.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[
+]]></value>
+                    </code>
+                  </step>
+                </steps>
+              </case>
+            </cases>
+          </sequence>
+          <sequence>
+            <type index="0">
+              <value>Internal Tests</value>
+            </type>
+            <brief>
               <value>API Invalid Cases tests.</value>
             </brief>
             <description>
