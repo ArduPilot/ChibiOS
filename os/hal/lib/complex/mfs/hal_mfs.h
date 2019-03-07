@@ -100,6 +100,12 @@
 #define MFS_CFG_MEMORY_ALIGNMENT            2
 #endif
 
+/**
+ * @brief   Maximum number of objects writable in a single transaction.
+ */
+#if !defined(MFS_CFG_TRANSACTION_MAX) || defined(__DOXYGEN__)
+#define MFS_CFG_TRANSACTION_MAX             16
+#endif
 /** @} */
 
 /*===========================================================================*/
@@ -132,6 +138,11 @@
 #error "MFS_CFG_MEMORY_ALIGNMENT is not a power of two"
 #endif
 
+#if (MFS_CFG_TRANSACTION_MAX < 0) ||                                        \
+    (MFS_CFG_TRANSACTION_MAX > MFS_CFG_MAX_RECORDS)
+#error "invalid MFS_CFG_TRANSACTION_MAX value"
+#endif
+
 /*===========================================================================*/
 /* Driver data structures and types.                                         */
 /*===========================================================================*/
@@ -151,7 +162,8 @@ typedef enum {
   MFS_UNINIT = 0,
   MFS_STOP = 1,
   MFS_READY = 2,
-  MFS_ERROR = 3
+  MFS_TRANSACTION = 3,
+  MFS_ERROR = 4
 } mfs_state_t;
 
 /**
@@ -167,9 +179,11 @@ typedef enum {
   MFS_ERR_INV_SIZE = -2,
   MFS_ERR_NOT_FOUND = -3,
   MFS_ERR_OUT_OF_MEM = -4,
-  MFS_ERR_NOT_ERASED = -5,
-  MFS_ERR_FLASH_FAILURE = -6,
-  MFS_ERR_INTERNAL = -7
+  MFS_ERR_TRANSACTION_NUM = -5,
+  MFS_ERR_TRANSACTION_SIZE = -6,
+  MFS_ERR_NOT_ERASED = -7,
+  MFS_ERR_FLASH_FAILURE = -8,
+  MFS_ERR_INTERNAL = -9
 } mfs_error_t;
 
 /**
@@ -230,7 +244,7 @@ typedef union {
      */
     uint32_t                magic;
     /**
-     * @brief   Data identifier.
+     * @brief   Record identifier.
      */
     uint16_t                id;
     /**
@@ -297,8 +311,24 @@ typedef struct {
 } MFSConfig;
 
 /**
- * @extends BaseFlash
- *
+ * @brief   Type of a buffered write/erase operation within a transaction.
+ */
+typedef struct {
+  /**
+   * @brief   Written header offset.
+   */
+  flash_offset_t            offset;
+  /**
+   * @brief   Written data size.
+   */
+  size_t                    size;
+  /**
+   * @brief   Record identifier.
+   */
+  mfs_id_t                  id;
+} mfs_transaction_op_t;
+
+/**
  * @brief   Type of an MFS instance.
  */
 typedef struct {
@@ -331,6 +361,24 @@ typedef struct {
    * @note    Zero means that there is not a record with that id.
    */
   mfs_record_descriptor_t   descriptors[MFS_CFG_MAX_RECORDS];
+#if (MFS_CFG_TRANSACTION_MAX > 0) || defined(__DOXYGEN__)
+  /**
+   * @brief   Next write offset for current transaction.
+   */
+  flash_offset_t            tr_next_offset;
+  /**
+   * @brief   Maximum offset for the transaction.
+   */
+  flash_offset_t            tr_limit_offet;
+  /**
+   * @brief   Number of buffered operations in current transaction.
+   */
+  uint32_t                  tr_nops;
+  /**
+   * @brief   Buffered operations in current transaction.
+   */
+  mfs_transaction_op_t      tr_ops[MFS_CFG_TRANSACTION_MAX];
+#endif
   /**
    * @brief   Transient buffer.
    */
@@ -362,7 +410,8 @@ typedef struct {
 #define MFS_ALIGN_MASK      ((uint32_t)MFS_CFG_MEMORY_ALIGNMENT - 1U)
 #define MFS_IS_ALIGNED(v)   (((uint32_t)(v) & MFS_ALIGN_MASK) == 0U)
 #define MFS_ALIGN_PREV(v)   ((uint32_t)(v) & ~MFS_ALIGN_MASK)
-#define MFS_ALIGN_NEXT(v)   MFS_ALIGN_PREV((size_t)(v) + MFS_ALIGN_MASK)
+#define MFS_ALIGN_NEXT(v)   (MFS_ALIGN_PREV(((uint32_t)(v) - 1U)) +         \
+                                            MFS_CFG_MEMORY_ALIGNMENT)
 /** @} */
 
 /*===========================================================================*/
@@ -382,6 +431,11 @@ extern "C" {
                              size_t n, const uint8_t *buffer);
   mfs_error_t mfsEraseRecord(MFSDriver *devp, mfs_id_t id);
   mfs_error_t mfsPerformGarbageCollection(MFSDriver *mfsp);
+#if MFS_CFG_TRANSACTION_MAX > 0
+  mfs_error_t mfsStartTransaction(MFSDriver *mfsp, uint32_t n, size_t size);
+  mfs_error_t mfsCommitTransaction(MFSDriver *mfsp);
+  mfs_error_t mfsRollbackTransaction(MFSDriver *mfsp);
+#endif /* MFS_CFG_TRANSACTION_MAX > 0 */
 #ifdef __cplusplus
 }
 #endif
