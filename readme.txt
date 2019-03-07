@@ -74,6 +74,7 @@
 *****************************************************************************
 
 *** Next ***
+- NEW: Added transactional updates to MFS.
 - VAR: Modified syscalls.c to allocate memory from bottom upward, ChibiOS
        allocators take memory from top downward. This way the memory taken
        using _sbrk_r() does not contain "holes" caused by other allocators.

@@ -958,7 +958,8 @@ mfsStart(&mfs1, &mfscfg1);]]></value>
                     <value><![CDATA[mfsStop(&mfs1);]]></value>
                   </teardown_code>
                   <local_variables>
-                    <value />
+                    <value><![CDATA[uint32_t current_counter;
+uint32_t used_space;]]></value>
                   </local_variables>
                 </various_code>
                 <steps>
@@ -1049,7 +1050,11 @@ test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");]]>
                       <value><![CDATA[mfs_error_t err;
 
 err = mfsCommitTransaction(&mfs1);
-test_assert(err == MFS_NO_ERROR, "error committing transaction");]]></value>
+test_assert(err == MFS_NO_ERROR, "error committing transaction");
+
+/* Saving some internal state for successive checks.*/
+current_counter = mfs1.current_counter;
+used_space      = mfs1.used_space;]]></value>
                     </code>
                   </step>
                   <step>
@@ -1080,7 +1085,113 @@ size = sizeof mfs_buffer;
 err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
 test_assert(err == MFS_NO_ERROR, "record not found");
 test_assert(size == sizeof pattern1, "unexpected record length");
-test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");]]></value>
+test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");
+
+/* Checking internal data.*/
+test_assert(MFS_BANK_0 == mfs1.current_bank, "internal data mismatch");
+test_assert(current_counter == mfs1.current_counter, "internal data mismatch");
+test_assert(used_space == mfs1.used_space, "internal data mismatch");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Re-mounting the manage storage, MFS_NO_ERROR is expected.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+
+err = mfsStart(&mfs1, &mfscfg1);
+test_assert(err == MFS_NO_ERROR, "re-start failed");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Testing outcome again after re-start.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+size_t size;
+
+/* Record 1 must not be present.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
+test_assert(err == MFS_ERR_NOT_FOUND, "record found");
+
+/* Record 2 must contain the new value.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 2, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+test_assert(size == sizeof pattern2, "unexpected record length");
+test_assert(memcmp(pattern2, mfs_buffer, size) == 0, "wrong record content");
+
+/* Record 3 must be unchanged.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+test_assert(size == sizeof pattern1, "unexpected record length");
+test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");
+
+/* Checking internal data.*/
+test_assert(MFS_BANK_0 == mfs1.current_bank, "internal data mismatch");
+test_assert(current_counter == mfs1.current_counter, "internal data mismatch");
+test_assert(used_space == mfs1.used_space, "internal data mismatch");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Performing a garbage collection, the result must
+                             not change.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+
+err = mfsPerformGarbageCollection(&mfs1);
+test_assert(err == MFS_NO_ERROR, "garbage collection failed");]]></value>
+                    </code>
+                  </step>
+                  <step>
+                    <description>
+                      <value>Testing outcome again after garbage collection.</value>
+                    </description>
+                    <tags>
+                      <value />
+                    </tags>
+                    <code>
+                      <value><![CDATA[mfs_error_t err;
+size_t size;
+
+/* Record 1 must not be present.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
+test_assert(err == MFS_ERR_NOT_FOUND, "record found");
+
+/* Record 2 must contain the new value.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 2, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+test_assert(size == sizeof pattern2, "unexpected record length");
+test_assert(memcmp(pattern2, mfs_buffer, size) == 0, "wrong record content");
+
+/* Record 3 must be unchanged.*/
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
+test_assert(err == MFS_NO_ERROR, "record not found");
+test_assert(size == sizeof pattern1, "unexpected record length");
+test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");
+
+/* Checking internal data.*/
+test_assert(MFS_BANK_1 == mfs1.current_bank, "internal data mismatch");
+test_assert(current_counter == mfs1.current_counter - 1, "internal data mismatch");
+test_assert(used_space == mfs1.used_space, "internal data mismatch");]]></value>
                     </code>
                   </step>
                 </steps>
