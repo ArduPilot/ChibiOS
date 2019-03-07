@@ -73,10 +73,23 @@
 *** Releases and Change Log                                               ***
 *****************************************************************************
 
-*** 19.1.1 ***
-- NEW: Extra timer checks in STM32 ST driver.
-- FIX: Fixed invalid AXI errata fix for STM32H7xx (bug #1014).
-- FIX: Fixed invalid ADCD3 initialization in STM32 ADCv3 driver (bug #1013).
+*** Next ***
+- NEW: Added transactional updates to MFS.
+- VAR: Modified syscalls.c to allocate memory from bottom upward, ChibiOS
+       allocators take memory from top downward. This way the memory taken
+       using _sbrk_r() does not contain "holes" caused by other allocators.
+- LIB: Modified core allocator to be able to get blocks starting from bottom
+       or top of the available memory range.
+       Removed alignment enforcement for requested block size. Alignment is
+       only ensured on the returned pointer, this should reduce memory usage
+       is some cases.
+- HAL: Added a new interface for range-finder devices (used by EX).
+- HAL: Added mcuconf.h updater tool for STM32F407 (backported to 19.1.1).
+- NIL: Integrated NIL 4.0.
+- FIX: Fixed invalid AXI errata fix for STM32H7xx (bug #1014)
+       (backported to 19.1.1)(backported to 18.2.3).
+- FIX: Fixed invalid ADCD3 initialization in STM32 ADCv3 driver (bug #1013)
+       (backported to 19.1.1)(backported to 18.2.3).
 - FIX: Fixed invalid call to dmaStreamRelease() in STM32 SDIOv1 driver
        (bug #1012).
 - FIX: Fixed wrong license restriction check in Nil (bug #1011).
