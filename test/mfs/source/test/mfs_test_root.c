@@ -23,6 +23,7 @@
  * <h2>Test Sequences</h2>
  * - @subpage mfs_test_sequence_001
  * - @subpage mfs_test_sequence_002
+ * - @subpage mfs_test_sequence_003
  * .
  */
 
@@ -46,6 +47,7 @@
 const testsequence_t * const mfs_test_suite_array[] = {
   &mfs_test_sequence_001,
   &mfs_test_sequence_002,
+  &mfs_test_sequence_003,
   NULL
 };
 

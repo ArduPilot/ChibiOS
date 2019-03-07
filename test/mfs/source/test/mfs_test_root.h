@@ -26,6 +26,7 @@
 
 #include "mfs_test_sequence_001.h"
 #include "mfs_test_sequence_002.h"
+#include "mfs_test_sequence_003.h"
 
 #if !defined(__DOXYGEN__)
 

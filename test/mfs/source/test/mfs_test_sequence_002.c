@@ -21,13 +21,13 @@
  * @file    mfs_test_sequence_002.c
  * @brief   Test Sequence 002 code.
  *
- * @page mfs_test_sequence_002 [2] API Invalid Cases tests
+ * @page mfs_test_sequence_002 [2] Transaction Mode tests
  *
  * File: @ref mfs_test_sequence_002.c
  *
  * <h2>Description</h2>
- * This test sequence tests the error coded returned by the various
- * APIs when called when the system is not initialized.
+ * This sequence tests the MFS behavior when used in transaction mode,
+ * correct cases and expected error cases are tested.
  *
  * <h2>Test Cases</h2>
  * - @subpage mfs_test_002_001
@@ -39,98 +39,185 @@
  * Shared code.
  ****************************************************************************/
 
+#include <string.h>
 #include "hal_mfs.h"
+
+static const uint8_t pattern1[] = {
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+};
+
+static const uint8_t pattern2[] = {
+  15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+};
 
 /****************************************************************************
  * Test cases.
  ****************************************************************************/
 
 /**
- * @page mfs_test_002_001 [2.1] Initialization error from APIs
+ * @page mfs_test_002_001 [2.1] Committing a transaction
  *
  * <h2>Description</h2>
- * The API functions are invoked without prior initialization.
+ * A set of new/existing records are written/erased within a
+ * transaction then the transaction is committed, the state is checked
+ * afterward.
  *
  * <h2>Test Steps</h2>
- * - [2.1.1] The function mfsErase() is called, MFS_ERR_INV_STATE is
- *   expected.
- * - [2.1.2] The function mfsWriteRecord() is called, MFS_ERR_INV_STATE
+ * - [2.1.1] Records 1, 2 and 3 are created, MFS_NO_ERROR is expected.
+ * - [2.1.2] Presence of records 1, 2 and 3 is verified, MFS_NO_ERROR
  *   is expected.
- * - [2.1.3] The function mfsEraseRecord() is called, MFS_ERR_INV_STATE
- *   is expected.
- * - [2.1.4] The function mfsReadRecord() is called, MFS_ERR_INV_STATE
- *   is expected.
- * - [2.1.5] The function mfsPerformGarbageCollection() is called,
- *   MFS_ERR_INV_STATE is expected.
+ * - [2.1.3] Starting a transaction with sufficient pre-allocated
+ *   space, MFS_NO_ERROR is expected.
+ * - [2.1.4] Atomically erasing record 1, updating record 2, reading
+ *   record 3.
+ * - [2.1.5] Committing the transaction, MFS_NO_ERROR is expected.
+ * - [2.1.6] Testing outcome, records 1 must not be present, record 2
+ *   must contain the new value and record 3 must be unchanged.
  * .
  */
 
+static void mfs_test_002_001_setup(void) {
+  bank_erase(MFS_BANK_0);
+  bank_erase(MFS_BANK_1);
+  mfsStart(&mfs1, &mfscfg1);
+}
+
+static void mfs_test_002_001_teardown(void) {
+  mfsStop(&mfs1);
+}
+
 static void mfs_test_002_001_execute(void) {
 
-  /* [2.1.1] The function mfsErase() is called, MFS_ERR_INV_STATE is
+  /* [2.1.1] Records 1, 2 and 3 are created, MFS_NO_ERROR is
      expected.*/
   test_set_step(1);
   {
-    mfs_error_t err = mfsErase(&mfs1);
-    test_assert(err == MFS_ERR_INV_STATE, "mfsErase() returned wrong status");
-  }
+    mfs_error_t err;
 
-  /* [2.1.2] The function mfsWriteRecord() is called, MFS_ERR_INV_STATE
+    err = mfsWriteRecord(&mfs1, 1, sizeof pattern1, pattern1);
+    test_assert(err == MFS_NO_ERROR, "error creating record 1");
+    err = mfsWriteRecord(&mfs1, 2, sizeof pattern1, pattern1);
+    test_assert(err == MFS_NO_ERROR, "error creating record 2");
+    err = mfsWriteRecord(&mfs1, 3, sizeof pattern1, pattern1);
+    test_assert(err == MFS_NO_ERROR, "error creating record 3");
+  }
+  test_end_step(1);
+
+  /* [2.1.2] Presence of records 1, 2 and 3 is verified, MFS_NO_ERROR
      is expected.*/
   test_set_step(2);
   {
-    mfs_error_t err = mfsWriteRecord(&mfs1, 1, 16, mfs_buffer);
-    test_assert(err == MFS_ERR_INV_STATE, "mfsWriteRecord() returned wrong status");
-  }
+    mfs_error_t err;
+    size_t size;
 
-  /* [2.1.3] The function mfsEraseRecord() is called, MFS_ERR_INV_STATE
-     is expected.*/
+    size = sizeof mfs_buffer;
+    err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
+    test_assert(err == MFS_NO_ERROR, "record not found");
+    size = sizeof mfs_buffer;
+    err = mfsReadRecord(&mfs1, 2, &size, mfs_buffer);
+    test_assert(err == MFS_NO_ERROR, "record not found");
+    size = sizeof mfs_buffer;
+    err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
+    test_assert(err == MFS_NO_ERROR, "record not found");
+  }
+  test_end_step(2);
+
+  /* [2.1.3] Starting a transaction with sufficient pre-allocated
+     space, MFS_NO_ERROR is expected.*/
   test_set_step(3);
   {
-    mfs_error_t err = mfsEraseRecord(&mfs1, 1);
-    test_assert(err == MFS_ERR_INV_STATE, "mfsEraseRecord() returned wrong status");
-  }
+    mfs_error_t err;
 
-  /* [2.1.4] The function mfsReadRecord() is called, MFS_ERR_INV_STATE
-     is expected.*/
+    err = mfsStartTransaction(&mfs1, 3U, 1024U);
+    test_assert(err == MFS_NO_ERROR, "error starting transaction");
+  }
+  test_end_step(3);
+
+  /* [2.1.4] Atomically erasing record 1, updating record 2, reading
+     record 3.*/
   test_set_step(4);
   {
-    size_t size = sizeof mfs_buffer;
-    mfs_error_t err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
-    test_assert(err == MFS_ERR_INV_STATE, "mfsReadRecord() returned wrong status");
-  }
+    mfs_error_t err;
+    size_t size;
 
-  /* [2.1.5] The function mfsPerformGarbageCollection() is called,
-     MFS_ERR_INV_STATE is expected.*/
+    err = mfsEraseRecord(&mfs1, 1);
+    test_assert(err == MFS_NO_ERROR, "error erasing record 1");
+    err = mfsWriteRecord(&mfs1, 2, sizeof pattern2, pattern2);
+    test_assert(err == MFS_NO_ERROR, "error writing record 2");
+    size = sizeof mfs_buffer;
+    err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
+    test_assert(err == MFS_NO_ERROR, "record not found");
+    test_assert(size == sizeof pattern1, "unexpected record length");
+    test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");
+  }
+  test_end_step(4);
+
+  /* [2.1.5] Committing the transaction, MFS_NO_ERROR is expected.*/
   test_set_step(5);
   {
-    mfs_error_t err = mfsPerformGarbageCollection(&mfs1);
-    test_assert(err == MFS_ERR_INV_STATE, "mfsPerformGarbageCollection() returned wrong status");
+    mfs_error_t err;
+
+    err = mfsCommitTransaction(&mfs1);
+    test_assert(err == MFS_NO_ERROR, "error committing transaction");
   }
+  test_end_step(5);
+
+  /* [2.1.6] Testing outcome, records 1 must not be present, record 2
+     must contain the new value and record 3 must be unchanged.*/
+  test_set_step(6);
+  {
+    mfs_error_t err;
+    size_t size;
+
+    /* Record 1 must not be present.*/
+    size = sizeof mfs_buffer;
+    err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
+    test_assert(err == MFS_ERR_NOT_FOUND, "record found");
+
+    /* Record 2 must contain the new value.*/
+    size = sizeof mfs_buffer;
+    err = mfsReadRecord(&mfs1, 2, &size, mfs_buffer);
+    test_assert(err == MFS_NO_ERROR, "record not found");
+    test_assert(size == sizeof pattern2, "unexpected record length");
+    test_assert(memcmp(pattern2, mfs_buffer, size) == 0, "wrong record content");
+
+    /* Record 3 must be unchanged.*/
+    size = sizeof mfs_buffer;
+    err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
+    test_assert(err == MFS_NO_ERROR, "record not found");
+    test_assert(size == sizeof pattern1, "unexpected record length");
+    test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");
+  }
+  test_end_step(6);
 }
 
 static const testcase_t mfs_test_002_001 = {
-  "Initialization error from APIs",
-  NULL,
-  NULL,
+  "Committing a transaction",
+  mfs_test_002_001_setup,
+  mfs_test_002_001_teardown,
   mfs_test_002_001_execute
 };
 
 /**
- * @page mfs_test_002_002 [2.2] Erasing non existing record
+ * @page mfs_test_002_002 [2.2] Rolling back a transaction
  *
  * <h2>Description</h2>
- * An erase operation is attempted on an non-existing record.
+ * A set of new/existing records are written/erased within a
+ * transaction then the transaction is rolled back, the state is
+ * checked afterward.
  *
  * <h2>Test Steps</h2>
- * - [2.2.1] Record one is erased, the error MFS_ERR_NOT_FOUND is
- *   expected.
+ * - [2.2.1] Description.
+ * - [2.2.2] Description.
+ * - [2.2.3] Description.
  * .
  */
 
 static void mfs_test_002_002_setup(void) {
+  bank_erase(MFS_BANK_0);
+  bank_erase(MFS_BANK_1);
   mfsStart(&mfs1, &mfscfg1);
-  mfsErase(&mfs1);
 }
 
 static void mfs_test_002_002_teardown(void) {
@@ -139,20 +226,27 @@ static void mfs_test_002_002_teardown(void) {
 
 static void mfs_test_002_002_execute(void) {
 
-  /* [2.2.1] Record one is erased, the error MFS_ERR_NOT_FOUND is
-     expected.*/
+  /* [2.2.1] Description.*/
   test_set_step(1);
   {
-    mfs_error_t err;
-
-    err = mfsEraseRecord(&mfs1, 1);
-    test_assert(err != MFS_NO_ERROR, "record was present");
-    test_assert(err == MFS_ERR_NOT_FOUND, "invalid error code");
   }
+  test_end_step(1);
+
+  /* [2.2.2] Description.*/
+  test_set_step(2);
+  {
+  }
+  test_end_step(2);
+
+  /* [2.2.3] Description.*/
+  test_set_step(3);
+  {
+  }
+  test_end_step(3);
 }
 
 static const testcase_t mfs_test_002_002 = {
-  "Erasing non existing record",
+  "Rolling back a transaction",
   mfs_test_002_002_setup,
   mfs_test_002_002_teardown,
   mfs_test_002_002_execute
@@ -172,9 +266,9 @@ const testcase_t * const mfs_test_sequence_002_array[] = {
 };
 
 /**
- * @brief   API Invalid Cases tests.
+ * @brief   Transaction Mode tests.
  */
 const testsequence_t mfs_test_sequence_002 = {
-  "API Invalid Cases tests",
+  "Transaction Mode tests",
   mfs_test_sequence_002_array
 };

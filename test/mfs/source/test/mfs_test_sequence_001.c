@@ -136,6 +136,7 @@ static void mfs_test_001_001_execute(void) {
     ferr = bank_erase(MFS_BANK_1);
     test_assert(ferr == FLASH_NO_ERROR, "Bank 1 erase failure");
   }
+  test_end_step(1);
 
   /* [1.1.2] Calling mfsStart() on an uninitialized flash array,
      MFS_NO_ERROR is expected.*/
@@ -146,6 +147,7 @@ static void mfs_test_001_001_execute(void) {
     err = mfsStart(&mfs1, &mfscfg1);
     test_assert(err == MFS_NO_ERROR, "initialization error with erased flash");
   }
+  test_end_step(2);
 
   /* [1.1.3] Calling mfsStart() on a newly initialized flash array,
      MFS_NO_ERROR is expected.*/
@@ -156,6 +158,7 @@ static void mfs_test_001_001_execute(void) {
     err = mfsStart(&mfs1, &mfscfg1);
     test_assert(err == MFS_NO_ERROR, "initialization error with initialized flash");
   }
+  test_end_step(3);
 }
 
 static const testcase_t mfs_test_001_001 = {
@@ -203,6 +206,7 @@ static void mfs_test_001_002_execute(void) {
                   "found a record that should not exists");
     }
   }
+  test_end_step(1);
 }
 
 static const testcase_t mfs_test_001_002 = {
@@ -253,6 +257,7 @@ static void mfs_test_001_003_execute(void) {
     mfs_error_t err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
     test_assert(err == MFS_ERR_NOT_FOUND , "record was already present");
   }
+  test_end_step(1);
 
   /* [1.3.2] Creating the record then retrieving it again, MFS_NO_ERROR
      is expected, record content and size are compared with the
@@ -269,6 +274,7 @@ static void mfs_test_001_003_execute(void) {
     test_assert(size == sizeof pattern1, "unexpected record length");
     test_assert(memcmp(pattern1, mfs_buffer, size) == 0, "wrong record content");
   }
+  test_end_step(2);
 
   /* [1.3.3] Updating the record then retrieving it again, MFS_NO_ERROR
      is expected, record content and size are compared with the
@@ -285,6 +291,7 @@ static void mfs_test_001_003_execute(void) {
     test_assert(size == sizeof pattern2, "unexpected record length");
     test_assert(memcmp(pattern2, mfs_buffer, size) == 0, "wrong record content");
   }
+  test_end_step(3);
 
   /* [1.3.4] Erasing the record then trying to retrieve it again,
      MFS_NO_ERROR is expected on erase, MFS_ERR_NOT_FOUND is expected
@@ -299,6 +306,7 @@ static void mfs_test_001_003_execute(void) {
     err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
     test_assert(err == MFS_ERR_NOT_FOUND, "record not erased");
   }
+  test_end_step(4);
 }
 
 static const testcase_t mfs_test_001_003 = {
@@ -348,6 +356,7 @@ static void mfs_test_001_004_execute(void) {
     err = mfsWriteRecord(&mfs1, 3, sizeof pattern3, pattern3);
     test_assert(err == MFS_NO_ERROR, "error creating record 3");
   }
+  test_end_step(1);
 
   /* [1.4.2] Records must exist.*/
   test_set_step(2);
@@ -365,6 +374,7 @@ static void mfs_test_001_004_execute(void) {
     err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
     test_assert(err == MFS_NO_ERROR, "record 2 not present");
   }
+  test_end_step(2);
 
   /* [1.4.3] Re-mounting, records must still exist.*/
   test_set_step(3);
@@ -384,6 +394,7 @@ static void mfs_test_001_004_execute(void) {
     err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
     test_assert(err == MFS_NO_ERROR, "record 2 not present");
   }
+  test_end_step(3);
 
   /* [1.4.4] Erasing storage and verify that the records have been
      removed, MFS_NO_ERROR is expected on erase, MFS_ERR_NOT_FOUND is
@@ -405,6 +416,7 @@ static void mfs_test_001_004_execute(void) {
     err = mfsReadRecord(&mfs1, 3, &size, mfs_buffer);
     test_assert(err == MFS_ERR_NOT_FOUND, "record 2 still present");
   }
+  test_end_step(4);
 }
 
 static const testcase_t mfs_test_001_004 = {
@@ -466,6 +478,7 @@ static void mfs_test_001_005_execute(void) {
                   "wrong record content");
     }
   }
+  test_end_step(1);
 
   /* [1.5.2] Creating one more record, should fail, MFS_ERR_OUT_OF_MEM
      is expected.*/
@@ -478,6 +491,7 @@ static void mfs_test_001_005_execute(void) {
     err = mfsWriteRecord(&mfs1, id_max, sizeof pattern512 , pattern512);
     test_assert(err == MFS_ERR_OUT_OF_MEM, "creation didn't fail");
   }
+  test_end_step(2);
 
   /* [1.5.3] Adding a smaller record to fill the final gap. A
      reinitialization is performed and MFS_NO_ERROR is expected.*/
@@ -515,6 +529,7 @@ static void mfs_test_001_005_execute(void) {
     err = mfsStart(&mfs1, &mfscfg1);
     test_assert(err == MFS_NO_ERROR, "initialization error");
   }
+  test_end_step(3);
 }
 
 static const testcase_t mfs_test_001_005 = {
@@ -584,6 +599,7 @@ static void mfs_test_001_006_execute(void) {
                   "wrong record content");
     }
   }
+  test_end_step(1);
 
   /* [1.6.2] Erasing one record, MFS_NO_ERROR is expected.*/
   test_set_step(2);
@@ -597,6 +613,7 @@ static void mfs_test_001_006_execute(void) {
     err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
     test_assert(err == MFS_ERR_NOT_FOUND, "record not erased");
   }
+  test_end_step(2);
 
   /* [1.6.3] Writing one more record triggers garbage collection,
      MFS_WARN_GC is expected, KS state is checked for correctness after
@@ -618,6 +635,7 @@ static void mfs_test_001_006_execute(void) {
     test_assert(mfs1.current_bank == MFS_BANK_1, "unexpected bank");
     test_assert(bank_verify_erased(MFS_BANK_0) == FLASH_NO_ERROR, "bank 0 not erased");
   }
+  test_end_step(3);
 
   /* [1.6.4] Checking for all records in the new bank, MFS_NOERROR is
      expected for each record.*/
@@ -645,6 +663,7 @@ static void mfs_test_001_006_execute(void) {
       }
     }
   }
+  test_end_step(4);
 
   /* [1.6.5] Erasing one record, MFS_NO_ERROR is expected.*/
   test_set_step(5);
@@ -658,6 +677,7 @@ static void mfs_test_001_006_execute(void) {
     err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
     test_assert(err == MFS_ERR_NOT_FOUND, "record not erased");
   }
+  test_end_step(5);
 
   /* [1.6.6] Writing one more record triggers garbage collection,
      MFS_WARN_GC is expected, MFS object state is checked for
@@ -679,6 +699,7 @@ static void mfs_test_001_006_execute(void) {
     test_assert(mfs1.current_bank == MFS_BANK_0, "unexpected bank");
     test_assert(bank_verify_erased(MFS_BANK_1) == FLASH_NO_ERROR, "bank 1 not erased");
   }
+  test_end_step(6);
 
   /* [1.6.7] Checking for all records in the new bank, MFS_NO_ERROR is
      expected for each record.*/
@@ -706,6 +727,7 @@ static void mfs_test_001_006_execute(void) {
       }
     }
   }
+  test_end_step(7);
 }
 
 static const testcase_t mfs_test_001_006 = {
@@ -764,6 +786,7 @@ static void mfs_test_001_007_execute(void) {
       test_assert(memcmp(pattern512, mfs_buffer, size) == 0, "wrong record content");
     }
   }
+  test_end_step(1);
 
   /* [1.7.2] Erase records until the flash bank is filled entirely.*/
   test_set_step(2);
@@ -785,6 +808,7 @@ static void mfs_test_001_007_execute(void) {
       test_assert(err == MFS_ERR_NOT_FOUND, "record not erased");
     }
   }
+  test_end_step(2);
 
   /* [1.7.3] Erasing one more record triggers garbage collection,
      MFS_WARN_GC is expected, KS state is checked for correctness after
@@ -806,6 +830,7 @@ static void mfs_test_001_007_execute(void) {
     test_assert(mfs1.current_bank == MFS_BANK_1, "unexpected bank");
     test_assert(bank_verify_erased(MFS_BANK_0) == FLASH_NO_ERROR, "bank 0 not erased");
   }
+  test_end_step(3);
 }
 
 static const testcase_t mfs_test_001_007 = {
