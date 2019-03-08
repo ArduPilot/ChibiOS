@@ -1158,17 +1158,17 @@ mfs_error_t mfsEraseRecord(MFSDriver *mfsp, mfs_id_t id) {
   osalDbgCheck((mfsp != NULL) &&
                (id >= 1U) && (id <= (mfs_id_t)MFS_CFG_MAX_RECORDS));
 
-  /* Checking if the requested record actually exists.*/
-  if (mfsp->descriptors[id - 1U].offset == 0U) {
-    return MFS_ERR_NOT_FOUND;
-  }
-
   /* Aligned record size.*/
   asize = ALIGNED_DHDR_SIZE;
 
   /* Normal mode code path.*/
   if (mfsp->state == MFS_READY) {
     bool warning = false;
+
+    /* Checking if the requested record actually exists.*/
+    if (mfsp->descriptors[id - 1U].offset == 0U) {
+      return MFS_ERR_NOT_FOUND;
+    }
 
     /* If the required space is beyond the available (compacted) block
        size then an internal error is returned, it should never happen.*/
@@ -1211,6 +1211,11 @@ mfs_error_t mfsEraseRecord(MFSDriver *mfsp, mfs_id_t id) {
   /* Transaction mode code path.*/
   if (mfsp->state == MFS_TRANSACTION) {
     mfs_transaction_op_t *top;
+
+    /* Checking if the requested record actually exists.*/
+    if (mfsp->descriptors[id - 1U].offset == 0U) {
+      return MFS_ERR_NOT_FOUND;
+    }
 
     /* Checking if the maximum number of operations in a transaction is
        Exceeded.*/
