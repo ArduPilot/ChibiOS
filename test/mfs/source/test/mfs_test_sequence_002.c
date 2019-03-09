@@ -128,7 +128,7 @@ static void mfs_test_002_001_execute(void) {
   {
     mfs_error_t err;
 
-    err = mfsStartTransaction(&mfs1, 3U, 1024U);
+    err = mfsStartTransaction(&mfs1, 1024U);
     test_assert(err == MFS_NO_ERROR, "error starting transaction");
   }
   test_end_step(3);
@@ -369,7 +369,7 @@ static void mfs_test_002_002_execute(void) {
   {
     mfs_error_t err;
 
-    err = mfsStartTransaction(&mfs1, 3U, 1024U);
+    err = mfsStartTransaction(&mfs1, 1024U);
     test_assert(err == MFS_NO_ERROR, "error starting transaction");
   }
   test_end_step(3);
@@ -452,17 +452,14 @@ static const testcase_t mfs_test_002_002 = {
  * <h2>Test Steps</h2>
  * - [2.3.1] Filling up the storage by writing records with increasing
  *   IDs, MFS_NO_ERROR is expected.
- * - [2.3.2] Description.
- * - [2.3.3] Description.
- * - [2.3.4] Description.
- * - [2.3.5] Description.
- * - [2.3.6] Description.
- * - [2.3.7] Description.
- * - [2.3.8] Description.
- * - [2.3.9] Description.
- * - [2.3.10] Description.
- * - [2.3.11] Description.
- * - [2.3.12] Description.
+ * - [2.3.2] Erasing one record, MFS_NO_ERROR is expected.
+ * - [2.3.3] Starting a transaction with the whole remaining space,
+ *   MFS_ERR_OUT_OF_MEM is expected.
+ * - [2.3.4] Starting a transaction with insufficient space for one
+ *   more header, MFS_ERR_OUT_OF_MEM is expected.
+ * - [2.3.5] Starting a transaction with just enough space for one more
+ *   header, MFS_NO_ERROR is expected.
+ * - [2.3.6] Rolling back, MFS_NO_ERROR is expected.
  * .
  */
 
@@ -504,71 +501,65 @@ static void mfs_test_002_003_execute(void) {
   }
   test_end_step(1);
 
-  /* [2.3.2] Description.*/
+  /* [2.3.2] Erasing one record, MFS_NO_ERROR is expected.*/
   test_set_step(2);
   {
+    mfs_error_t err;
+    size_t size;
+
+    err = mfsEraseRecord(&mfs1, 1);
+    test_assert(err == MFS_NO_ERROR, "error erasing the record");
+    size = sizeof mfs_buffer;
+    err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
+    test_assert(err == MFS_ERR_NOT_FOUND, "record not erased");
   }
   test_end_step(2);
 
-  /* [2.3.3] Description.*/
+  /* [2.3.3] Starting a transaction with the whole remaining space,
+     MFS_ERR_OUT_OF_MEM is expected.*/
   test_set_step(3);
   {
+    mfs_error_t err;
+    size_t size = mfs1.config->bank_size - mfs1.used_space;
+
+    err = mfsStartTransaction(&mfs1, size);
+    test_assert(err == MFS_ERR_OUT_OF_MEM, "invalid error code");
   }
   test_end_step(3);
 
-  /* [2.3.4] Description.*/
+  /* [2.3.4] Starting a transaction with insufficient space for one
+     more header, MFS_ERR_OUT_OF_MEM is expected.*/
   test_set_step(4);
   {
+    mfs_error_t err;
+    size_t size = ((mfs1.config->bank_size - mfs1.used_space) - sizeof (mfs_data_header_t)) + 1;
+
+    err = mfsStartTransaction(&mfs1, size);
+    test_assert(err == MFS_ERR_OUT_OF_MEM, "invalid error code");
   }
   test_end_step(4);
 
-  /* [2.3.5] Description.*/
+  /* [2.3.5] Starting a transaction with just enough space for one more
+     header, MFS_NO_ERROR is expected.*/
   test_set_step(5);
   {
+    mfs_error_t err;
+    size_t size = (mfs1.config->bank_size - mfs1.used_space) - sizeof (mfs_data_header_t);
+
+    err = mfsStartTransaction(&mfs1, size);
+    test_assert(err == MFS_NO_ERROR, "error starting transaction");
   }
   test_end_step(5);
 
-  /* [2.3.6] Description.*/
+  /* [2.3.6] Rolling back, MFS_NO_ERROR is expected.*/
   test_set_step(6);
   {
+    mfs_error_t err;
+
+    err = mfsRollbackTransaction(&mfs1);
+    test_assert(err == MFS_NO_ERROR, "error rolling back transaction");
   }
   test_end_step(6);
-
-  /* [2.3.7] Description.*/
-  test_set_step(7);
-  {
-  }
-  test_end_step(7);
-
-  /* [2.3.8] Description.*/
-  test_set_step(8);
-  {
-  }
-  test_end_step(8);
-
-  /* [2.3.9] Description.*/
-  test_set_step(9);
-  {
-  }
-  test_end_step(9);
-
-  /* [2.3.10] Description.*/
-  test_set_step(10);
-  {
-  }
-  test_end_step(10);
-
-  /* [2.3.11] Description.*/
-  test_set_step(11);
-  {
-  }
-  test_end_step(11);
-
-  /* [2.3.12] Description.*/
-  test_set_step(12);
-  {
-  }
-  test_end_step(12);
 }
 
 static const testcase_t mfs_test_002_003 = {

@@ -1304,8 +1304,8 @@ mfs_error_t mfsPerformGarbageCollection(MFSDriver *mfsp) {
  *          .
  *
  * @param[in] mfsp      pointer to the @p MFSDriver object
- * @param[in] n         number of records to be written in the transaction
- * @param[in] size      estimated total size of written records in transaction
+ * @param[in] size      estimated total size of written records in transaction,
+ *                      this includes, data, headers and alignment gaps
  * @return              The operation status.
  * @retval MFS_NO_ERROR             if the operation has been successfully
  *                                  completed.
@@ -1318,12 +1318,10 @@ mfs_error_t mfsPerformGarbageCollection(MFSDriver *mfsp) {
  *
  * @api
  */
-mfs_error_t mfsStartTransaction(MFSDriver *mfsp, uint32_t n, size_t size) {
+mfs_error_t mfsStartTransaction(MFSDriver *mfsp, size_t size) {
   flash_offset_t free, tspace, rspace;
 
-  osalDbgCheck((mfsp != NULL) &&
-               (n >= 1U) && (n <= MFS_CFG_TRANSACTION_MAX ) &&
-               (size > 0U));
+  osalDbgCheck((mfsp != NULL) && (size > ALIGNED_DHDR_SIZE));
 
   /* The driver must be in ready mode.*/
   if (mfsp->state != MFS_READY) {
@@ -1331,7 +1329,7 @@ mfs_error_t mfsStartTransaction(MFSDriver *mfsp, uint32_t n, size_t size) {
   }
 
   /* Estimating the required contiguous compacted space.*/
-  tspace = (flash_offset_t)MFS_ALIGN_NEXT(size + (n * sizeof (mfs_data_header_t)));
+  tspace = (flash_offset_t)MFS_ALIGN_NEXT(size);
   rspace = tspace + ALIGNED_DHDR_SIZE;
 
   /* If the required space is beyond the available (compacted) block
@@ -1457,6 +1455,7 @@ mfs_error_t mfsCommitTransaction(MFSDriver *mfsp) {
  * @api
  */
 mfs_error_t mfsRollbackTransaction(MFSDriver *mfsp) {
+  mfs_error_t err;
 
   osalDbgCheck(mfsp != NULL);
 
@@ -1467,7 +1466,16 @@ mfs_error_t mfsRollbackTransaction(MFSDriver *mfsp) {
   /* Returning to ready mode.*/
   mfsp->state = MFS_READY;
 
-  return mfs_garbage_collect(mfsp);
+  /* If no operations have been performed then there is no need to perform
+     a garbage collection.*/
+  if (mfsp->tr_nops > 0U) {
+    err = mfs_garbage_collect(mfsp);
+  }
+  else {
+    err = MFS_NO_ERROR;
+  }
+
+  return err;
 }
 #endif /* MFS_CFG_TRANSACTION_MAX > 0 */
 
