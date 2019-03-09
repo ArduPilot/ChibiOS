@@ -432,7 +432,7 @@ extern "C" {
   mfs_error_t mfsEraseRecord(MFSDriver *devp, mfs_id_t id);
   mfs_error_t mfsPerformGarbageCollection(MFSDriver *mfsp);
 #if MFS_CFG_TRANSACTION_MAX > 0
-  mfs_error_t mfsStartTransaction(MFSDriver *mfsp, uint32_t n, size_t size);
+  mfs_error_t mfsStartTransaction(MFSDriver *mfsp, size_t size);
   mfs_error_t mfsCommitTransaction(MFSDriver *mfsp);
   mfs_error_t mfsRollbackTransaction(MFSDriver *mfsp);
 #endif /* MFS_CFG_TRANSACTION_MAX > 0 */

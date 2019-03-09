@@ -1013,7 +1013,7 @@ test_assert(err == MFS_NO_ERROR, "record not found");]]></value>
                     <code>
                       <value><![CDATA[mfs_error_t err;
 
-err = mfsStartTransaction(&mfs1, 3U, 1024U);
+err = mfsStartTransaction(&mfs1, 1024U);
 test_assert(err == MFS_NO_ERROR, "error starting transaction");]]></value>
                     </code>
                   </step>
@@ -1271,7 +1271,7 @@ test_assert(err == MFS_NO_ERROR, "record not found");]]></value>
                     <code>
                       <value><![CDATA[mfs_error_t err;
 
-err = mfsStartTransaction(&mfs1, 3U, 1024U);
+err = mfsStartTransaction(&mfs1, 1024U);
 test_assert(err == MFS_NO_ERROR, "error starting transaction");]]></value>
                     </code>
                   </step>
@@ -1373,7 +1373,7 @@ mfsStart(&mfs1, &mfscfg1);]]></value>
                 <steps>
                   <step>
                     <description>
-                      <value>Filling up the storage by writing records with increasing IDs, MFS_NO_ERROR is expected</value>
+                      <value>Filling up the storage by writing records with increasing IDs, MFS_NO_ERROR is expected.</value>
                     </description>
                     <tags>
                       <value />
@@ -1402,134 +1402,79 @@ for (id = 1; id <= id_max; id++) {
                   </step>
                   <step>
                     <description>
-                      <value>Description.</value>
+                      <value>Erasing one record, MFS_NO_ERROR is expected.</value>
                     </description>
                     <tags>
                       <value />
                     </tags>
                     <code>
-                      <value><![CDATA[
-]]></value>
+                      <value><![CDATA[mfs_error_t err;
+size_t size;
+
+err = mfsEraseRecord(&mfs1, 1);
+test_assert(err == MFS_NO_ERROR, "error erasing the record");
+size = sizeof mfs_buffer;
+err = mfsReadRecord(&mfs1, 1, &size, mfs_buffer);
+test_assert(err == MFS_ERR_NOT_FOUND, "record not erased");]]></value>
                     </code>
                   </step>
                   <step>
                     <description>
-                      <value>Description.</value>
+                      <value>Starting a transaction with the whole remaining space, MFS_ERR_OUT_OF_MEM is expected.</value>
                     </description>
                     <tags>
                       <value />
                     </tags>
                     <code>
-                      <value><![CDATA[
-]]></value>
+                      <value><![CDATA[mfs_error_t err;
+size_t size = mfs1.config->bank_size - mfs1.used_space;
+
+err = mfsStartTransaction(&mfs1, size);
+test_assert(err == MFS_ERR_OUT_OF_MEM, "invalid error code");]]></value>
                     </code>
                   </step>
                   <step>
                     <description>
-                      <value>Description.</value>
+                      <value>Starting a transaction with insufficient space for one more header, MFS_ERR_OUT_OF_MEM is expected.</value>
                     </description>
                     <tags>
                       <value />
                     </tags>
                     <code>
-                      <value><![CDATA[
-]]></value>
+                      <value><![CDATA[mfs_error_t err;
+size_t size = ((mfs1.config->bank_size - mfs1.used_space) - sizeof (mfs_data_header_t)) + 1;
+
+err = mfsStartTransaction(&mfs1, size);
+test_assert(err == MFS_ERR_OUT_OF_MEM, "invalid error code");]]></value>
                     </code>
                   </step>
                   <step>
                     <description>
-                      <value>Description.</value>
+                      <value>Starting a transaction with just enough space for one more header, MFS_NO_ERROR is expected.</value>
                     </description>
                     <tags>
                       <value />
                     </tags>
                     <code>
-                      <value><![CDATA[
-]]></value>
+                      <value><![CDATA[mfs_error_t err;
+size_t size = (mfs1.config->bank_size - mfs1.used_space) - sizeof (mfs_data_header_t);
+
+err = mfsStartTransaction(&mfs1, size);
+test_assert(err == MFS_NO_ERROR, "error starting transaction");]]></value>
                     </code>
                   </step>
                   <step>
                     <description>
-                      <value>Description.</value>
+                      <value>Rolling back, MFS_NO_ERROR is expected.</value>
                     </description>
                     <tags>
                       <value />
                     </tags>
                     <code>
-                      <value><![CDATA[
-]]></value>
-                    </code>
-                  </step>
-                  <step>
-                    <description>
-                      <value>Description.</value>
-                    </description>
-                    <tags>
-                      <value />
-                    </tags>
-                    <code>
-                      <value><![CDATA[
-]]></value>
-                    </code>
-                  </step>
-                  <step>
-                    <description>
-                      <value>Description.</value>
-                    </description>
-                    <tags>
-                      <value />
-                    </tags>
-                    <code>
-                      <value><![CDATA[
-]]></value>
-                    </code>
-                  </step>
-                  <step>
-                    <description>
-                      <value>Description.</value>
-                    </description>
-                    <tags>
-                      <value />
-                    </tags>
-                    <code>
-                      <value><![CDATA[
-]]></value>
-                    </code>
-                  </step>
-                  <step>
-                    <description>
-                      <value>Description.</value>
-                    </description>
-                    <tags>
-                      <value />
-                    </tags>
-                    <code>
-                      <value><![CDATA[
-]]></value>
-                    </code>
-                  </step>
-                  <step>
-                    <description>
-                      <value>Description.</value>
-                    </description>
-                    <tags>
-                      <value />
-                    </tags>
-                    <code>
-                      <value><![CDATA[
-]]></value>
-                    </code>
-                  </step>
-                  <step>
-                    <description>
-                      <value>Description.</value>
-                    </description>
-                    <tags>
-                      <value />
-                    </tags>
-                    <code>
-                      <value><![CDATA[
-]]></value>
+                      <value><![CDATA[mfs_error_t err;
+
+err = mfsRollbackTransaction(&mfs1);
+test_assert(err == MFS_NO_ERROR, "error rolling back transaction");]]></value>
                     </code>
                   </step>
                 </steps>
