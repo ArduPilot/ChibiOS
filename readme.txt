@@ -86,6 +86,8 @@
 - HAL: Added a new interface for range-finder devices (used by EX).
 - HAL: Added mcuconf.h updater tool for STM32F407 (backported to 19.1.1).
 - NIL: Integrated NIL 4.0.
+- FIX: Fixed chTimeIsInRangeX() failing under some configurations (bug #1015)
+       (backported to 19.1.1)(backported to 18.2.3).
 - FIX: Fixed invalid AXI errata fix for STM32H7xx (bug #1014)
        (backported to 19.1.1)(backported to 18.2.3).
 - FIX: Fixed invalid ADCD3 initialization in STM32 ADCv3 driver (bug #1013)
