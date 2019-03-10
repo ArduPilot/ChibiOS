@@ -832,11 +832,11 @@ void spi_lld_ignore(SPIDriver *spip, size_t n) {
 #endif
 #if defined(STM32_SPI_BDMA_REQUIRED)
   {
-    bdmaStreamSetMemory(spip->rx.bdma, &dummyrx);
+	bdmaStreamSetMemory(spip->rx.bdma, spip->config->dummyrx?spip->config->dummyrx:&dummyrx);
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode);
 
-    bdmaStreamSetMemory(spip->tx.bdma, &dummytx);
+    bdmaStreamSetMemory(spip->tx.bdma, spip->config->dummytx?spip->config->dummytx:&dummytx);
     bdmaStreamSetTransactionSize(spip->tx.bdma, n);
     bdmaStreamSetMode(spip->tx.bdma, spip->txdmamode);
 
@@ -849,11 +849,11 @@ void spi_lld_ignore(SPIDriver *spip, size_t n) {
 #endif
 #if defined(STM32_SPI_DMA_REQUIRED)
   {
-    dmaStreamSetMemory0(spip->rx.dma, &dummyrx);
+    dmaStreamSetMemory0(spip->rx.dma, spip->config->dummyrx?spip->config->dummyrx:&dummyrx);
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode);
 
-    dmaStreamSetMemory0(spip->tx.dma, &dummytx);
+    dmaStreamSetMemory0(spip->tx.dma, spip->config->dummytx?spip->config->dummytx:&dummytx);
     dmaStreamSetTransactionSize(spip->tx.dma, n);
     dmaStreamSetMode(spip->tx.dma, spip->txdmamode);
 
@@ -949,7 +949,7 @@ void spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf) {
 #endif
 #if defined(STM32_SPI_BDMA_REQUIRED)
   {
-    bdmaStreamSetMemory(spip->rx.bdma, &dummyrx);
+    bdmaStreamSetMemory(spip->rx.bdma, spip->config->dummyrx?spip->config->dummyrx:&dummyrx);
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode);
 
@@ -966,7 +966,7 @@ void spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf) {
 #endif
 #if defined(STM32_SPI_DMA_REQUIRED)
   {
-    dmaStreamSetMemory0(spip->rx.dma, &dummyrx);
+	dmaStreamSetMemory0(spip->rx.dma, spip->config->dummyrx?spip->config->dummyrx:&dummyrx);
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode);
 
@@ -1010,7 +1010,7 @@ void spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf) {
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode | STM32_BDMA_CR_MINC);
 
-    bdmaStreamSetMemory(spip->tx.bdma, &dummytx);
+    bdmaStreamSetMemory(spip->tx.bdma, spip->config->dummytx?spip->config->dummytx:&dummytx);
     bdmaStreamSetTransactionSize(spip->tx.bdma, n);
     bdmaStreamSetMode(spip->tx.bdma, spip->txdmamode);
 
@@ -1027,7 +1027,7 @@ void spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf) {
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode | STM32_DMA_CR_MINC);
 
-    dmaStreamSetMemory0(spip->tx.dma, &dummytx);
+    dmaStreamSetMemory0(spip->tx.dma, spip->config->dummytx?spip->config->dummytx:&dummytx);
     dmaStreamSetTransactionSize(spip->tx.dma, n);
     dmaStreamSetMode(spip->tx.dma, spip->txdmamode);
 
