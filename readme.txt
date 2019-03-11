@@ -78,6 +78,8 @@
 - VAR: Modified syscalls.c to allocate memory from bottom upward, ChibiOS
        allocators take memory from top downward. This way the memory taken
        using _sbrk_r() does not contain "holes" caused by other allocators.
+- LIB: Re-introduced missing chGuardedPoolGetCounterI() function to guarded
+       pools allocator.
 - LIB: Modified core allocator to be able to get blocks starting from bottom
        or top of the available memory range.
        Removed alignment enforcement for requested block size. Alignment is
