@@ -1217,9 +1217,14 @@
 #error "Using a wrong mcuconf.h file, STM32H7xx_MCUCONF not defined"
 #endif
 
-#if (defined(STM32H743xx) || defined(STM32H753xx)) &&                       \
+#if defined(STM32H743xx) &&                       \
     !defined(STM32H743_MCUCONF)
 #error "Using a wrong mcuconf.h file, STM32H743_MCUCONF not defined"
+#endif
+
+#if defined(STM32H753xx) &&                       \
+    !defined(STM32H753_MCUCONF)
+#error "Using a wrong mcuconf.h file, STM32H753_MCUCONF not defined"
 #endif
 
 /*
