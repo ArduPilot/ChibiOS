@@ -88,12 +88,14 @@
 - HAL: Added a new interface for range-finder devices (used by EX).
 - HAL: Added mcuconf.h updater tool for STM32F407 (backported to 19.1.1).
 - NIL: Integrated NIL 4.0.
+- FIX: Fixed call to obsolete dmaStreamRelease() in STM32 I2Cv3 driver
+       (bug #1019)(backported to 19.1.1).
 - FIX: Fixed misconfiguration in STM32L4R9I DIscovery board files (bug #1018)
-      (backported to 19.1.1).
+       (backported to 19.1.1).
 - FIX: Fixed wrong Debug launch configuration in STM32L4Rx demos (bug #1017)
-      (backported to 19.1.1).
+       (backported to 19.1.1).
 - FIX: Fixed wrong ADCSEL definitions in STM32H7 HAL (bug #1016)
-      (backported to 19.1.1)(backported to 18.2.3).
+       (backported to 19.1.1)(backported to 18.2.3).
 - FIX: Fixed chTimeIsInRangeX() failing under some configurations (bug #1015)
        (backported to 19.1.1)(backported to 18.2.3).
 - FIX: Fixed invalid AXI errata fix for STM32H7xx (bug #1014)
@@ -114,4 +116,4 @@
   (bug #1006)(backported to 19.1.1)(backported to 18.2.3).
 - EX:  Fixed missing I2C release bus in LPS22HB initialization (bug #1005)
   (backported to 19.1.1).
-  
+
