@@ -114,3 +114,4 @@
   (bug #1006)(backported to 19.1.1)(backported to 18.2.3).
 - EX:  Fixed missing I2C release bus in LPS22HB initialization (bug #1005)
   (backported to 19.1.1).
+  
