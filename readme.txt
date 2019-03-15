@@ -88,6 +88,8 @@
 - HAL: Added a new interface for range-finder devices (used by EX).
 - HAL: Added mcuconf.h updater tool for STM32F407 (backported to 19.1.1).
 - NIL: Integrated NIL 4.0.
+- FIX: Fixed misconfiguration in STM32L4R9I DIscovery board files (bug #1018)
+      (backported to 19.1.1).
 - FIX: Fixed wrong Debug launch configuration in STM32L4Rx demos (bug #1017)
       (backported to 19.1.1).
 - FIX: Fixed wrong ADCSEL definitions in STM32H7 HAL (bug #1016)
