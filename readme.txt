@@ -88,6 +88,8 @@
 - HAL: Added a new interface for range-finder devices (used by EX).
 - HAL: Added mcuconf.h updater tool for STM32F407 (backported to 19.1.1).
 - NIL: Integrated NIL 4.0.
+- FIX: Fixed missing STM32L4+ check in GPIOv3 driver (bug #1020)
+       (backported to 19.1.1)(backported to 18.2.3).
 - FIX: Fixed call to obsolete dmaStreamRelease() in STM32 I2Cv3 driver
        (bug #1019)(backported to 19.1.1).
 - FIX: Fixed misconfiguration in STM32L4R9I DIscovery board files (bug #1018)
