@@ -111,9 +111,10 @@
 - FIX: Fixed wrong license restriction check in Nil (bug #1011).
 - FIX: Fixed uninitialized variables in STM32 DMA drivers (bug #1010).
 - FIX: Fixed wrong mcuconf.h in some testex demos related to STM32F407 
-  (bug #1008).
-- FIX: Fixed problem in STM32 mcuconf.h template files (bug #1007).
-- EX:  Fixed I2C Acquire bus called twice in the HTS221 initialization 
-  (bug #1006)(backported to 19.1.1)(backported to 18.2.3).
+       (bug #1008)(backported to 19.1.1)(backported to 18.2.3).
+- FIX: Fixed problem in STM32 mcuconf.h template files (bug #1007)
+       (backported to 19.1.1)(backported to 18.2.3).
+- EX:  Fixed I2C Acquire bus called twice in the HTS221 initialization
+       (bug #1006)(backported to 19.1.1)(backported to 18.2.3).
 - EX:  Fixed missing I2C release bus in LPS22HB initialization (bug #1005)
   (backported to 19.1.1).
