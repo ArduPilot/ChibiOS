@@ -74,6 +74,7 @@
 *****************************************************************************
 
 *** Next ***
+- HAL: Added H753 to all H7 mcuconf.h files.
 - NEW: Added transactional updates to MFS.
 - VAR: Modified syscalls.c to allocate memory from bottom upward, ChibiOS
        allocators take memory from top downward. This way the memory taken
