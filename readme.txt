@@ -89,6 +89,8 @@
 - HAL: Added a new interface for range-finder devices (used by EX).
 - HAL: Added mcuconf.h updater tool for STM32F407 (backported to 19.1.1).
 - NIL: Integrated NIL 4.0.
+- FIX: Fixed missing RTC definitions in STM32L1xx registry (bug #1023)
+       (backported to 19.1.1).
 - FIX: Fixed missing EXTI driver integration on some platforms (bug #1022)
        (backported to 19.1.1).
 - FIX: Fixed various UART clock naming errors in STM32H7 HAL (bug #1021)
