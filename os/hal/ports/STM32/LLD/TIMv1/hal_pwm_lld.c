@@ -590,7 +590,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
 #if defined(STM32_TIM12CLK)
       pwmp->clock = STM32_TIM12CLK;
 #else
-      pwmp->clock = STM32_TIMCLK2;
+      pwmp->clock = STM32_TIMCLK1;
 #endif
     }
 #endif
