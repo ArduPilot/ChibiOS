@@ -100,7 +100,7 @@ typedef enum {
   osalSysLockFromISR();                                                     \
   osalThreadResumeI(&(i2cp)->thread, MSG_OK);                               \
   osalSysUnlockFromISR();                                                   \
-} while(0)
+} while (0)
 
 /**
  * @brief   Wakes up the waiting thread notifying errors.
@@ -113,7 +113,7 @@ typedef enum {
   osalSysLockFromISR();                                                     \
   osalThreadResumeI(&(i2cp)->thread, MSG_RESET);                            \
   osalSysUnlockFromISR();                                                   \
-} while(0)
+} while (0)
 
 /**
  * @brief   Wrap i2cMasterTransmitTimeout function with TIME_INFINITE timeout.
