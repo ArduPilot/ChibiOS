@@ -50,7 +50,7 @@
 
 #if 0
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
@@ -113,7 +113,7 @@ I2CDriver I2CD4;
 static inline void i2c_lld_start_rx_dma(I2CDriver *i2cp) {
 
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
@@ -133,7 +133,7 @@ static inline void i2c_lld_start_rx_dma(I2CDriver *i2cp) {
 static inline void i2c_lld_start_tx_dma(I2CDriver *i2cp) {
 
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
@@ -153,7 +153,7 @@ static inline void i2c_lld_start_tx_dma(I2CDriver *i2cp) {
 static inline void i2c_lld_stop_rx_dma(I2CDriver *i2cp) {
 
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
@@ -175,7 +175,7 @@ static inline void i2c_lld_stop_rx_dma(I2CDriver *i2cp) {
 static inline void i2c_lld_stop_tx_dma(I2CDriver *i2cp) {
 
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
@@ -928,7 +928,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
 #if STM32_I2C_USE_DMA == TRUE
     /* Common DMA modes.*/
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
@@ -1059,7 +1059,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
 #if STM32_I2C_USE_DMA == TRUE
   /* I2C registers pointed by the DMA.*/
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
@@ -1108,7 +1108,7 @@ void i2c_lld_stop(I2CDriver *i2cp) {
     i2c_lld_abort_operation(i2cp);
 
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-    if(i2cp->is_bdma)
+    if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
     {
@@ -1239,7 +1239,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 #if STM32_I2C_USE_DMA == TRUE
   /* RX DMA setup.*/
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
@@ -1375,7 +1375,7 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 #if STM32_I2C_USE_DMA == TRUE
   /* TX and RX DMA setup.*/
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
-  if(i2cp->is_bdma)
+  if (i2cp->is_bdma)
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {

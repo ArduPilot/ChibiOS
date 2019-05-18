@@ -654,7 +654,7 @@ bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
       return HAL_FAILED;
   }
 
-  if(sdc_lld_prepare_read_bytes(sdcp, buf, bytes))
+  if (sdc_lld_prepare_read_bytes(sdcp, buf, bytes))
     goto error;
 
   if (sdc_lld_send_cmd_short_crc(sdcp, cmd, arg, resp)
