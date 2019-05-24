@@ -933,6 +933,79 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 }
 
 /**
+ * @brief   Disable DMA, disable interrupts, but leave the peripheral enabled
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+void i2c_lld_soft_stop(I2CDriver *i2cp) {
+
+  /* If not in stopped state then disables the I2C clock.*/
+  if (i2cp->state != I2C_STOP) {
+
+#if STM32_I2C_USE_DMA == TRUE
+    dmaStreamFreeI(i2cp->dmatx);
+    dmaStreamFreeI(i2cp->dmarx);
+    i2cp->dmatx = NULL;
+    i2cp->dmarx = NULL;
+#endif
+
+#if STM32_I2C_USE_I2C1
+    if (&I2CD1 == i2cp) {
+#if defined(STM32_I2C1_GLOBAL_NUMBER) || defined(__DOXYGEN__)
+      nvicDisableVector(STM32_I2C1_GLOBAL_NUMBER);
+#elif defined(STM32_I2C1_EVENT_NUMBER) && defined(STM32_I2C1_ERROR_NUMBER)
+      nvicDisableVector(STM32_I2C1_EVENT_NUMBER);
+      nvicDisableVector(STM32_I2C1_ERROR_NUMBER);
+#else
+#error "I2C1 interrupt numbers not defined"
+#endif
+    }
+#endif
+
+#if STM32_I2C_USE_I2C2
+    if (&I2CD2 == i2cp) {
+#if defined(STM32_I2C2_GLOBAL_NUMBER) || defined(__DOXYGEN__)
+      nvicDisableVector(STM32_I2C2_GLOBAL_NUMBER);
+#elif defined(STM32_I2C2_EVENT_NUMBER) && defined(STM32_I2C2_ERROR_NUMBER)
+      nvicDisableVector(STM32_I2C2_EVENT_NUMBER);
+      nvicDisableVector(STM32_I2C2_ERROR_NUMBER);
+#else
+#error "I2C2 interrupt numbers not defined"
+#endif
+    }
+#endif
+
+#if STM32_I2C_USE_I2C3
+    if (&I2CD3 == i2cp) {
+#if defined(STM32_I2C3_GLOBAL_NUMBER) || defined(__DOXYGEN__)
+      nvicDisableVector(STM32_I2C3_GLOBAL_NUMBER);
+#elif defined(STM32_I2C3_EVENT_NUMBER) && defined(STM32_I2C3_ERROR_NUMBER)
+      nvicDisableVector(STM32_I2C3_EVENT_NUMBER);
+      nvicDisableVector(STM32_I2C3_ERROR_NUMBER);
+#else
+#error "I2C3 interrupt numbers not defined"
+#endif
+    }
+#endif
+
+#if STM32_I2C_USE_I2C4
+    if (&I2CD4 == i2cp) {
+#if defined(STM32_I2C4_GLOBAL_NUMBER) || defined(__DOXYGEN__)
+      nvicDisableVector(STM32_I2C4_GLOBAL_NUMBER);
+#elif defined(STM32_I2C4_EVENT_NUMBER) && defined(STM32_I2C4_ERROR_NUMBER)
+      nvicDisableVector(STM32_I2C4_EVENT_NUMBER);
+      nvicDisableVector(STM32_I2C4_ERROR_NUMBER);
+#else
+#error "I2C4 interrupt numbers not defined"
+#endif
+    }
+#endif
+  }
+}
+
+/**
  * @brief   Receives data via the I2C bus as master.
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object

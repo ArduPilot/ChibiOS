@@ -736,6 +736,48 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 }
 
 /**
+ * @brief   Disable DMA, disable interrupts, but leave the peripheral enabled
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+void i2c_lld_soft_stop(I2CDriver *i2cp) {
+
+  /* If not in stopped state then disables the I2C clock.*/
+  if (i2cp->state != I2C_STOP) {
+
+    /* I2C disable.*/
+    dmaStreamFreeI(i2cp->dmatx);
+    dmaStreamFreeI(i2cp->dmarx);
+    i2cp->dmatx = NULL;
+    i2cp->dmarx = NULL;
+
+#if STM32_I2C_USE_I2C1
+    if (&I2CD1 == i2cp) {
+      nvicDisableVector(I2C1_EV_IRQn);
+      nvicDisableVector(I2C1_ER_IRQn);
+    }
+#endif
+
+#if STM32_I2C_USE_I2C2
+    if (&I2CD2 == i2cp) {
+      nvicDisableVector(I2C2_EV_IRQn);
+      nvicDisableVector(I2C2_ER_IRQn);
+    }
+#endif
+
+#if STM32_I2C_USE_I2C3
+    if (&I2CD3 == i2cp) {
+      nvicDisableVector(I2C3_EV_IRQn);
+      nvicDisableVector(I2C3_ER_IRQn);
+    }
+#endif
+  }
+}
+
+
+/**
  * @brief   Receives data via the I2C bus as master.
  * @details Number of receiving bytes must be more than 1 on STM32F1x. This is
  *          hardware restriction.
