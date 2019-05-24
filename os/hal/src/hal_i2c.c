@@ -121,6 +121,29 @@ msg_t i2cStart(I2CDriver *i2cp, const I2CConfig *config) {
 }
 
 /**
+ * @brief   Like i2cStop, but doesn't stop the clock nor disable the peripheral.
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @api
+ */
+void i2cSoftStop(I2CDriver *i2cp) {
+
+  osalDbgCheck(i2cp != NULL);
+
+  osalSysLock();
+
+  osalDbgAssert((i2cp->state == I2C_STOP) || (i2cp->state == I2C_READY) ||
+                (i2cp->state == I2C_LOCKED), "invalid state");
+
+  i2c_lld_soft_stop(i2cp);
+  i2cp->config = NULL;
+  i2cp->state  = I2C_STOP;
+
+  osalSysUnlock();
+}
+
+/**
  * @brief   Deactivates the I2C peripheral.
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object
