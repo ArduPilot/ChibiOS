@@ -997,7 +997,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
         dmaSetRequestSource(i2cp->rx.dma, STM32_DMAMUX1_I2C2_RX);
         dmaSetRequestSource(i2cp->tx.dma, STM32_DMAMUX1_I2C2_TX);
       }
-#endif /*STM32_I2C_USE_DMA == TRUE */
+#endif /* STM32_I2C_USE_DMA == TRUE */
     }
 #endif /* STM32_I2C_USE_I2C2 */
 
@@ -1024,7 +1024,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
         dmaSetRequestSource(i2cp->rx.dma, STM32_DMAMUX1_I2C3_RX);
         dmaSetRequestSource(i2cp->tx.dma, STM32_DMAMUX1_I2C3_TX);
       }
-#endif /*STM32_I2C_USE_DMA == TRUE */
+#endif /* STM32_I2C_USE_DMA == TRUE */
     }
 #endif /* STM32_I2C_USE_I2C3 */
 
@@ -1051,7 +1051,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
         bdmaSetRequestSource(i2cp->rx.bdma, STM32_DMAMUX2_I2C4_RX);
         bdmaSetRequestSource(i2cp->tx.bdma, STM32_DMAMUX2_I2C4_TX);
       }
-#endif /*STM32_I2C_USE_DMA == TRUE */
+#endif /* STM32_I2C_USE_DMA == TRUE */
     }
 #endif /* STM32_I2C_USE_I2C4 */
   }
