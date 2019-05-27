@@ -867,7 +867,7 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   systime_t start, end;
   msg_t msg;
 
-#if defined(STM32F1XX_I2C)
+#if defined(STM32F1XX_I2C) && !defined(_ARDUPILOT_)
   osalDbgCheck((rxbytes == 0) || ((rxbytes > 1) && (rxbuf != NULL)));
 #endif
 
