@@ -274,24 +274,14 @@ void chSysInit(void) {
   thread_t *tp;
   const thread_config_t *tcp;
 
-#if CH_DBG_SYSTEM_STATE_CHECK == TRUE
-  nil.isr_cnt  = (cnt_t)0;
-  nil.lock_cnt = (cnt_t)0;
-#endif
+  /* Optional library modules.*/
+  _oslib_init();
+
+  /* Architecture layer initialization.*/
+  port_init();
 
   /* System initialization hook.*/
   CH_CFG_SYSTEM_INIT_HOOK();
-
-  /* Iterates through the list of defined threads.*/
-  tp = &nil.threads[0];
-  tcp = nil_thd_configs;
-  while (tp < &nil.threads[CH_CFG_NUM_THREADS]) {
-#if CH_DBG_ENABLE_STACK_CHECK
-    tp->wabase  = (stkalign_t *)tcp->wbase;
-#endif
-
-    /* Port dependent thread initialization.*/
-    PORT_SETUP_CONTEXT(tp, tcp->wbase, tcp->wend, tcp->funcp, tcp->arg);
 
     /* Initialization hook.*/
     CH_CFG_THREAD_EXT_INIT_HOOK(tp);
