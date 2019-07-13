@@ -91,6 +91,14 @@ PWMDriver PWMD9;
 #endif
 
 /**
+ * @brief   PWMD11 driver identifier.
+ * @note    The driver PWMD11 allocates the timer TIM11 when enabled.
+ */
+#if STM32_PWM_USE_TIM11 || defined(__DOXYGEN__)
+PWMDriver PWMD11;
+#endif
+
+/**
  * @brief   PWMD12 driver identifier.
  * @note    The driver PWMD12 allocates the timer TIM12 when enabled.
  */
@@ -335,6 +343,12 @@ OSAL_IRQ_HANDLER(STM32_TIM9_HANDLER) {
 #endif /* !defined(STM32_TIM9_SUPPRESS_ISR) */
 #endif /* STM32_PWM_USE_TIM9 */
 
+#if STM32_PWM_USE_TIM11 || defined(__DOXYGEN__)
+#if !defined(STM32_TIM11_SUPPRESS_ISR)
+#error "TIM11 ISR not defined by platform"
+#endif /* !defined(STM32_TIM11_SUPPRESS_ISR) */
+#endif /* STM32_PWM_USE_TIM11 */
+
 #if STM32_PWM_USE_TIM12 || defined(__DOXYGEN__)
 #if !defined(STM32_TIM12_SUPPRESS_ISR)
 #error "TIM12 ISR not defined by platform"
@@ -423,6 +437,13 @@ void pwm_lld_init(void) {
   pwmObjectInit(&PWMD9);
   PWMD9.channels = STM32_TIM9_CHANNELS;
   PWMD9.tim = STM32_TIM9;
+#endif
+
+#if STM32_PWM_USE_TIM11
+  /* Driver initialization.*/
+  pwmObjectInit(&PWMD11);
+  PWMD11.channels = STM32_TIM11_CHANNELS;
+  PWMD11.tim = STM32_TIM11;
 #endif
 
 #if STM32_PWM_USE_TIM12
@@ -577,6 +598,18 @@ void pwm_lld_start(PWMDriver *pwmp) {
 #endif
 #if defined(STM32_TIM9CLK)
       pwmp->clock = STM32_TIM9CLK;
+#else
+      pwmp->clock = STM32_TIMCLK2;
+#endif
+    }
+#endif
+
+#if STM32_PWM_USE_TIM11
+    if (&PWMD11 == pwmp) {
+      rccEnableTIM11(true);
+      rccResetTIM11();
+#if defined(STM32_TIM11CLK)
+      pwmp->clock = STM32_TIM11CLK;
 #else
       pwmp->clock = STM32_TIMCLK2;
 #endif
@@ -861,6 +894,12 @@ void pwm_lld_stop(PWMDriver *pwmp) {
       nvicDisableVector(STM32_TIM9_NUMBER);
 #endif
       rccDisableTIM9();
+    }
+#endif
+
+#if STM32_PWM_USE_TIM11
+    if (&PWMD11 == pwmp) {
+      rccDisableTIM11();
     }
 #endif
 
