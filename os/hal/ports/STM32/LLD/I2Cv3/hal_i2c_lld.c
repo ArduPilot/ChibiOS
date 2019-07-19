@@ -186,7 +186,7 @@ static inline void i2c_lld_stop_tx_dma(I2CDriver *i2cp) {
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
-    if (i2cp->rx.bdma)
+    if (i2cp->tx.bdma)
       bdmaStreamDisable(i2cp->tx.bdma);
   }
 #endif
@@ -196,7 +196,7 @@ static inline void i2c_lld_stop_tx_dma(I2CDriver *i2cp) {
 #endif /* STM32_I2C4_USE_BDMA == TRUE */
 #if defined(STM32_I2C_DMA_REQUIRED)
   {
-    if (i2cp->rx.dma)
+    if (i2cp->tx.dma)
       dmaStreamDisable(i2cp->tx.dma);
   }
 #endif
