@@ -162,7 +162,8 @@ static inline void i2c_lld_stop_rx_dma(I2CDriver *i2cp) {
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
-    bdmaStreamDisable(i2cp->rx.bdma);
+    if (i2cp->rx.bdma)
+      bdmaStreamDisable(i2cp->rx.bdma);
   }
 #endif
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
@@ -171,7 +172,8 @@ static inline void i2c_lld_stop_rx_dma(I2CDriver *i2cp) {
 #endif /* STM32_I2C4_USE_BDMA == TRUE */
 #if defined(STM32_I2C_DMA_REQUIRED)
   {
-    dmaStreamDisable(i2cp->rx.dma);
+    if (i2cp->rx.dma)
+      dmaStreamDisable(i2cp->rx.dma);
   }
 #endif
 }
@@ -184,7 +186,8 @@ static inline void i2c_lld_stop_tx_dma(I2CDriver *i2cp) {
 #endif
 #if defined(STM32_I2C_BDMA_REQUIRED)
   {
-    bdmaStreamDisable(i2cp->tx.bdma);
+    if (i2cp->rx.bdma)
+      bdmaStreamDisable(i2cp->tx.bdma);
   }
 #endif
 #if defined(STM32_I2C_DMA_REQUIRED) && defined(STM32_I2C_BDMA_REQUIRED)
@@ -193,7 +196,8 @@ static inline void i2c_lld_stop_tx_dma(I2CDriver *i2cp) {
 #endif /* STM32_I2C4_USE_BDMA == TRUE */
 #if defined(STM32_I2C_DMA_REQUIRED)
   {
-    dmaStreamDisable(i2cp->tx.dma);
+    if (i2cp->rx.dma)
+      dmaStreamDisable(i2cp->tx.dma);
   }
 #endif
 }
