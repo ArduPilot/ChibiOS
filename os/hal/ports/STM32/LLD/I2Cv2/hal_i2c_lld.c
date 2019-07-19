@@ -362,8 +362,10 @@ static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint32_t isr) {
 
 #if STM32_I2C_USE_DMA == TRUE
   /* Clears DMA interrupt flags just to be safe.*/
-  dmaStreamDisable(i2cp->dmatx);
-  dmaStreamDisable(i2cp->dmarx);
+  if (i2cp->dmatx)
+      dmaStreamDisable(i2cp->dmatx);
+  if (i2cp->dmarx)
+      dmaStreamDisable(i2cp->dmarx);
 #else
   /* Disabling RX and TX interrupts.*/
   i2cp->i2c->CR1 &= ~(I2C_CR1_TXIE | I2C_CR1_RXIE);

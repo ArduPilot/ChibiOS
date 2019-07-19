@@ -413,8 +413,10 @@ static void i2c_lld_serve_tx_end_irq(I2CDriver *i2cp, uint32_t flags) {
 static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint16_t sr) {
 
   /* Clears interrupt flags just to be safe.*/
-  dmaStreamDisable(i2cp->dmatx);
-  dmaStreamDisable(i2cp->dmarx);
+  if (i2cp->dmatx)
+      dmaStreamDisable(i2cp->dmatx);
+  if (i2cp->dmarx)
+      dmaStreamDisable(i2cp->dmarx);
 
   i2cp->errors = I2C_NO_ERROR;
 
