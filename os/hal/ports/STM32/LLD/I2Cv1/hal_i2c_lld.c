@@ -276,6 +276,35 @@ static void i2c_lld_set_opmode(I2CDriver *i2cp) {
   dp->CR1 = regCR1;
 }
 
+#ifdef STM32_I2C_ISR_LIMIT
+/**
+ * @brief reset I2C peripheral
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+static void i2c_lld_reset(I2CDriver *i2cp) {
+#if STM32_I2C_USE_I2C1
+    if (&I2CD1 == i2cp) {
+      rccResetI2C1();
+    }
+#endif /* STM32_I2C_USE_I2C1 */
+
+#if STM32_I2C_USE_I2C2
+    if (&I2CD2 == i2cp) {
+      rccResetI2C2();
+    }
+#endif /* STM32_I2C_USE_I2C2 */
+
+#if STM32_I2C_USE_I2C3
+    if (&I2CD3 == i2cp) {
+      rccResetI2C3();
+    }
+#endif /* STM32_I2C_USE_I2C3 */
+}
+#endif // STM32_I2C_ISR_LIMIT
+
 /**
  * @brief   I2C shared ISR code.
  *
@@ -287,6 +316,19 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
   I2C_TypeDef *dp = i2cp->i2c;
   uint32_t regSR2 = dp->SR2;
   uint32_t event = dp->SR1;
+
+#ifdef STM32_I2C_ISR_LIMIT
+    if (i2cp->isr_count++ > i2cp->isr_limit) {
+        i2cp->errors |= I2C_ISR_LIMIT;
+        if (i2cp->dmatx)
+            dmaStreamDisable(i2cp->dmatx);
+        if (i2cp->dmarx)
+            dmaStreamDisable(i2cp->dmarx);
+        i2c_lld_reset(i2cp);
+        _i2c_wakeup_error_isr(i2cp);
+        return;
+    }
+#endif
 
   /* Interrupts are disabled just before dmaStreamEnable() because there
      is no need of interrupts until next transaction begin. All the work is
@@ -417,6 +459,15 @@ static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint16_t sr) {
       dmaStreamDisable(i2cp->dmatx);
   if (i2cp->dmarx)
       dmaStreamDisable(i2cp->dmarx);
+
+#ifdef STM32_I2C_ISR_LIMIT
+    if (i2cp->isr_count++ > i2cp->isr_limit) {
+        i2cp->errors |= I2C_ISR_LIMIT;
+        i2c_lld_reset(i2cp);
+        _i2c_wakeup_error_isr(i2cp);
+        return;
+    }
+#endif
 
   i2cp->errors = I2C_NO_ERROR;
 
@@ -823,6 +874,11 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   systime_t start, end;
   msg_t msg;
 
+#ifdef STM32_I2C_ISR_LIMIT
+  i2cp->isr_limit = rxbytes * STM32_I2C_ISR_LIMIT;
+  i2cp->isr_count = 0;
+#endif
+
 #if defined(STM32F1XX_I2C)
   osalDbgCheck(rxbytes > 1);
 #endif
@@ -913,6 +969,11 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
 #if defined(STM32F1XX_I2C) && !defined(_ARDUPILOT_)
   osalDbgCheck((rxbytes == 0) || ((rxbytes > 1) && (rxbuf != NULL)));
+#endif
+
+#ifdef STM32_I2C_ISR_LIMIT
+  i2cp->isr_limit = (txbytes + rxbytes) * STM32_I2C_ISR_LIMIT;
+  i2cp->isr_count = 0;
 #endif
 
   /* Resetting error flags for this transfer.*/
