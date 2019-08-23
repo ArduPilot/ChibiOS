@@ -546,6 +546,18 @@ struct hal_i2c_driver {
    * @brief     Pointer to the I2Cx registers block.
    */
   I2C_TypeDef               *i2c;
+
+#ifdef STM32_I2C_ISR_LIMIT
+  /**
+   * @brief count of interrupts since transfer start
+   */
+  uint32_t                  isr_count;
+
+  /**
+   * @brief limit of interrupts for this transfer
+   */
+  uint32_t                  isr_limit;
+#endif
 };
 
 /*===========================================================================*/

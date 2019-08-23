@@ -49,6 +49,7 @@
                                                 reception.                  */
 #define I2C_TIMEOUT                0x20    /**< @brief Hardware timeout.    */
 #define I2C_SMB_ALERT              0x40    /**< @brief SMBus Alert.         */
+#define I2C_ISR_LIMIT              0x80    /**< @brief exceeded maximum ISR limit */
 /** @} */
 
 /*===========================================================================*/
