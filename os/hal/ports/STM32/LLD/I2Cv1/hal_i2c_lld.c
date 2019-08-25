@@ -372,13 +372,7 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
     _i2c_wakeup_isr(i2cp);
     break;
   default:
-    if (event & I2C_SR1_TXE)
-      dp->DR =0;
-    if (event & I2C_SR1_BTF)
-      (void)dp->DR;
-    if (event & I2C_SR1_STOPF)
-      dp->CR1 = dp->CR1;
-    break;
+	break;
   }
   /* Clear ADDR flag. */
   if (event & (I2C_SR1_ADDR | I2C_SR1_ADD10))
