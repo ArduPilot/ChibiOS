@@ -177,6 +177,7 @@ static void oslib_test_001_001_execute(void) {
     test_assert(mb1.buffer == mb1.wrptr, "write pointer not aligned to base");
     test_assert(mb1.buffer == mb1.rdptr, "read pointer not aligned to base");
   }
+  test_end_step(1);
 }
 
 static const testcase_t oslib_test_001_001 = {
@@ -300,6 +301,7 @@ static void oslib_test_001_002_execute(void) {
     test_assert(mb1.buffer == mb1.wrptr, "write pointer not aligned to base");
     test_assert(mb1.buffer == mb1.rdptr, "read pointer not aligned to base");
   }
+  test_end_step(1);
 }
 
 static const testcase_t oslib_test_001_002 = {
@@ -382,6 +384,7 @@ static void oslib_test_001_003_execute(void) {
     chSysUnlock();
     test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
   }
+  test_end_step(1);
 }
 
 static const testcase_t oslib_test_001_003 = {

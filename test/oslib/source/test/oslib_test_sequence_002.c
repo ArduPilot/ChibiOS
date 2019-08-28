@@ -101,6 +101,7 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == 0),
                 "invalid pipe state");
   }
+  test_end_step(1);
 
   /* [2.1.2] Writing data, must fail.*/
   test_set_step(2);
@@ -114,6 +115,7 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == 0),
                 "invalid pipe state");
   }
+  test_end_step(2);
 
   /* [2.1.3] Reading data, must fail.*/
   test_set_step(3);
@@ -128,6 +130,7 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == 0),
                 "invalid pipe state");
   }
+  test_end_step(3);
 
   /* [2.1.4] Reactivating pipe.*/
   test_set_step(4);
@@ -138,6 +141,7 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == 0),
                 "invalid pipe state");
   }
+  test_end_step(4);
 
   /* [2.1.5] Filling whole pipe.*/
   test_set_step(5);
@@ -151,6 +155,7 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == PIPE_SIZE),
                 "invalid pipe state");
   }
+  test_end_step(5);
 
   /* [2.1.6] Emptying pipe.*/
   test_set_step(6);
@@ -166,6 +171,7 @@ static void oslib_test_002_001_execute(void) {
                 "invalid pipe state");
     test_assert(memcmp(pipe_pattern, buf, PIPE_SIZE) == 0, "content mismatch");
   }
+  test_end_step(6);
 
   /* [2.1.7] Small write.*/
   test_set_step(7);
@@ -179,6 +185,7 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == 4),
                 "invalid pipe state");
   }
+  test_end_step(7);
 
   /* [2.1.8] Filling remaining space.*/
   test_set_step(8);
@@ -192,6 +199,8 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == PIPE_SIZE),
                 "invalid pipe state");
   }
+  test_end_step(8);
+}
 
   /* [2.1.9] Small Read.*/
   test_set_step(9);
@@ -207,6 +216,7 @@ static void oslib_test_002_001_execute(void) {
                 "invalid pipe state");
     test_assert(memcmp(pipe_pattern, buf, 4) == 0, "content mismatch");
   }
+  test_end_step(1);
 
   /* [2.1.10] Reading remaining data.*/
   test_set_step(10);
@@ -222,6 +232,7 @@ static void oslib_test_002_001_execute(void) {
                 "invalid pipe state");
     test_assert(memcmp(pipe_pattern, buf, PIPE_SIZE - 4) == 0, "content mismatch");
   }
+  test_end_step(2);
 
   /* [2.1.11] Small Write.*/
   test_set_step(11);
@@ -235,6 +246,7 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == 5),
                 "invalid pipe state");
   }
+  test_end_step(3);
 
   /* [2.1.12] Small Read.*/
   test_set_step(12);
@@ -250,6 +262,7 @@ static void oslib_test_002_001_execute(void) {
                 "invalid pipe state");
     test_assert(memcmp(pipe_pattern, buf, 5) == 0, "content mismatch");
   }
+  test_end_step(4);
 
   /* [2.1.13] Write wrapping buffer boundary.*/
   test_set_step(13);
@@ -263,9 +276,22 @@ static void oslib_test_002_001_execute(void) {
                 (pipe1.cnt == PIPE_SIZE),
                 "invalid pipe state");
   }
+  test_end_step(5);
 
-  /* [2.1.14] Read wrapping buffer boundary.*/
-  test_set_step(14);
+  /* [2.2.6] Posting and then fetching one more message, no errors
+     expected.*/
+  test_set_step(6);
+  {
+    msg1 = chMBPostTimeout(&mb1, 'B' + i, TIME_INFINITE);
+    test_assert(msg1 == MSG_OK, "wrong wake-up message");
+    msg1 = chMBFetchTimeout(&mb1, &msg2, TIME_INFINITE);
+    test_assert(msg1 == MSG_OK, "wrong wake-up message");
+  }
+  test_end_step(6);
+
+  /* [2.2.7] Testing final conditions. Data pointers must be aligned to
+     buffer start, semaphore counters are checked.*/
+  test_set_step(7);
   {
     size_t n;
     uint8_t buf[PIPE_SIZE];
@@ -278,6 +304,7 @@ static void oslib_test_002_001_execute(void) {
                 "invalid pipe state");
     test_assert(memcmp(pipe_pattern, buf, PIPE_SIZE) == 0, "content mismatch");
   }
+  test_end_step(7);
 }
 
 static const testcase_t oslib_test_002_001 = {
@@ -318,19 +345,46 @@ static void oslib_test_002_002_execute(void) {
                 (pipe1.cnt == 0),
                 "invalid pipe state");
   }
+  test_end_step(1);
 
   /* [2.2.2] Writing a string larger than pipe buffer.*/
   test_set_step(2);
   {
-    size_t n;
-
-    n = chPipeWriteTimeout(&pipe1, pipe_pattern, PIPE_SIZE, TIME_IMMEDIATE);
-    test_assert(n == PIPE_SIZE / 2, "wrong size");
-    test_assert((pipe1.rdptr == pipe1.wrptr) &&
-                (pipe1.wrptr == pipe1.buffer) &&
-                (pipe1.cnt == PIPE_SIZE / 2),
-                "invalid pipe state");
+    msg1 = chMBPostTimeout(&mb1, 'X', 1);
+    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
+    chSysLock();
+    msg1 = chMBPostI(&mb1, 'X');
+    chSysUnlock();
+    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
+    msg1 = chMBPostAheadTimeout(&mb1, 'X', 1);
+    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
+    chSysLock();
+    msg1 = chMBPostAheadI(&mb1, 'X');
+    chSysUnlock();
+    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
   }
+  test_end_step(2);
+
+  /* [2.3.3] Resetting the mailbox. The mailbox is then returned in
+     active state.*/
+  test_set_step(3);
+  {
+    chMBReset(&mb1);
+    chMBResumeX(&mb1);
+  }
+  test_end_step(3);
+
+  /* [2.3.4] Testing chMBFetchTimeout() and chMBFetchI() timeout.*/
+  test_set_step(4);
+  {
+    msg1 = chMBFetchTimeout(&mb1, &msg2, 1);
+    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
+    chSysLock();
+    msg1 = chMBFetchI(&mb1, &msg2);
+    chSysUnlock();
+    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
+  }
+  test_end_step(4);
 }
 
 static const testcase_t oslib_test_002_002 = {

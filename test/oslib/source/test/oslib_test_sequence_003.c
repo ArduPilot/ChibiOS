@@ -100,6 +100,7 @@ static void oslib_test_003_001_execute(void) {
   {
     chPoolLoadArray(&mp1, objects, MEMORY_POOL_SIZE);
   }
+  test_end_step(1);
 
   /* [3.1.2] Emptying the pool using chPoolAlloc().*/
   test_set_step(2);
@@ -107,12 +108,14 @@ static void oslib_test_003_001_execute(void) {
     for (i = 0; i < MEMORY_POOL_SIZE; i++)
       test_assert(chPoolAlloc(&mp1) != NULL, "list empty");
   }
+  test_end_step(2);
 
   /* [3.1.3] Now must be empty.*/
   test_set_step(3);
   {
     test_assert(chPoolAlloc(&mp1) == NULL, "list not empty");
   }
+  test_end_step(3);
 
   /* [3.1.4] Adding the objects to the pool using chPoolFree().*/
   test_set_step(4);
@@ -120,6 +123,7 @@ static void oslib_test_003_001_execute(void) {
     for (i = 0; i < MEMORY_POOL_SIZE; i++)
       chPoolFree(&mp1, &objects[i]);
   }
+  test_end_step(4);
 
   /* [3.1.5] Emptying the pool using chPoolAlloc() again.*/
   test_set_step(5);
@@ -127,12 +131,14 @@ static void oslib_test_003_001_execute(void) {
     for (i = 0; i < MEMORY_POOL_SIZE; i++)
       test_assert(chPoolAlloc(&mp1) != NULL, "list empty");
   }
+  test_end_step(5);
 
   /* [3.1.6] Now must be empty again.*/
   test_set_step(6);
   {
     test_assert(chPoolAlloc(&mp1) == NULL, "list not empty");
   }
+  test_end_step(6);
 
   /* [3.1.7] Covering the case where a provider is unable to return
      more memory.*/
@@ -141,43 +147,21 @@ static void oslib_test_003_001_execute(void) {
     chPoolObjectInit(&mp1, sizeof (uint32_t), null_provider);
     test_assert(chPoolAlloc(&mp1) == NULL, "provider returned memory");
   }
-}
+  test_end_step(7);
 
-static const testcase_t oslib_test_003_001 = {
-  "Loading and emptying a memory pool",
-  oslib_test_003_001_setup,
-  NULL,
-  oslib_test_003_001_execute
-};
+  /* [3.1.8] Filling remaining space.*/
+  test_set_step(8);
+  {
+    size_t n;
 
-#if (CH_CFG_USE_SEMAPHORES) || defined(__DOXYGEN__)
-/**
- * @page oslib_test_003_002 [3.2] Loading and emptying a guarded memory pool without waiting
- *
- * <h2>Description</h2>
- * The memory pool functionality is tested by loading and emptying it,
- * all conditions are tested.
- *
- * <h2>Conditions</h2>
- * This test is only executed if the following preprocessor condition
- * evaluates to true:
- * - CH_CFG_USE_SEMAPHORES
- * .
- *
- * <h2>Test Steps</h2>
- * - [3.2.1] Adding the objects to the pool using
- *   chGuardedPoolLoadArray().
- * - [3.2.2] Emptying the pool using chGuardedPoolAllocTimeout().
- * - [3.2.3] Now must be empty.
- * - [3.2.4] Adding the objects to the pool using chGuardedPoolFree().
- * - [3.2.5] Emptying the pool using chGuardedPoolAllocTimeout() again.
- * - [3.2.6] Now must be empty again.
- * .
- */
-
-static void oslib_test_003_002_setup(void) {
-  chGuardedPoolObjectInit(&gmp1, sizeof (uint32_t));
-}
+    n = chPipeWriteTimeout(&pipe1, pipe_pattern, PIPE_SIZE - 4, TIME_IMMEDIATE);
+    test_assert(n == PIPE_SIZE - 4, "wrong size");
+    test_assert((pipe1.rdptr == pipe1.buffer) &&
+                (pipe1.wrptr == pipe1.buffer) &&
+                (pipe1.cnt == PIPE_SIZE),
+                "invalid pipe state");
+  }
+  test_end_step(8);
 
 static void oslib_test_003_002_execute(void) {
   unsigned i;
@@ -188,6 +172,7 @@ static void oslib_test_003_002_execute(void) {
   {
     chGuardedPoolLoadArray(&gmp1, objects, MEMORY_POOL_SIZE);
   }
+  test_end_step(9);
 
   /* [3.2.2] Emptying the pool using chGuardedPoolAllocTimeout().*/
   test_set_step(2);
@@ -195,12 +180,14 @@ static void oslib_test_003_002_execute(void) {
     for (i = 0; i < MEMORY_POOL_SIZE; i++)
       test_assert(chGuardedPoolAllocTimeout(&gmp1, TIME_IMMEDIATE) != NULL, "list empty");
   }
+  test_end_step(10);
 
   /* [3.2.3] Now must be empty.*/
   test_set_step(3);
   {
     test_assert(chGuardedPoolAllocTimeout(&gmp1, TIME_IMMEDIATE) == NULL, "list not empty");
   }
+  test_end_step(11);
 
   /* [3.2.4] Adding the objects to the pool using
      chGuardedPoolFree().*/
@@ -209,6 +196,7 @@ static void oslib_test_003_002_execute(void) {
     for (i = 0; i < MEMORY_POOL_SIZE; i++)
       chGuardedPoolFree(&gmp1, &objects[i]);
   }
+  test_end_step(12);
 
   /* [3.2.5] Emptying the pool using chGuardedPoolAllocTimeout()
      again.*/
@@ -217,12 +205,14 @@ static void oslib_test_003_002_execute(void) {
     for (i = 0; i < MEMORY_POOL_SIZE; i++)
       test_assert(chGuardedPoolAllocTimeout(&gmp1, TIME_IMMEDIATE) != NULL, "list empty");
   }
+  test_end_step(13);
 
   /* [3.2.6] Now must be empty again.*/
   test_set_step(6);
   {
     test_assert(chGuardedPoolAllocTimeout(&gmp1, TIME_IMMEDIATE) == NULL, "list not empty");
   }
+  test_end_step(14);
 }
 
 static const testcase_t oslib_test_003_002 = {
@@ -262,8 +252,31 @@ static void oslib_test_003_003_execute(void) {
      the pool is empty.*/
   test_set_step(1);
   {
-    test_assert(chGuardedPoolAllocTimeout(&gmp1, TIME_MS2I(100)) == NULL, "list not empty");
+    size_t n;
+    uint8_t buf[PIPE_SIZE];
+
+    n = chPipeReadTimeout(&pipe1, buf, PIPE_SIZE, TIME_IMMEDIATE);
+    test_assert(n == 0, "wrong size");
+    test_assert((pipe1.rdptr == pipe1.buffer) &&
+                (pipe1.wrptr == pipe1.buffer) &&
+                (pipe1.cnt == 0),
+                "invalid pipe state");
   }
+  test_end_step(1);
+
+  /* [3.2.2] Writing a string larger than pipe buffer.*/
+  test_set_step(2);
+  {
+    size_t n;
+
+    n = chPipeWriteTimeout(&pipe1, pipe_pattern, PIPE_SIZE, TIME_IMMEDIATE);
+    test_assert(n == PIPE_SIZE / 2, "wrong size");
+    test_assert((pipe1.rdptr == pipe1.wrptr) &&
+                (pipe1.wrptr == pipe1.buffer) &&
+                (pipe1.cnt == PIPE_SIZE / 2),
+                "invalid pipe state");
+  }
+  test_end_step(2);
 }
 
 static const testcase_t oslib_test_003_003 = {
