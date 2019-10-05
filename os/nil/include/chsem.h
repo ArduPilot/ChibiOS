@@ -18,10 +18,10 @@
 */
 
 /**
- * @file    chsem.h
- * @brief   Semaphores macros and structures.
+ * @file    nil/include/chsem.h
+ * @brief   Nil RTOS semaphores header file.
  *
- * @addtogroup semaphores
+ * @addtogroup NIL_SEMAPHORES
  * @{
  */
 
@@ -46,66 +46,24 @@
 /* Module data structures and types.                                         */
 /*===========================================================================*/
 
-/**
- * @brief   Semaphore structure.
- */
-typedef struct ch_semaphore {
-  threads_queue_t       queue;      /**< @brief Queue of the threads sleeping
-                                                on this semaphore.          */
-  cnt_t                 cnt;        /**< @brief The semaphore counter.      */
-} semaphore_t;
-
 /*===========================================================================*/
 /* Module macros.                                                            */
 /*===========================================================================*/
 
 /**
- * @brief   Data part of a static semaphore initializer.
- * @details This macro should be used when statically initializing a semaphore
- *          that is part of a bigger structure.
- *
- * @param[in] name      the name of the semaphore variable
- * @param[in] n         the counter initial value, this value must be
- *                      non-negative
+ * @name    Macro Functions
+ * @{
  */
-#define _SEMAPHORE_DATA(name, n) {_THREADS_QUEUE_DATA(name.queue), n}
-
 /**
- * @brief   Static semaphore initializer.
- * @details Statically initialized semaphores require no explicit
- *          initialization using @p chSemInit().
+ * @brief   Initializes a semaphore with the specified counter value.
  *
- * @param[in] name      the name of the semaphore variable
- * @param[in] n         the counter initial value, this value must be
- *                      non-negative
+ * @param[out] sp       pointer to a @p semaphore_t structure
+ * @param[in] n         initial value of the semaphore counter. Must be
+ *                      non-negative.
+ *
+ * @init
  */
-#define SEMAPHORE_DECL(name, n) semaphore_t name = _SEMAPHORE_DATA(name, n)
-
-/*===========================================================================*/
-/* External declarations.                                                    */
-/*===========================================================================*/
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-  void chSemObjectInit(semaphore_t *sp, cnt_t n);
-  void chSemResetWithMessage(semaphore_t *sp, cnt_t n, msg_t msg);
-  void chSemResetWithMessageI(semaphore_t *sp, cnt_t n, msg_t msg);
-  msg_t chSemWait(semaphore_t *sp);
-  msg_t chSemWaitS(semaphore_t *sp);
-  msg_t chSemWaitTimeout(semaphore_t *sp, sysinterval_t timeout);
-  msg_t chSemWaitTimeoutS(semaphore_t *sp, sysinterval_t timeout);
-  void chSemSignal(semaphore_t *sp);
-  void chSemSignalI(semaphore_t *sp);
-  void chSemAddCounterI(semaphore_t *sp, cnt_t n);
-  msg_t chSemSignalWait(semaphore_t *sps, semaphore_t *spw);
-#ifdef __cplusplus
-}
-#endif
-
-/*===========================================================================*/
-/* Module inline functions.                                                  */
-/*===========================================================================*/
+#define chSemObjectInit(sp, n) ((sp)->cnt = n)
 
 /**
  * @brief   Performs a reset operation on the semaphore.
@@ -120,10 +78,7 @@ extern "C" {
  *
  * @api
  */
-static inline void chSemReset(semaphore_t *sp, cnt_t n) {
-
-  chSemResetWithMessage(sp, n, MSG_RESET);
-}
+#define chSemReset(sp, n) chSemResetWithMessage(sp, n, MSG_RESET)
 
 /**
  * @brief   Performs a reset operation on the semaphore.
@@ -142,10 +97,35 @@ static inline void chSemReset(semaphore_t *sp, cnt_t n) {
  *
  * @iclass
  */
-static inline void chSemResetI(semaphore_t *sp, cnt_t n) {
+#define chSemResetI(sp, n) chSemResetWithMessageI(sp, n, MSG_RESET)
 
-  chSemResetWithMessageI(sp, n, MSG_RESET);
-}
+/**
+ * @brief   Performs a wait operation on a semaphore.
+ *
+ * @param[in] sp        pointer to a @p semaphore_t structure
+ * @return              A message specifying how the invoking thread has been
+ *                      released from the semaphore.
+ * @retval CH_MSG_OK   if the thread has not stopped on the semaphore or the
+ *                      semaphore has been signaled.
+ * @retval CH_MSG_RST  if the semaphore has been reset using @p chSemReset().
+ *
+ * @api
+ */
+#define chSemWait(sp) chSemWaitTimeout(sp, TIME_INFINITE)
+
+/**
+ * @brief   Performs a wait operation on a semaphore.
+ *
+ * @param[in] sp        pointer to a @p semaphore_t structure
+ * @return              A message specifying how the invoking thread has been
+ *                      released from the semaphore.
+ * @retval CH_MSG_OK   if the thread has not stopped on the semaphore or the
+ *                      semaphore has been signaled.
+ * @retval CH_MSG_RST  if the semaphore has been reset using @p chSemReset().
+ *
+ * @sclass
+ */
+#define chSemWaitS(sp) chSemWaitTimeoutS(sp, TIME_INFINITE)
 
 /**
  * @brief   Decreases the semaphore counter.
@@ -155,12 +135,7 @@ static inline void chSemResetI(semaphore_t *sp, cnt_t n) {
  *
  * @iclass
  */
-static inline void chSemFastWaitI(semaphore_t *sp) {
-
-  chDbgCheckClassI();
-
-  sp->cnt--;
-}
+#define chSemFastWaitI(sp) ((sp)->cnt--)
 
 /**
  * @brief   Increases the semaphore counter.
@@ -171,27 +146,32 @@ static inline void chSemFastWaitI(semaphore_t *sp) {
  *
  * @iclass
  */
-static inline void chSemFastSignalI(semaphore_t *sp) {
-
-  chDbgCheckClassI();
-
-  sp->cnt++;
-}
+#define chSemFastSignalI(sp) ((sp)->cnt++)
 
 /**
  * @brief   Returns the semaphore counter current value.
  *
- * @param[in] sp        pointer to a @p semaphore_t structure
- * @return              The semaphore counter value.
- *
  * @iclass
  */
-static inline cnt_t chSemGetCounterI(const semaphore_t *sp) {
+#define chSemGetCounterI(sp) ((sp)->cnt)
+/** @} */
 
-  chDbgCheckClassI();
+/*===========================================================================*/
+/* External declarations.                                                    */
+/*===========================================================================*/
 
-  return sp->cnt;
+#ifdef __cplusplus
+extern "C" {
+#endif
+  msg_t chSemWaitTimeout(semaphore_t *sp, sysinterval_t timeout);
+  msg_t chSemWaitTimeoutS(semaphore_t *sp, sysinterval_t timeout);
+  void chSemSignal(semaphore_t *sp);
+  void chSemSignalI(semaphore_t *sp);
+  void chSemResetWithMessage(semaphore_t *sp, cnt_t n, msg_t msg);
+  void chSemResetWithMessageI(semaphore_t *sp, cnt_t n, msg_t msg);
+#ifdef __cplusplus
 }
+#endif
 
 #endif /* CH_CFG_USE_SEMAPHORES == TRUE */
 

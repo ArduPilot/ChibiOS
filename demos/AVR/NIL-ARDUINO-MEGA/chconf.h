@@ -103,8 +103,6 @@
 /*===========================================================================*/
 
 /**
-<<<<<<< HEAD
-=======
  * @brief   Threads synchronization APIs.
  * @details If enabled then the @p chThdWait() function is included in
  *          the kernel.
@@ -116,7 +114,6 @@
 #endif
 
 /**
->>>>>>> d018ea6f57... Mass update of chconf.h files.
  * @brief   Semaphores APIs.
  * @details If enabled then the Semaphores APIs are included in the kernel.
  *
@@ -148,8 +145,6 @@
 #endif
 
 /**
-<<<<<<< HEAD
-=======
  * @brief   Synchronous Messages APIs.
  * @details If enabled then the synchronous messages APIs are included
  *          in the kernel.
@@ -170,7 +165,6 @@
 /*===========================================================================*/
 
 /**
->>>>>>> d018ea6f57... Mass update of chconf.h files.
  * @brief   Mailboxes APIs.
  * @details If enabled then the asynchronous messages (mailboxes) APIs are
  *          included in the kernel.
