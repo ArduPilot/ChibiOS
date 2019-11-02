@@ -626,7 +626,7 @@ struct nil_thread {
   /* Note, the following union contains a pointer while the thread is in a
      sleeping state (!NIL_THD_IS_READY()) else contains the wake-up message.*/
   union {
-    msg_t               msg;        /**< @brief Wake-up message.            */
+    msg_t               msg;        /**< @brief Wake-up/exit message.       */
     void                *p;         /**< @brief Generic pointer.            */
     thread_reference_t  *trp;       /**< @brief Pointer to thread reference.*/
     threads_queue_t     *tqp;       /**< @brief Pointer to thread queue.    */
@@ -1196,6 +1196,29 @@ struct nil_system {
 }
 
 /**
+ * @brief   Puts the current thread to sleep into the specified state.
+ *
+ * @param[in] newstate  the new thread state or a semaphore pointer
+ * @return              The wakeup message.
+ *
+ * @sclass
+ */
+#define chSchGoSleepS(newstate) chSchGoSleepTimeoutS(newstate, TIME_INFINITE)
+
+/**
+ * @brief   Wakes up a thread.
+ *
+ * @param[in] ntp       the thread to be made ready
+ * @param[in] msg       the wakeup message
+ *
+ * @sclass
+ */
+#define chSchWakeupS(ntp, msg) do {                                         \
+  chSchReadyI(ntp, msg);                                                    \
+  chSchRescheduleS();                                                       \
+} while (false)
+
+/**
  * @brief   Evaluates if a reschedule is required.
  *
  * @retval true         if there is a thread that must go in running state
@@ -1212,6 +1235,31 @@ struct nil_system {
  * @xclass
  */
 #define chThdGetSelfX() nil.current
+
+/**
+ * @brief   Returns the current thread priority.
+ * @note    Can be invoked in any context.
+ *
+ * @return              The current thread priority.
+ *
+ * @xclass
+ */
+#define chThdGetPriorityX(void) (tprio_t)(nil.current - &nil.threads[0])
+
+/**
+ * @brief   Wakes up a thread waiting on a thread reference object.
+ * @note    This function must reschedule, it can only be called from thread
+ *          context.
+ *
+ * @param[in] trp       a pointer to a thread reference object
+ * @param[in] msg       the message code
+ *
+ * @sclass
+ */
+#define chThdResumeS(trp, msg) do {                                         \
+  chThdResumeI(trp, msg);                                                   \
+  chSchRescheduleS();                                                       \
+} while (false)
 
 /**
  * @brief   Delays the invoking thread for the specified number of seconds.

@@ -303,9 +303,13 @@ void chSysInit(void) {
   nil.lock_cnt = (cnt_t)1;
 #endif
 
-  /* Memory core initialization, if enabled.*/
-#if CH_CFG_USE_MEMCORE == TRUE
-  _core_init();
+#if CH_CFG_AUTOSTART_THREADS == TRUE
+  /* Iterates through the list of threads to be auto-started.*/
+  tcp = nil_thd_configs;
+  do {
+    (void) chThdCreateI(tcp);
+    tcp++;
+  } while (tcp->funcp != NULL);
 #endif
 
   /* Heap initialization, if enabled.*/
@@ -735,6 +739,146 @@ msg_t chSchGoSleepTimeoutS(tstate_t newstate, sysinterval_t timeout) {
     chDbgAssert(ntp <= &nil.threads[CH_CFG_NUM_THREADS],
                 "pointer out of range");
   }
+}
+
+/**
+ * @brief   Creates a new thread into a static memory area.
+ * @details The new thread is initialized and make ready to execute.
+ * @note    A thread can terminate by calling @p chThdExit() or by simply
+ *          returning from its main function.
+ *
+ * @param[out] tcp      pointer to the thread configuration structure
+ * @return              The pointer to the @p thread_t structure allocated for
+ *                      the thread.
+ *
+ * @iclass
+ */
+thread_t *chThdCreateI(const thread_config_t *tcp) {
+  thread_t *tp;
+
+  chDbgCheck((tcp->prio < (tprio_t)CH_CFG_MAX_THREADS) &&
+             (tcp->wbase != NULL) &&
+             MEM_IS_ALIGNED(tcp->wbase, PORT_WORKING_AREA_ALIGN) &&
+             (tcp->wend > tcp->wbase) &&
+             MEM_IS_ALIGNED(tcp->wbase, PORT_STACK_ALIGN) &&
+             (tcp->funcp != NULL));
+
+  chDbgCheckClassI();
+
+  /* Pointer to the thread slot to be used.*/
+  tp = &nil.threads[tcp->prio];
+  chDbgAssert(NIL_THD_IS_WTSTART(tp) || NIL_THD_IS_FINAL(tp),
+              "priority slot taken");
+
+#if CH_CFG_USE_EVENTS == TRUE
+  tp->epmask = (eventmask_t)0;
+#endif
+#if CH_DBG_ENABLE_STACK_CHECK == TRUE
+  tp->wabase = (stkalign_t *)tcp->wbase;
+#endif
+
+  /* Port dependent thread initialization.*/
+  PORT_SETUP_CONTEXT(tp, tcp->wbase, tcp->wend, tcp->funcp, tcp->arg);
+
+  /* Initialization hook.*/
+  CH_CFG_THREAD_EXT_INIT_HOOK(tp);
+
+  /* Readying up thread.*/
+  return chSchReadyI(tp, MSG_OK);
+}
+
+/**
+ * @brief   Creates a new thread into a static memory area.
+ * @details The new thread is initialized and make ready to execute.
+ * @note    A thread can terminate by calling @p chThdExit() or by simply
+ *          returning from its main function.
+ *
+ * @param[out] tcp      pointer to the thread configuration structure
+ * @return              The pointer to the @p thread_t structure allocated for
+ *                      the thread.
+ *
+ * @api
+ */
+thread_t *chThdCreate(const thread_config_t *tcp) {
+  thread_t *tp;
+
+  chSysLock();
+  tp = chThdCreateI(tcp);
+  chSchRescheduleS();
+  chSysUnlock();
+
+  return tp;
+}
+
+/**
+ * @brief   Terminates the current thread.
+ * @details The thread goes in the @p CH_STATE_FINAL state holding the
+ *          specified exit status code, other threads can retrieve the
+ *          exit status code by invoking the function @p chThdWait().
+ * @post    Exiting a non-static thread that does not have references
+ *          (detached) causes the thread to remain in the registry.
+ *          It can only be removed by performing a registry scan operation.
+ * @post    Eventual code after this function will never be executed,
+ *          this function never returns. The compiler has no way to
+ *          know this so do not assume that the compiler would remove
+ *          the dead code.
+ *
+ * @param[in] msg       thread exit code
+ *
+ * @api
+ */
+void chThdExit(msg_t msg) {
+
+  chSysLock();
+
+  /* Exit handler hook.*/
+  CH_CFG_THREAD_EXIT_HOOK(tp);
+
+#if CH_CFG_USE_WAITEXIT == TRUE
+  {
+    /* Waking up any waiting thread.*/
+    thread_t *tp = nil.threads;
+    while (tp < &nil.threads[CH_CFG_MAX_THREADS]) {
+      /* Is this thread waiting for current thread termination?*/
+      if ((tp->state == NIL_STATE_WTEXIT) && (tp->u1.tp == nil.current)) {
+        (void) chSchReadyI(tp, msg);
+      }
+      tp++;
+    }
+  }
+#endif
+
+  /* Going into final state with exit message stored.*/
+  nil.current->u1.msg = msg;
+  (void) chSchGoSleepTimeoutS(NIL_STATE_FINAL, TIME_INFINITE);
+
+  /* The thread never returns here.*/
+  chDbgAssert(false, "zombies apocalypse");
+}
+
+/**
+ * @brief   Blocks the execution of the invoking thread until the specified
+ *          thread terminates then the exit code is returned.
+ *
+ * @param[in] tp        pointer to the thread
+ * @return              The exit code from the terminated thread.
+ *
+ * @api
+ */
+msg_t chThdWait(thread_t *tp) {
+  msg_t msg;
+
+  chSysLock();
+  if (NIL_THD_IS_FINAL(tp)) {
+    msg = tp->u1.msg;
+  }
+  else {
+    nil.current->u1.tp = tp;
+    msg = chSchGoSleepTimeoutS(NIL_STATE_WTEXIT, TIME_INFINITE);
+  }
+  chSysUnlock();
+
+  return msg;
 }
 
 /**
