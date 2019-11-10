@@ -96,8 +96,10 @@ HALSRC += $(CHIBIOS)/os/hal/src/hal_wspi.c
 endif
 else
 HALSRC = $(CHIBIOS)/os/hal/src/hal.c \
+         $(CHIBIOS)/os/hal/src/hal_st.c \
          $(CHIBIOS)/os/hal/src/hal_buffers.c \
          $(CHIBIOS)/os/hal/src/hal_queues.c \
+         $(CHIBIOS)/os/hal/src/hal_flash.c \
          $(CHIBIOS)/os/hal/src/hal_mmcsd.c \
          $(CHIBIOS)/os/hal/src/hal_adc.c \
          $(CHIBIOS)/os/hal/src/hal_can.c \
@@ -119,7 +121,6 @@ HALSRC = $(CHIBIOS)/os/hal/src/hal.c \
          $(CHIBIOS)/os/hal/src/hal_serial_usb.c \
          $(CHIBIOS)/os/hal/src/hal_sio.c \
          $(CHIBIOS)/os/hal/src/hal_spi.c \
-         $(CHIBIOS)/os/hal/src/hal_st.c \
          $(CHIBIOS)/os/hal/src/hal_trng.c \
          $(CHIBIOS)/os/hal/src/hal_uart.c \
          $(CHIBIOS)/os/hal/src/hal_usb.c \
