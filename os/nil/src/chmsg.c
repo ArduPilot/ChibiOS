@@ -18,28 +18,10 @@
 */
 
 /**
- * @file    chmsg.c
- * @brief   Messages code.
+ * @file    nil/src/chmsg.c
+ * @brief   Nil RTOS synchronous messages source file.
  *
- * @addtogroup messages
- * @details Synchronous inter-thread messages APIs and services.
- *          <h2>Operation Mode</h2>
- *          Synchronous messages are an easy to use and fast IPC mechanism,
- *          threads can both act as message servers and/or message clients,
- *          the mechanism allows data to be carried in both directions. Note
- *          that messages are not copied between the client and server threads
- *          but just a pointer passed so the exchange is very time
- *          efficient.<br>
- *          Messages are scalar data types of type @p msg_t that are guaranteed
- *          to be size compatible with data pointers. Note that on some
- *          architectures function pointers can be larger that @p msg_t.<br>
- *          Messages are usually processed in FIFO order but it is possible to
- *          process them in priority order by enabling the
- *          @p CH_CFG_USE_MESSAGES_PRIORITY option in @p chconf.h.<br>
- * @pre     In order to use the message APIs the @p CH_CFG_USE_MESSAGES option
- *          must be enabled in @p chconf.h.
- * @post    Enabling messages requires 6-12 (depending on the architecture)
- *          extra bytes in the @p thread_t structure.
+ * @addtogroup NIL_MESSAGES
  * @{
  */
 
@@ -48,11 +30,11 @@
 #if (CH_CFG_USE_MESSAGES == TRUE) || defined(__DOXYGEN__)
 
 /*===========================================================================*/
-/* Module exported variables.                                                */
+/* Module local definitions.                                                 */
 /*===========================================================================*/
 
 /*===========================================================================*/
-/* Module local types.                                                       */
+/* Module exported variables.                                                */
 /*===========================================================================*/
 
 /*===========================================================================*/
@@ -63,11 +45,9 @@
 /* Module local functions.                                                   */
 /*===========================================================================*/
 
-#if CH_CFG_USE_MESSAGES_PRIORITY == TRUE
-#define msg_insert(tp, qp) queue_prio_insert(tp, qp)
-#else
-#define msg_insert(tp, qp) queue_insert(tp, qp)
-#endif
+/*===========================================================================*/
+/* Module interrupt handlers.                                                */
+/*===========================================================================*/
 
 /*===========================================================================*/
 /* Module exported functions.                                                */
@@ -85,18 +65,17 @@
  * @api
  */
 msg_t chMsgSend(thread_t *tp, msg_t msg) {
-  thread_t *ctp = currp;
+  thread_t *ctp = nil.current;
 
   chDbgCheck(tp != NULL);
 
   chSysLock();
-  ctp->u.sentmsg = msg;
-  msg_insert(ctp, &tp->msgqueue);
-  if (tp->state == CH_STATE_WTMSG) {
-    (void) chSchReadyI(tp);
+  ctp->sntmsg = msg;
+  ctp->u1.tp =  tp;
+  if (NIL_THD_IS_WTMSG(tp)) {
+    (void) chSchReadyI(tp, (msg_t)ctp);
   }
-  chSchGoSleepS(CH_STATE_SNDMSGQ);
-  msg = ctp->u.rdymsg;
+  msg = chSchGoSleepTimeoutS(NIL_STATE_SNDMSGQ, TIME_INFINITE);
   chSysUnlock();
 
   return msg;
@@ -116,18 +95,47 @@ msg_t chMsgSend(thread_t *tp, msg_t msg) {
  *
  * @return              A pointer to the thread carrying the message.
  *
- * @sclass
+ * @api
  */
-thread_t *chMsgWaitS(void) {
+thread_t *chMsgWait(void) {
   thread_t *tp;
 
-  chDbgCheckClassS();
+  chSysLock();
+  tp = chMsgWaitS();
+  chSysUnlock();
 
-  if (!chMsgIsPendingI(currp)) {
-    chSchGoSleepS(CH_STATE_WTMSG);
-  }
-  tp = queue_fifo_remove(&currp->msgqueue);
-  tp->state = CH_STATE_SNDMSG;
+  return tp;
+}
+
+/**
+ * @brief   Suspends the thread and waits for an incoming message or a
+ *          timeout to occur.
+ * @post    After receiving a message the function @p chMsgGet() must be
+ *          called in order to retrieve the message and then @p chMsgRelease()
+ *          must be invoked in order to acknowledge the reception and send
+ *          the answer.
+ * @note    If the message is a pointer then you can assume that the data
+ *          pointed by the message is stable until you invoke @p chMsgRelease()
+ *          because the sending thread is suspended until then.
+ * @note    The reference counter of the sender thread is not increased, the
+ *          returned pointer is a temporary reference.
+ *
+ * @param[in] timeout   the number of ticks before the operation timeouts,
+ *                      the following special values are allowed:
+ *                      - @a TIME_IMMEDIATE immediate timeout.
+ *                      - @a TIME_INFINITE no timeout.
+ *                      .
+ * @return              A pointer to the thread carrying the message.
+ * @retval NULL         if a timeout occurred.
+ *
+ * @api
+ */
+thread_t *chMsgWaitTimeout(sysinterval_t timeout) {
+  thread_t *tp;
+
+  chSysLock();
+  tp = chMsgWaitTimeoutS(timeout);
+  chSysUnlock();
 
   return tp;
 }
@@ -159,40 +167,12 @@ thread_t *chMsgWaitTimeoutS(sysinterval_t timeout) {
 
   chDbgCheckClassS();
 
-  if (!chMsgIsPendingI(currp)) {
-    if (chSchGoSleepTimeoutS(CH_STATE_WTMSG, timeout) != MSG_OK) {
-      return NULL;
+  tp = nil_find_thread(NIL_STATE_SNDMSGQ, nil.current);
+  if (tp == NULL) {
+    msg_t msg = chSchGoSleepTimeoutS(NIL_STATE_WTMSG, timeout);
+    if (msg != MSG_TIMEOUT) {
+      return (thread_t *)msg;
     }
-  }
-  tp = queue_fifo_remove(&currp->msgqueue);
-  tp->state = CH_STATE_SNDMSG;
-
-  return tp;
-}
-
-/**
- * @brief   Poll to check for an incoming message.
- * @post    If a message is available the function @p chMsgGet() must be
- *          called in order to retrieve the message and then @p chMsgRelease()
- *          must be invoked in order to acknowledge the reception and send
- *          the answer.
- * @note    If the message is a pointer then you can assume that the data
- *          pointed by the message is stable until you invoke @p chMsgRelease()
- *          because the sending thread is suspended until then.
- * @note    The reference counter of the sender thread is not increased, the
- *          returned pointer is a temporary reference.
- *
- * @return              Result of the poll.
- * @retval  NULL        if no incoming message waiting.
- *
- * @sclass
- */
-thread_t *chMsgPollS(void) {
-  thread_t *tp = NULL;
-
-  if (chMsgIsPendingI(currp)) {
-    tp = queue_fifo_remove(&currp->msgqueue);
-    tp->state = CH_STATE_SNDMSG;
   }
 
   return tp;
@@ -211,7 +191,7 @@ thread_t *chMsgPollS(void) {
 void chMsgRelease(thread_t *tp, msg_t msg) {
 
   chSysLock();
-  chDbgAssert(tp->state == CH_STATE_SNDMSG, "invalid state");
+  chDbgAssert(tp->state == NIL_STATE_SNDMSGQ, "invalid state");
   chMsgReleaseS(tp, msg);
   chSysUnlock();
 }
