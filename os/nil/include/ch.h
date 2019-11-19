@@ -747,7 +747,7 @@ struct nil_system {
  * @brief   End of user threads table.
  */
 #define THD_TABLE_END                                                       \
-  {THD_IDLE_BASE, THD_IDLE_END, "idle", NULL, NULL}                         \
+  {CH_CFG_MAX_THREADS, "idle", THD_IDLE_BASE, THD_IDLE_END, NULL, NULL}     \
 };
 /** @} */
 
