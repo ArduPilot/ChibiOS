@@ -342,47 +342,54 @@ static void oslib_test_001_003_execute(void) {
   /* [1.3.1] Filling the mailbox.*/
   test_set_step(1);
   {
-    for (i = 0; i < MB_SIZE; i++) {
-      msg1 = chMBPostTimeout(&mb1, 'B' + i, TIME_INFINITE);
-      test_assert(msg1 == MSG_OK, "wrong wake-up message");
-    }
-  }
-
-  /* [1.3.2] Testing chMBPostTimeout(), chMBPostI(),
-     chMBPostAheadTimeout() and chMBPostAheadI() timeout.*/
-  test_set_step(2);
-  {
-    msg1 = chMBPostTimeout(&mb1, 'X', 1);
-    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
-    chSysLock();
-    msg1 = chMBPostI(&mb1, 'X');
-    chSysUnlock();
-    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
-    msg1 = chMBPostAheadTimeout(&mb1, 'X', 1);
-    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
-    chSysLock();
-    msg1 = chMBPostAheadI(&mb1, 'X');
-    chSysUnlock();
-    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
-  }
-
-  /* [1.3.3] Resetting the mailbox. The mailbox is then returned in
-     active state.*/
-  test_set_step(3);
-  {
-    chMBReset(&mb1);
-    chMBResumeX(&mb1);
-  }
-
-  /* [1.3.4] Testing chMBFetchTimeout() and chMBFetchI() timeout.*/
-  test_set_step(4);
-  {
-    msg1 = chMBFetchTimeout(&mb1, &msg2, 1);
-    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
-    chSysLock();
-    msg1 = chMBFetchI(&mb1, &msg2);
-    chSysUnlock();
-    test_assert(msg1 == MSG_TIMEOUT, "wrong wake-up message");
+    test_print("--- CH_CFG_USE_MAILBOXES:               ");
+    test_printn(CH_CFG_USE_MAILBOXES);
+    test_println("");
+    test_print("--- CH_CFG_USE_MEMCORE:                 ");
+    test_printn(CH_CFG_USE_MEMCORE);
+    test_println("");
+    test_print("--- CH_CFG_USE_HEAP:                    ");
+    test_printn(CH_CFG_USE_HEAP);
+    test_println("");
+    test_print("--- CH_CFG_USE_MEMPOOLS:                ");
+    test_printn(CH_CFG_USE_MEMPOOLS);
+    test_println("");
+    test_print("--- CH_CFG_USE_OBJ_FIFOS:               ");
+    test_printn(CH_CFG_USE_OBJ_FIFOS);
+    test_println("");
+    test_print("--- CH_CFG_USE_PIPES:                   ");
+    test_printn(CH_CFG_USE_PIPES);
+    test_println("");
+    test_print("--- CH_CFG_USE_OBJ_CACHES:              ");
+    test_printn(CH_CFG_USE_OBJ_CACHES);
+    test_println("");
+    test_print("--- CH_CFG_USE_DELEGATES:               ");
+    test_printn(CH_CFG_USE_DELEGATES);
+    test_println("");
+    test_print("--- CH_CFG_USE_FACTORY:                 ");
+    test_printn(CH_CFG_USE_FACTORY);
+    test_println("");
+    test_print("--- CH_CFG_FACTORY_MAX_NAMES_LENGTH:    ");
+    test_printn(CH_CFG_FACTORY_MAX_NAMES_LENGTH);
+    test_println("");
+    test_print("--- CH_CFG_FACTORY_OBJECTS_REGISTRY:    ");
+    test_printn(CH_CFG_FACTORY_OBJECTS_REGISTRY);
+    test_println("");
+    test_print("--- CH_CFG_FACTORY_GENERIC_BUFFERS:     ");
+    test_printn(CH_CFG_FACTORY_GENERIC_BUFFERS);
+    test_println("");
+    test_print("--- CH_CFG_FACTORY_SEMAPHORES:          ");
+    test_printn(CH_CFG_FACTORY_SEMAPHORES);
+    test_println("");
+    test_print("--- CH_CFG_FACTORY_MAILBOXES:           ");
+    test_printn(CH_CFG_FACTORY_MAILBOXES);
+    test_println("");
+    test_print("--- CH_CFG_FACTORY_OBJ_FIFOS:           ");
+    test_printn(CH_CFG_FACTORY_OBJ_FIFOS);
+    test_println("");
+    test_print("--- CH_CFG_FACTORY_PIPES:               ");
+    test_printn(CH_CFG_FACTORY_PIPES);
+    test_println("");
   }
   test_end_step(1);
 }
