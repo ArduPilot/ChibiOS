@@ -563,6 +563,21 @@ typedef uint32_t time_conv_t;
 #endif
 
 /**
+ * @brief   Type of a structure representing the system.
+ */
+typedef struct nil_system nil_system_t;
+
+/**
+ * @brief Thread function.
+ */
+typedef void (*tfunc_t)(void *p);
+
+/**
+ * @brief   Type of a thread descriptor.
+ */
+typedef struct nil_thread_descriptor thread_descriptor_t;
+
+/**
  * @brief   Type of a structure representing a thread.
  * @note    It is required as an early definition.
  */
@@ -602,12 +617,13 @@ typedef void (*tfunc_t)(void *p);
 typedef struct nil_thread_cfg thread_config_t;
 
 /**
- * @brief   Structure representing a thread static configuration.
+ * @brief   Structure representing a thread descriptor.
  */
-struct nil_thread_cfg {
+struct nil_thread_descriptor {
+  const char        *name;      /**< @brief Thread name, for debugging.     */
   stkalign_t        *wbase;     /**< @brief Thread working area base.       */
   stkalign_t        *wend;      /**< @brief Thread working area end.        */
-  const char        *namep;     /**< @brief Thread name, for debugging.     */
+  tprio_t           prio;       /**< @brief Thread priority slot.           */
   tfunc_t           funcp;      /**< @brief Thread function.                */
   void              *arg;       /**< @brief Thread function argument.       */
 };
@@ -734,20 +750,33 @@ struct nil_system {
  * @brief   Start of user threads table.
  */
 #define THD_TABLE_BEGIN                                                     \
-  const thread_config_t nil_thd_configs[CH_CFG_NUM_THREADS + 1] = {
+  const thread_descriptor_t nil_thd_configs[] = {
 
 /**
  * @brief   Entry of user threads table
  */
-#define THD_TABLE_ENTRY(wap, name, funcp, arg)                              \
-  {wap, ((stkalign_t *)(wap)) + (sizeof (wap) / sizeof(stkalign_t)),        \
-   name, funcp, arg},
+#define THD_TABLE_THREAD(_prio, _name, _wap, _funcp, _arg)                  \
+  {                                                                         \
+    .name  = (_name),                                                       \
+    .wbase = (_wap),                                                        \
+    .wend  = THD_WORKING_AREA_END(_wap),                                    \
+    .prio  = (_prio),                                                       \
+    .funcp = (_funcp),                                                      \
+    .arg   = (_arg)                                                         \
+  },
 
 /**
  * @brief   End of user threads table.
  */
 #define THD_TABLE_END                                                       \
-  {CH_CFG_MAX_THREADS, "idle", THD_IDLE_BASE, THD_IDLE_END, NULL, NULL}     \
+  {                                                                         \
+    .name  = "idle",                                                        \
+    .wbase = THD_IDLE_BASE,                                                 \
+    .wend  = THD_IDLE_END,                                                  \
+    .prio  = CH_CFG_MAX_THREADS,                                            \
+    .funcp = NULL,                                                          \
+    .arg  = NULL                                                            \
+  }                                                                         \
 };
 /** @} */
 
@@ -1557,7 +1586,7 @@ struct nil_system {
 extern stkalign_t __main_thread_stack_base__, __main_thread_stack_end__;
 #endif
 extern nil_system_t nil;
-extern const thread_config_t nil_thd_configs[CH_CFG_NUM_THREADS + 1];
+extern const thread_descriptor_t nil_thd_configs[];
 #endif
 
 #ifdef __cplusplus
@@ -1577,6 +1606,12 @@ extern "C" {
   void chSchDoReschedule(void);
   void chSchRescheduleS(void);
   msg_t chSchGoSleepTimeoutS(tstate_t newstate, sysinterval_t timeout);
+  thread_t *chThdCreateI(const thread_descriptor_t *tdp);
+  thread_t *chThdCreate(const thread_descriptor_t *tdp);
+  void chThdExit(msg_t msg);
+#if CH_CFG_USE_WAITEXIT == TRUE
+  msg_t chThdWait(thread_t *tp);
+#endif
   msg_t chThdSuspendTimeoutS(thread_reference_t *trp, sysinterval_t timeout);
   void chThdResumeI(thread_reference_t *trp, msg_t msg);
   void chThdResume(thread_reference_t *trp, msg_t msg);

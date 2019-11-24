@@ -139,7 +139,15 @@ static const testcase_t nil_test_003_001 = {
  */
 
 static void nil_test_003_002_setup(void) {
-  chSemObjectInit(&gsem1, 0);
+  thread_descriptor_t td = {
+    .name  = "signaler",
+    .wbase = wa_common,
+    .wend  = THD_WORKING_AREA_END(wa_common),
+    .prio  = chThdGetPriorityX() - 1,
+    .funcp = signaler,
+    .arg   = NULL
+  };
+  tp1 = chThdCreate(&td);
 }
 
 static void nil_test_003_002_teardown(void) {

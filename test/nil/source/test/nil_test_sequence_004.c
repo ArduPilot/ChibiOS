@@ -63,7 +63,20 @@ static thread_reference_t tr1;
  */
 
 static void nil_test_004_001_setup(void) {
-  tr1 = NULL;
+  thread_descriptor_t td = {
+    .name  = "resumer",
+    .wbase = wa_common,
+    .wend  = THD_WORKING_AREA_END(wa_common),
+    .prio  = chThdGetPriorityX() - 1,
+    .funcp = resumer,
+    .arg   = NULL
+  };
+  tp1 = chThdCreate(&td);
+}
+
+static void nil_test_004_001_teardown(void) {
+  terminate = true;
+  chThdWait(tp1);
 }
 
 static void nil_test_004_001_execute(void) {
