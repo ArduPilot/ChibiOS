@@ -223,7 +223,6 @@ static void i2c_lld_abort_operation(I2CDriver *i2cp) {
 #endif
 }
 
-#ifdef STM32_I2C_ISR_LIMIT
 /**
  * @brief   reset I2C peripheral
  *
@@ -256,7 +255,6 @@ static void i2c_lld_reset(I2CDriver *i2cp) {
     }
 #endif  /* STM32_I2C_USE_I2C4 */
 }
-#endif // STM32_I2C_ISR_LIMIT
 
 /**
  * @brief   I2C shared ISR code.
@@ -268,6 +266,13 @@ static void i2c_lld_reset(I2CDriver *i2cp) {
  */
 static void i2c_lld_serve_interrupt(I2CDriver *i2cp, uint32_t isr) {
   I2C_TypeDef *dp = i2cp->i2c;
+
+  if (!i2cp->in_transaction) {
+      // unexpected interrupt generated due to bus noise
+      dp->CR1 &= ~(I2C_CR1_TCIE | I2C_CR1_TXIE | I2C_CR1_RXIE);
+      i2c_lld_reset(i2cp);
+      return;
+  }
 
   /* Special case of a received NACK, the transfer is aborted.*/
   if ((isr & I2C_ISR_NACKF) != 0U) {
@@ -395,6 +400,13 @@ static void i2c_lld_serve_interrupt(I2CDriver *i2cp, uint32_t isr) {
  */
 static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint32_t isr) {
 
+  if (!i2cp->in_transaction) {
+      // unexpected interrupt generated due to bus noise
+      i2cp->i2c->CR1 &= ~(I2C_CR1_TCIE | I2C_CR1_TXIE | I2C_CR1_RXIE);
+      i2c_lld_reset(i2cp);
+      return;
+  }
+
 #if STM32_I2C_USE_DMA == TRUE
   /* Clears DMA interrupt flags just to be safe.*/
   if (i2cp->dmatx)
@@ -406,8 +418,10 @@ static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint32_t isr) {
   i2cp->i2c->CR1 &= ~(I2C_CR1_TXIE | I2C_CR1_RXIE);
 #endif
 
-  if (isr & I2C_ISR_BERR)
+  if (isr & I2C_ISR_BERR) {
     i2cp->errors |= I2C_BUS_ERROR;
+    i2cp->i2c->ISR &= ~I2C_ISR_BERR;
+  }
 
   if (isr & I2C_ISR_ARLO)
     i2cp->errors |= I2C_ARBITRATION_LOST;
@@ -1214,6 +1228,8 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
     osalSysUnlock();
   }
 
+  i2cp->in_transaction = true;
+
   /* Setting up the slave address.*/
   i2c_lld_set_address(i2cp, addr);
 
@@ -1246,6 +1262,12 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
     dmaStreamDisable(i2cp->dmarx);
 #endif
   }
+
+#if STM32_I2C_USE_DMA == TRUE
+  dmaStreamDisable(i2cp->dmarx);
+#endif
+
+  i2cp->in_transaction = false;
 
   return msg;
 }
@@ -1332,6 +1354,8 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
     osalSysUnlock();
   }
 
+  i2cp->in_transaction = true;
+
   /* Setting up the slave address.*/
   i2c_lld_set_address(i2cp, addr);
 
@@ -1364,6 +1388,13 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
     dmaStreamDisable(i2cp->dmatx);
 #endif
   }
+
+#if STM32_I2C_USE_DMA == TRUE
+  dmaStreamDisable(i2cp->dmatx);
+  dmaStreamDisable(i2cp->dmarx);
+#endif
+
+  i2cp->in_transaction = false;
 
   return msg;
 }
