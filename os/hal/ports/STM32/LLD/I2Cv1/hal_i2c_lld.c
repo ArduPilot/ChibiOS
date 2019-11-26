@@ -954,6 +954,13 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   /* Initializes driver fields, LSB = 1 -> receive.*/
   i2cp->addr = (addr << 1) | 0x01;
 
+  /* we expect the bus to not be busy when this is called. If it is
+   * busy then immediately fail and let higher level code restart
+   * I2C. Note that we return with lock held. */
+  if ((dp->SR2 & I2C_SR2_BUSY) || (dp->CR1 & I2C_CR1_STOP)) {
+      return MSG_TIMEOUT;
+  }
+
   /* Releases the lock from high level driver.*/
   osalSysUnlock();
 
@@ -968,13 +975,6 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 #endif /* STM32_I2C_USE_DMA */
 
   osalSysLock();
-
-  /* we expect the bus to not be busy when this is called. If it is
-   * busy then immediately fail and let higher level code restart
-   * I2C. Note that we return with lock held. */
-  if ((dp->SR2 & I2C_SR2_BUSY) || (dp->CR1 & I2C_CR1_STOP)) {
-      return MSG_TIMEOUT;
-  }
 
   /* Starts the operation.*/
   dp->CR2 |= I2C_CR2_ITEVTEN;
@@ -1027,6 +1027,13 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   /* Initializes driver fields, LSB = 0 -> transmit.*/
   i2cp->addr = (addr << 1);
 
+  /* we expect the bus to not be busy when this is called. If it is
+   * busy then immediately fail and let higher level code restart
+   * I2C. Note that we return with lock held. */
+  if ((dp->SR2 & I2C_SR2_BUSY) || (dp->CR1 & I2C_CR1_STOP)) {
+      return MSG_TIMEOUT;
+  }
+
   /* Releases the lock from high level driver.*/
   osalSysUnlock();
 
@@ -1048,13 +1055,6 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 #endif /* STM32_I2C_USE_DMA */
 
   osalSysLock();
-
-  /* we expect the bus to not be busy when this is called. If it is
-   * busy then immediately fail and let higher level code restart
-   * I2C. Note that we return with lock held. */
-  if ((dp->SR2 & I2C_SR2_BUSY) || (dp->CR1 & I2C_CR1_STOP)) {
-      return MSG_TIMEOUT;
-  }
 
   /* Starts the operation.*/
   dp->CR2 |= I2C_CR2_ITEVTEN;
