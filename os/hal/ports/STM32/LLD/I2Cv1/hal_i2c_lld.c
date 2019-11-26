@@ -321,6 +321,8 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
             dmaStreamDisable(i2cp->dmatx);
         if (i2cp->dmarx)
             dmaStreamDisable(i2cp->dmarx);
+        dp->CR1 |= I2C_CR1_SWRST;
+        dp->CR1 &= ~I2C_CR1_PE;
         i2c_lld_reset(i2cp);
         _i2c_wakeup_error_isr(i2cp);
         return;
@@ -453,6 +455,8 @@ static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint16_t sr) {
 #ifdef STM32_I2C_ISR_LIMIT
     if (i2cp->isr_count++ > i2cp->isr_limit) {
         i2cp->errors |= I2C_ISR_LIMIT;
+        i2cp->i2c->CR1 |= I2C_CR1_SWRST;
+        i2cp->i2c->CR1 &= ~I2C_CR1_PE;
         i2c_lld_reset(i2cp);
         _i2c_wakeup_error_isr(i2cp);
         return;
