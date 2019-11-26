@@ -489,12 +489,12 @@ struct I2CDriver {
    * @brief limit of interrupts for this transfer
    */
   uint32_t                  isr_limit;
+#endif
 
   /**
      true when we are in an I2C transaction
    */
   bool                      in_transaction;
-#endif
 };
 
 /*===========================================================================*/
