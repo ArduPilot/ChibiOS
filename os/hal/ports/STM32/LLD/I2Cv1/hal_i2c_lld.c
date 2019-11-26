@@ -981,7 +981,9 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   dp->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
 
   /* Waits for the operation completion or a timeout.*/
-  return osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
+  msg_t ret = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
+  dmaStreamDisable(i2cp->dmarx);
+  return ret;
 }
 
 /**
@@ -1059,7 +1061,10 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   dp->CR1 |= I2C_CR1_START;
 
   /* Waits for the operation completion or a timeout.*/
-  return osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
+  msg_t ret = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
+  dmaStreamDisable(i2cp->dmatx);
+  dmaStreamDisable(i2cp->dmarx);
+  return ret;
 }
 
 #endif /* HAL_USE_I2C */
