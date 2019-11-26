@@ -329,6 +329,15 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
     }
 #endif
 
+  if (!i2cp->in_transaction) {
+      // we have an interrupt while not inside an I2C operation. This
+      // can happen with sufficient bus noise. The best we can do is
+      // disable the peripheral and reset it
+      dp->CR1 |= I2C_CR1_SWRST;
+      dp->CR1 &= ~I2C_CR1_PE;
+      return;
+  }
+
   /* Interrupts are disabled just before dmaStreamEnable() because there
      is no need of interrupts until next transaction begin. All the work is
      done by the DMA.*/
@@ -462,6 +471,15 @@ static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint16_t sr) {
         return;
     }
 #endif
+
+  if (!i2cp->in_transaction) {
+      // we have an interrupt while not inside an I2C operation. This
+      // can happen with sufficient bus noise. The best we can do is
+      // disable the peripheral and reset it
+      i2cp->i2c->CR1 |= I2C_CR1_SWRST;
+      i2cp->i2c->CR1 &= ~I2C_CR1_PE;
+      return;
+  }
 
   i2cp->errors = I2C_NO_ERROR;
 
@@ -897,6 +915,8 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   osalSysLock();
 
+  i2cp->in_transaction = true;
+
   /* Starts the operation.*/
   dp->CR2 |= I2C_CR2_ITEVTEN;
   dp->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
@@ -904,6 +924,9 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   /* Waits for the operation completion or a timeout.*/
   msg_t ret = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
   dmaStreamDisable(i2cp->dmarx);
+
+  i2cp->in_transaction = false;
+
   return ret;
 }
 
@@ -975,6 +998,8 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   osalSysLock();
 
+  i2cp->in_transaction = true;
+
   /* Starts the operation.*/
   dp->CR2 |= I2C_CR2_ITEVTEN;
   dp->CR1 |= I2C_CR1_START;
@@ -983,6 +1008,9 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   msg_t ret = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
   dmaStreamDisable(i2cp->dmatx);
   dmaStreamDisable(i2cp->dmarx);
+
+  i2cp->in_transaction = false;
+
   return ret;
 }
 
