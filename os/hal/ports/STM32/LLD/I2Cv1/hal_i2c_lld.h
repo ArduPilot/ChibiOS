@@ -486,6 +486,11 @@ struct I2CDriver {
    * @brief     Pointer to the I2Cx registers block.
    */
   I2C_TypeDef               *i2c;
+
+  /**
+     true when we are in an I2C transaction
+   */
+  bool                      in_transaction;
 };
 
 /*===========================================================================*/
