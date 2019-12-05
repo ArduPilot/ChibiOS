@@ -479,6 +479,11 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
   }
   // some unhandled cases that are highly unlikely but yet migh happen
 #endif /* STM32_I2C_USE_DMA */
+
+  // errata 2.4.6 for STM32F40x, Spurious Bus Error detection in Master mode
+  if (event & I2C_SR1_BERR) {
+      dp->SR1 &= ~I2C_SR1_BERR;
+  }
 }
 
 #if STM32_I2C_USE_DMA
@@ -555,8 +560,11 @@ static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint16_t sr) {
 
   i2cp->errors = I2C_NO_ERROR;
 
-  if (sr & I2C_SR1_BERR)                            /* Bus error.           */
+  if (sr & I2C_SR1_BERR) {                            /* Bus error.           */
     i2cp->errors |= I2C_BUS_ERROR;
+    // errata 2.4.6 for STM32F40x, Spurious Bus Error detection in Master mode
+    i2cp->i2c->SR1 &= ~I2C_SR1_BERR;
+  }
 
   if (sr & I2C_SR1_ARLO)                            /* Arbitration lost.    */
     i2cp->errors |= I2C_ARBITRATION_LOST;
