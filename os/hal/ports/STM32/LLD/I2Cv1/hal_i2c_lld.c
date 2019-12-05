@@ -389,9 +389,9 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
   if (event & (I2C_SR1_ADDR | I2C_SR1_ADD10))
     (void)dp->SR2;
 
-  // errata 2.4.6 for STM32F40x, Spurious Bus Error detection in Master mode
+  /* Errata 2.4.6 for STM32F40x, Spurious Bus Error detection in Master mode.*/
   if (event & I2C_SR1_BERR) {
-      dp->SR1 &= ~I2C_SR1_BERR;
+    dp->SR1 &= ~I2C_SR1_BERR;
   }
 }
 
@@ -487,9 +487,10 @@ static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint16_t sr) {
 
   i2cp->errors = I2C_NO_ERROR;
 
-  if (sr & I2C_SR1_BERR) {                            /* Bus error.           */
+  if (sr & I2C_SR1_BERR) {                          /* Bus error.           */
     i2cp->errors |= I2C_BUS_ERROR;
-    // errata 2.4.6 for STM32F40x, Spurious Bus Error detection in Master mode
+    /* Errata 2.4.6 for STM32F40x, Spurious Bus Error detection in
+       Master mode.*/
     i2cp->i2c->SR1 &= ~I2C_SR1_BERR;
   }
 
@@ -892,6 +893,9 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   i2cp->isr_count = 0;
 #endif
 
+  systime_t start, end;
+  msg_t msg;
+
 #if defined(STM32F1XX_I2C)
   osalDbgCheck(rxbytes > 1);
 #endif
@@ -919,19 +923,42 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   osalSysLock();
 
+
   i2cp->in_transaction = true;
+
+  /* Waits until BUSY flag is reset or, alternatively, for a timeout
+     condition.*/
+  while (true) {
+    osalSysLock();
+
+    /* If the bus is not busy then the operation can continue, note, the
+       loop is exited in the locked state.*/
+    if (!(dp->SR2 & I2C_SR2_BUSY) && !(dp->CR1 & I2C_CR1_STOP))
+      break;
+
+    /* If the system time went outside the allowed window then a timeout
+       condition is returned.*/
+    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
+      dmaStreamDisable(i2cp->dmarx);
+      return MSG_TIMEOUT;
+    }
+
+    osalSysUnlock();
+  }
 
   /* Starts the operation.*/
   dp->CR2 |= I2C_CR2_ITEVTEN;
   dp->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
 
   /* Waits for the operation completion or a timeout.*/
-  msg_t ret = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
-  dmaStreamDisable(i2cp->dmarx);
+  msg = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
+  if (msg != MSG_OK) {
+    dmaStreamDisable(i2cp->dmarx);
+  }
 
   i2cp->in_transaction = false;
 
-  return ret;
+  return msg;
 }
 
 /**
@@ -964,6 +991,8 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                       uint8_t *rxbuf, size_t rxbytes,
                                       sysinterval_t timeout) {
   I2C_TypeDef *dp = i2cp->i2c;
+  systime_t start, end;
+  msg_t msg;
 
 #if defined(STM32F1XX_I2C) && !defined(_ARDUPILOT_)
   osalDbgCheck((rxbytes == 0) || ((rxbytes > 1) && (rxbuf != NULL)));
@@ -1004,18 +1033,41 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   i2cp->in_transaction = true;
 
+  /* Waits until BUSY flag is reset or, alternatively, for a timeout
+     condition.*/
+  while (true) {
+    osalSysLock();
+
+    /* If the bus is not busy then the operation can continue, note, the
+       loop is exited in the locked state.*/
+    if (!(dp->SR2 & I2C_SR2_BUSY) && !(dp->CR1 & I2C_CR1_STOP))
+      break;
+
+    /* If the system time went outside the allowed window then a timeout
+       condition is returned.*/
+    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
+      dmaStreamDisable(i2cp->dmatx);
+      dmaStreamDisable(i2cp->dmarx);
+      return MSG_TIMEOUT;
+    }
+
+    osalSysUnlock();
+  }
+
   /* Starts the operation.*/
   dp->CR2 |= I2C_CR2_ITEVTEN;
   dp->CR1 |= I2C_CR1_START;
 
   /* Waits for the operation completion or a timeout.*/
-  msg_t ret = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
-  dmaStreamDisable(i2cp->dmatx);
-  dmaStreamDisable(i2cp->dmarx);
+  msg = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
+  if (msg != MSG_OK) {
+    dmaStreamDisable(i2cp->dmatx);
+    dmaStreamDisable(i2cp->dmarx);
+  }
 
   i2cp->in_transaction = false;
 
-  return ret;
+  return msg;
 }
 
 #endif /* HAL_USE_I2C */
