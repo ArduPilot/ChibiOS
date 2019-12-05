@@ -345,6 +345,9 @@ static void serve_usart_irq(UARTDriver *uartp) {
     uartp->config->irq_cb(uartp);
   }
 
+  /* Timeout interrupt sources are only checked if enabled in CR1.*/
+  if ((cr1 & USART_CR1_IDLEIE) && (sr & USART_SR_IDLE))
+      _uart_timeout_isr_code(uartp);
 }
 
 /*===========================================================================*/
