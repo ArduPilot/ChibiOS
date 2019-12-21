@@ -1471,6 +1471,22 @@ struct nil_system {
   chTimeDiffX((start), chVTGetSystemTimeX())
 
 /**
+ * @brief   Checks if the current system time is within the specified time
+ *          window.
+ * @note    When start==end then the function returns always false because the
+ *          time window has zero size.
+ *
+ * @param[in] start     the start of the time window (inclusive)
+ * @param[in] end       the end of the time window (non inclusive)
+ * @retval true         current time within the specified time window.
+ * @retval false        current time not within the specified time window.
+ *
+ * @xclass
+ */
+#define chVTIsSystemTimeWithinX(start, end)                                 \
+  chTimeIsInRangeX(chVTGetSystemTimeX(), start, end)
+
+/**
  * @brief   Adds an interval to a system time returning a system time.
  *
  * @param[in] systime   base system time
