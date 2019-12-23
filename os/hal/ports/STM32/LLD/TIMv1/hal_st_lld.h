@@ -81,6 +81,18 @@
 #define STM32_HAS_TIM5                      FALSE
 #endif
 
+#if !defined(STM32_HAS_TIM12)
+#define STM32_HAS_TIM12                      FALSE
+#endif
+
+#if !defined(STM32_HAS_TIM13)
+#define STM32_HAS_TIM13                      FALSE
+#endif
+
+#if !defined(STM32_HAS_TIM14)
+#define STM32_HAS_TIM14                      FALSE
+#endif
+
 #if !defined(STM32_HAS_TIM21)
 #define STM32_HAS_TIM21                     FALSE
 #endif
@@ -100,6 +112,15 @@
 
 #elif STM32_ST_USE_TIMER == 5
 #define STM32_ST_TIM                        STM32_TIM5
+
+#elif STM32_ST_USE_TIMER == 12
+#define STM32_ST_TIM                        STM32_TIM12
+
+#elif STM32_ST_USE_TIMER == 13
+#define STM32_ST_TIM                        STM32_TIM13
+
+#elif STM32_ST_USE_TIMER == 14
+#define STM32_ST_TIM                        STM32_TIM14
 
 #elif STM32_ST_USE_TIMER == 21
 #define STM32_ST_TIM                        STM32_TIM21
