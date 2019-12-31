@@ -85,10 +85,9 @@ THD_FUNCTION(Thread3, arg) {
  * match NIL_CFG_NUM_THREADS.
  */
 THD_TABLE_BEGIN
-  THD_TABLE_ENTRY(waThread1, "blinker1", Thread1, NULL)
-  THD_TABLE_ENTRY(waThread2, "blinker2", Thread2, NULL)
-  THD_TABLE_ENTRY(wa_test_support, "test_support", test_support, (void *)&nil.threads[3])
-  THD_TABLE_ENTRY(waThread3, "tester", Thread3, NULL)
+  THD_TABLE_THREAD(0, "blinker1",     waThread1,       Thread1,      NULL)
+  THD_TABLE_THREAD(1, "blinker2",     waThread2,       Thread2,      NULL)
+  THD_TABLE_THREAD(4, "tester",       waThread3,       Thread3,      NULL)
 THD_TABLE_END
 
 /*

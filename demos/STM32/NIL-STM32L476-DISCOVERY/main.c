@@ -22,21 +22,31 @@
 /*
  * Blinker thread #1.
  */
-static THD_WORKING_AREA(waThread1, 128);
-static THD_FUNCTION(Thread1, arg) {
+THD_WORKING_AREA(waThread1, 128);
+THD_FUNCTION(Thread1, arg) {
 
   (void)arg;
 
-  /*
-   * GPIOI1 is programmed as output (board LED).
-   */
-  palClearLine(LINE_ARD_D13);
-  palSetLineMode(LINE_ARD_D13, PAL_MODE_OUTPUT_PUSHPULL);
+  while (true) {
+    palSetLine(LINE_LED_RED);
+    chThdSleepMilliseconds(250);
+    palClearLine(LINE_LED_RED);
+    chThdSleepMilliseconds(250);
+  }
+}
+
+/*
+ * Blinker thread #2.
+ */
+THD_WORKING_AREA(waThread2, 128);
+THD_FUNCTION(Thread2, arg) {
+
+  (void)arg;
 
   while (true) {
-    palSetLine(LINE_ARD_D13);
+    palSetLine(LINE_LED_GREEN);
     chThdSleepMilliseconds(500);
-    palClearLine(LINE_ARD_D13);
+    palClearLine(LINE_LED_GREEN);
     chThdSleepMilliseconds(500);
   }
 }
@@ -44,36 +54,36 @@ static THD_FUNCTION(Thread1, arg) {
 /*
  * Tester thread.
  */
-THD_WORKING_AREA(waThread2, 256);
-THD_FUNCTION(Thread2, arg) {
+THD_WORKING_AREA(waThread3, 256);
+THD_FUNCTION(Thread3, arg) {
 
   (void)arg;
 
   /*
-   * Activates the serial driver 1 using the driver default configuration.
+   * Activates the serial driver 2 using the driver default configuration.
    */
-  sdStart(&SD1, NULL);
+  sdStart(&SD2, NULL);
 
   /* Welcome message.*/
-  chnWrite(&SD1, (const uint8_t *)"Hello World!\r\n", 14);
+  chnWrite(&SD2, (const uint8_t *)"Hello World!\r\n", 14);
 
   /* Waiting for button push and activation of the test suite.*/
   while (true) {
-    if (palReadLine(LINE_BUTTON_USER)) {
-      test_execute((BaseSequentialStream *)&SD1, &nil_test_suite);
-      test_execute((BaseSequentialStream *)&SD1, &oslib_test_suite);
+    if (palReadLine(LINE_JOY_CENTER)) {
+      test_execute((BaseSequentialStream *)&SD2, &nil_test_suite);
+      test_execute((BaseSequentialStream *)&SD2, &oslib_test_suite);
     }
     chThdSleepMilliseconds(500);
   }
 }
 
 /*
- * Threads static table, one entry per thread. The number of entries must
- * match CH_CFG_NUM_THREADS.
+ * Threads creation table, one entry per thread.
  */
 THD_TABLE_BEGIN
   THD_TABLE_THREAD(0, "blinker1",     waThread1,       Thread1,      NULL)
-  THD_TABLE_THREAD(4, "tester",       waThread2,       Thread2,      NULL)
+  THD_TABLE_THREAD(1, "blinker2",     waThread2,       Thread2,      NULL)
+  THD_TABLE_THREAD(4, "tester",       waThread3,       Thread3,      NULL)
 THD_TABLE_END
 
 /*
