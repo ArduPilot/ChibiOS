@@ -65,7 +65,7 @@
 #define I2C_EV5_MASTER_MODE_SELECT                                          \
   ((uint32_t)(((I2C_SR2_MSL | I2C_SR2_BUSY) << 16) | I2C_SR1_SB))
 
-#define I2C_EV5_MASTER_MODE_SELECT_NO_BUSY                                          \
+#define I2C_EV5_MASTER_MODE_SELECT_NO_BUSY                                  \
   ((uint32_t)((I2C_SR2_MSL << 16) | I2C_SR1_SB))
 
 #define I2C_EV6_MASTER_TRA_MODE_SELECTED                                    \
