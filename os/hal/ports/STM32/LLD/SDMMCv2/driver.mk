@@ -7,4 +7,3 @@ PLATFORMSRC += $(CHIBIOS)/os/hal/ports/STM32/LLD/SDMMCv2/hal_sdc_lld.c
 endif
 
 PLATFORMINC += $(CHIBIOS)/os/hal/ports/STM32/LLD/SDMMCv2
-

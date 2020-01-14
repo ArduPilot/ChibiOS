@@ -15,7 +15,7 @@
 */
 
 /**
- * @file    SDMMCv1/hal_sdc_lld.h
+ * @file    SDMMCv2/hal_sdc_lld.h
  * @brief   STM32 SDC subsystem low level driver header.
  *
  * @addtogroup SDC
@@ -128,7 +128,7 @@
 
 #if (STM32_SDC_USE_SDMMC1 && !defined(STM32_SDMMC1_NUMBER)) ||              \
     (STM32_SDC_USE_SDMMC2 && !defined(STM32_SDMMC2_NUMBER))
-#error "STM32_ADCx_NUMBER not defined in registry"
+#error "STM32_SDMMCx_NUMBER not defined in registry"
 #endif
 
 /* Units checks.*/
@@ -145,16 +145,37 @@
 #endif
 
 /* Clock related tests.*/
-#if (STM32_HAS_SDMMC1 || STM32_HAS_SDMMC2) && !defined(STM32_SDMMCCLK)
-#error "STM32_SDMMCCLK not defined"
+#if STM32_HAS_SDMMC1 && !defined(STM32_SDMMC1CLK)
+#error "STM32_SDMMC1CLK not defined"
+#endif
+
+/* Clock related tests.*/
+#if STM32_HAS_SDMMC2 && !defined(STM32_SDMMC2CLK)
+#error "STM32_SDMMC2CLK not defined"
 #endif
 
 #if !defined(STM32_HCLK)
 #error "STM32_HCLK not defined"
 #endif
 
-#if (STM32_HAS_SDMMC1 || STM32_HAS_SDMMC1) && (STM32_SDMMCCLK > 200000000)
-#error "STM32_SDMMCCLK must not exceed 200MHz"
+#if STM32_HAS_SDMMC1 && (STM32_SDMMC1CLK * 10 > STM32_HCLK * 7)
+#error "STM32_SDMMC1CLK must not exceed STM32_HCLK * 0.7"
+#endif
+
+#if STM32_HAS_SDMMC2 && (STM32_SDMMC2CLK * 10 > STM32_HCLK * 7)
+#error "STM32_SDMMC2CLK must not exceed STM32_HCLK * 0.7"
+#endif
+
+#if !defined(STM32_SDMMC_MAXCLK)
+#define STM32_SDMMC_MAXCLK              48000000
+#endif
+
+#if STM32_HAS_SDMMC1 && (STM32_SDMMC1CLK > STM32_SDMMC_MAXCLK)
+#error "STM32_SDMMC1CLK must not exceed STM32_SDMMC_MAXCLK"
+#endif
+
+#if STM32_HAS_SDMMC2 && (STM32_SDMMC2CLK > STM32_SDMMC_MAXCLK)
+#error "STM32_SDMMC2CLK must not exceed STM32_SDMMC_MAXCLK"
 #endif
 
 /* SDMMC IRQ priority tests.*/
@@ -204,13 +225,6 @@ typedef struct {
    */
   sdcbusmode_t  bus_width;
   /* End of the mandatory fields.*/
-
-  /**
-   * @brief bus slowdown
-   * This is an additional slowdown applied to high speed bus operation
-   */
-  uint8_t slowdown;
-    
 } SDCConfig;
 
 /**
@@ -266,15 +280,11 @@ struct SDCDriver {
    * @brief     DTIMER register value for write operations.
    */
   uint32_t                  wtmo;
-
   /**
    * @brief     Pointer to the SDMMC registers block.
    * @note      Needed for debugging aid.
    */
   SDMMC_TypeDef             *sdmmc;
-
-  // bouncebuffer to support DMA to all memory regions
-  struct bouncebuffer_t *bouncebuffer;
 };
 
 /*===========================================================================*/
