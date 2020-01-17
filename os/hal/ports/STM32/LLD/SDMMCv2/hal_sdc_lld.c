@@ -250,7 +250,9 @@ static bool sdc_lld_wait_transaction_end(SDCDriver *sdcp, uint32_t n,
 
   if (sdcp->sdmmc->DCTRL & SDMMC_DCTRL_DTDIR) {
     // read operation
-	bouncebuffer_setup_read(sdcp->bouncebuffer, (uint8_t **)&sdcp->sdmmc->IDMABASE0, sdcp->sdmmc->DLEN);
+    if (!bouncebuffer_setup_read(sdcp->bouncebuffer, (uint8_t **)&sdcp->sdmmc->IDMABASE0, sdcp->sdmmc->DLEN)) {
+        return HAL_FAILED;
+    }
 
 	osalSysLock();
 
@@ -271,7 +273,9 @@ static bool sdc_lld_wait_transaction_end(SDCDriver *sdcp, uint32_t n,
 	sdcp->sdmmc->ICR = SDMMC_ICR_ALL_FLAGS;
 	sdcp->sdmmc->MASK = SDMMC_IDMA_MASK;
 
-	bouncebuffer_setup_write(sdcp->bouncebuffer, (const uint8_t **)&sdcp->sdmmc->IDMABASE0, sdcp->sdmmc->DLEN);
+    if (!bouncebuffer_setup_write(sdcp->bouncebuffer, (const uint8_t **)&sdcp->sdmmc->IDMABASE0, sdcp->sdmmc->DLEN)) {
+        return HAL_FAILED;
+    }
 
 	osalSysLock();
 

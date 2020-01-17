@@ -650,7 +650,9 @@ bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
                           uint8_t cmd, uint32_t arg) {
   uint32_t resp[1];
 
-  bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, bytes);  
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, bytes)) {
+      return HAL_FAILED;
+  }
 
   if(sdc_lld_prepare_read_bytes(sdcp, buf, bytes))
     goto error;
@@ -698,7 +700,9 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
 
-  bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE);
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
 
   /* Prepares the DMA channel for writing.*/
   dmaStreamSetMemory0(sdcp->dma, buf);
@@ -765,7 +769,9 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
 
-  bouncebuffer_setup_write(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE);
+  if (!bouncebuffer_setup_write(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
   
   /* Prepares the DMA channel for writing.*/
   dmaStreamSetMemory0(sdcp->dma, buf);
