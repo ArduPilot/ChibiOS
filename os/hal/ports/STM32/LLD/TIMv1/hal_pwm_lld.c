@@ -705,9 +705,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
 
   /* Timer configuration.*/
   psc = (pwmp->clock / pwmp->config->frequency) - 1;
-  osalDbgAssert((psc <= 0xFFFF) &&
-                ((psc + 1) * pwmp->config->frequency) == pwmp->clock,
-                "invalid frequency");
+  osalDbgAssert(psc <= 0xFFFF, "invalid frequency");
   pwmp->tim->PSC  = psc;
   pwmp->tim->ARR  = pwmp->period - 1;
   pwmp->tim->CR2  = pwmp->config->cr2;
