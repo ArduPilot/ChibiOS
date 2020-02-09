@@ -97,15 +97,9 @@ include $(CHIBIOS)/os/license/license.mk
 include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32l0xx.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
-<<<<<<< HEAD:testhal/STM32/multi/ADC/make/stm32h743_nucleo144.make
-include $(CHIBIOS)/os/hal/ports/STM32/STM32H7xx/platform.mk
-include $(CHIBIOS)/os/hal/boards/ST_NUCLEO144_H743ZI/board.mk
-include $(CHIBIOS)/os/hal/osal/rt/osal.mk
-=======
 include $(CHIBIOS)/os/hal/ports/STM32/STM32L0xx/platform.mk
 include $(CHIBIOS)/os/hal/boards/ST_NUCLEO64_L053R8/board.mk
 include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
->>>>>>> f3eafd7dd4... git-svn-id: http://svn.osdn.net/svnroot/chibios/trunk@13342 27425a3e-05d8-49a3-a47f-9c15f0e5edd8:testhal/STM32/multi/ADC/make/stm32l053r8_nucleo64.make
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v6m.mk
