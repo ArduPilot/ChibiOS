@@ -80,7 +80,9 @@ static thread_t *nil_find_thread(tstate_t state, void * p) {
  * @param[in] cnt       number of threads to be readied as a negative number,
  *                      non negative numbers are ignored
  * @param[in] msg       the wakeup message
- * @return              Always zero.
+ * @return              The number of readied threads.
+ *
+ * @notapi
  */
 static cnt_t nil_ready_all(void * p, cnt_t cnt, msg_t msg) {
   thread_t *tp = nil.threads;;
