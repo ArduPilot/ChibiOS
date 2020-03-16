@@ -63,9 +63,7 @@ static union {
  * @brief   SDIO default configuration.
  */
 static const SDCConfig sdc_default_cfg = {
-  NULL,
-  SDC_MODE_4BIT,
-  0
+  SDC_MODE_4BIT
 };
 
 /*===========================================================================*/
