@@ -318,13 +318,13 @@
 #define STM32_TIM15_HANDLER                 Vector210
 #define STM32_TIM15_NUMBER                  116
 
-#define STM32_HAS_TIM16                     FALSE
+#define STM32_HAS_TIM16                     TRUE
 #define STM32_TIM16_IS_32BITS               FALSE
 #define STM32_TIM16_CHANNELS                1
 #define STM32_TIM16_HANDLER                 Vector214
 #define STM32_TIM16_NUMBER                  117
 
-#define STM32_HAS_TIM17                     FALSE
+#define STM32_HAS_TIM17                     TRUE
 #define STM32_TIM17_IS_32BITS               FALSE
 #define STM32_TIM17_CHANNELS                1
 #define STM32_TIM17_HANDLER                 Vector218
