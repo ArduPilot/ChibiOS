@@ -153,8 +153,8 @@
 #error "STM32_HCLK not defined"
 #endif
 
-#if (STM32_HAS_SDMMC1 || STM32_HAS_SDMMC1) && (STM32_SDMMCCLK > 200000000)
-#error "STM32_SDMMCCLK must not exceed 200MHz"
+#if (STM32_HAS_SDMMC1 || STM32_HAS_SDMMC1) && (STM32_SDMMCCLK > 400000000)
+#error "STM32_SDMMCCLK must not exceed 400MHz"
 #endif
 
 /* SDMMC IRQ priority tests.*/

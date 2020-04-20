@@ -241,7 +241,7 @@
 #error "unsupported STM32 platform for OTG functionality"
 #endif
 
-#if STM32_USBCLK != 48000000
+#if STM32_USBCLK < 47500000 || STM32_USBCLK > 48500000
 #error "the USB OTG driver requires a 48MHz clock"
 #endif
 
