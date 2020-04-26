@@ -257,6 +257,7 @@ static void adc_lld_serve_dma_interrupt(ADCDriver *adcp, uint32_t flags) {
  * @param[in] adcp      pointer to the @p ADCDriver object
  * @param[in] flags     pre-shifted content of the ISR register
  */
+#if defined(STM32_ADC_BDMA_REQUIRED)
 static void adc_lld_serve_bdma_interrupt(ADCDriver *adcp, uint32_t flags) {
 
   /* DMA errors handling.*/
@@ -280,6 +281,7 @@ static void adc_lld_serve_bdma_interrupt(ADCDriver *adcp, uint32_t flags) {
     }
   }
 }
+#endif // STM32_ADC_BDMA_REQUIRED
 #endif /* STM32_ADC_USE_ADC3 == TRUE */
 
 /**
