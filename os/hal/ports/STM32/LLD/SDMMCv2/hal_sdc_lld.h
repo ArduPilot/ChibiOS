@@ -15,7 +15,7 @@
 */
 
 /**
- * @file    SDMMCv2/hal_sdc_lld.h
+ * @file    SDMMCv1/hal_sdc_lld.h
  * @brief   STM32 SDC subsystem low level driver header.
  *
  * @addtogroup SDC
@@ -66,17 +66,25 @@
 #endif
 
 /**
- * @brief   Write timeout in card clock cycles.
+ * @brief   Enable clock bypass.
+ * @note    Allow clock speed up to 50 Mhz.
  */
-#if !defined(STM32_SDC_SDMMC_WRITE_TIMEOUT) || defined(__DOXYGEN__)
-#define STM32_SDC_SDMMC_WRITE_TIMEOUT       1000000
+#if !defined(STM32_SDC_SDMMC_50MHZ) || defined(__DOXYGEN__)
+#define STM32_SDC_SDMMC_50MHZ               FALSE
 #endif
 
 /**
- * @brief   Read timeout in card clock cycles.
+ * @brief   Write timeout in milliseconds.
+ */
+#if !defined(STM32_SDC_SDMMC_WRITE_TIMEOUT) || defined(__DOXYGEN__)
+#define STM32_SDC_SDMMC_WRITE_TIMEOUT       1000
+#endif
+
+/**
+ * @brief   Read timeout in milliseconds.
  */
 #if !defined(STM32_SDC_SDMMC_READ_TIMEOUT) || defined(__DOXYGEN__)
-#define STM32_SDC_SDMMC_READ_TIMEOUT        1000000
+#define STM32_SDC_SDMMC_READ_TIMEOUT        1000
 #endif
 
 /**
@@ -92,6 +100,20 @@
 #if !defined(STM32_SDC_SDMMC_PWRSAV) || defined(__DOXYGEN__)
 #define STM32_SDC_SDMMC_PWRSAV              TRUE
 #endif
+
+/**
+ * @brief   SDMMC1 interrupt priority level setting.
+ */
+#if !defined(STM32_SDC_SDMMC1_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define STM32_SDC_SDMMC1_IRQ_PRIORITY       9
+#endif
+
+/**
+ * @brief   SDMMC2 interrupt priority level setting.
+ */
+#if !defined(STM32_SDC_SDMMC2_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define STM32_SDC_SDMMC2_IRQ_PRIORITY       9
+#endif
 /** @} */
 
 /*===========================================================================*/
@@ -106,7 +128,7 @@
 
 #if (STM32_SDC_USE_SDMMC1 && !defined(STM32_SDMMC1_NUMBER)) ||              \
     (STM32_SDC_USE_SDMMC2 && !defined(STM32_SDMMC2_NUMBER))
-#error "STM32_SDMMCx_NUMBER not defined in registry"
+#error "STM32_ADCx_NUMBER not defined in registry"
 #endif
 
 /* Units checks.*/
@@ -123,37 +145,25 @@
 #endif
 
 /* Clock related tests.*/
-#if STM32_HAS_SDMMC1 && !defined(STM32_SDMMC1CLK)
+#if (STM32_HAS_SDMMC1 || STM32_HAS_SDMMC2) && !defined(STM32_SDMMC1CLK)
 #error "STM32_SDMMC1CLK not defined"
-#endif
-
-/* Clock related tests.*/
-#if STM32_HAS_SDMMC2 && !defined(STM32_SDMMC2CLK)
-#error "STM32_SDMMC2CLK not defined"
 #endif
 
 #if !defined(STM32_HCLK)
 #error "STM32_HCLK not defined"
 #endif
 
-#if STM32_HAS_SDMMC1 && (STM32_SDMMC1CLK * 10 > STM32_HCLK * 7)
-#error "STM32_SDMMC1CLK must not exceed STM32_HCLK * 0.7"
+#if (STM32_HAS_SDMMC1 || STM32_HAS_SDMMC1) && (STM32_SDMMC1CLK > 200000000)
+#error "STM32_SDMMC1CLK must not exceed 200MHz"
 #endif
 
-#if STM32_HAS_SDMMC2 && (STM32_SDMMC2CLK * 10 > STM32_HCLK * 7)
-#error "STM32_SDMMC2CLK must not exceed STM32_HCLK * 0.7"
+/* SDMMC IRQ priority tests.*/
+#if !OSAL_IRQ_IS_VALID_PRIORITY(STM32_SDC_SDMMC1_IRQ_PRIORITY)
+#error "Invalid IRQ priority assigned to SDMMC1"
 #endif
 
-#if !defined(STM32_SDMMC_MAXCLK)
-#define STM32_SDMMC_MAXCLK              50000000
-#endif
-
-#if STM32_HAS_SDMMC1 && (STM32_SDMMC1CLK > STM32_SDMMC_MAXCLK)
-#error "STM32_SDMMC1CLK must not exceed STM32_SDMMC_MAXCLK"
-#endif
-
-#if STM32_HAS_SDMMC2 && (STM32_SDMMC2CLK > STM32_SDMMC_MAXCLK)
-#error "STM32_SDMMC2CLK must not exceed STM32_SDMMC_MAXCLK"
+#if !OSAL_IRQ_IS_VALID_PRIORITY(STM32_SDC_SDMMC2_IRQ_PRIORITY)
+#error "Invalid IRQ priority assigned to SDMMC2"
 #endif
 
 /*===========================================================================*/
@@ -181,10 +191,26 @@ typedef struct SDCDriver SDCDriver;
  */
 typedef struct {
   /**
+   * @brief   Working area for memory consuming operations.
+   * @note    Buffer must be word aligned and big enough to store 512 bytes.
+   * @note    It is mandatory for detecting MMC cards bigger than 2GB else it
+   *          can be @p NULL. SD cards do NOT need it.
+   * @note    Memory pointed by this buffer is only used by @p sdcConnect(),
+   *          afterward it can be reused for other purposes.
+   */
+  uint8_t       *scratchpad;
+  /**
    * @brief   Bus width.
    */
   sdcbusmode_t  bus_width;
   /* End of the mandatory fields.*/
+
+  /**
+   * @brief bus slowdown
+   * This is an additional slowdown applied to high speed bus operation
+   */
+  uint8_t slowdown;
+    
 } SDCConfig;
 
 /**
@@ -207,44 +233,53 @@ struct SDCDriverVMT {
  */
 struct SDCDriver {
   /**
-   * @brief   Virtual Methods Table.
+   * @brief Virtual Methods Table.
    */
   const struct SDCDriverVMT *vmt;
   _mmcsd_block_device_data
   /**
-   * @brief   Current configuration data.
+   * @brief Current configuration data.
    */
   const SDCConfig           *config;
   /**
-   * @brief   Various flags regarding the mounted card.
+   * @brief Various flags regarding the mounted card.
    */
   sdcmode_t                 cardmode;
   /**
-   * @brief   Errors flags.
+   * @brief Errors flags.
    */
   sdcflags_t                errors;
   /**
-   * @brief   Card RCA.
+   * @brief Card RCA.
    */
   uint32_t                  rca;
   /* End of the mandatory fields.*/
   /**
-   * @brief   Thread waiting for I/O completion IRQ.
+   * @brief Thread waiting for I/O completion IRQ.
    */
   thread_reference_t        thread;
   /**
-   * @brief   Pointer to the SDMMC registers block.
-   * @note    Needed for debugging aid.
+   * @brief     DTIMER register value for read operations.
    */
-  SDMMC_TypeDef             *sdmmc;
+  uint32_t                  rtmo;
   /**
-   * @brief   Input clock frequency.
+   * @brief     DTIMER register value for write operations.
    */
-  uint32_t                  clkfreq;
+  uint32_t                  wtmo;
+
   /**
    * @brief   Buffer for internal operations.
    */
   uint8_t                   buf[MMCSD_BLOCK_SIZE];
+
+  /**
+   * @brief     Pointer to the SDMMC registers block.
+   * @note      Needed for debugging aid.
+   */
+  SDMMC_TypeDef             *sdmmc;
+
+  // bouncebuffer to support DMA to all memory regions
+  struct bouncebuffer_t *bouncebuffer;
 };
 
 /*===========================================================================*/
@@ -289,7 +324,6 @@ extern "C" {
   bool sdc_lld_sync(SDCDriver *sdcp);
   bool sdc_lld_is_card_inserted(SDCDriver *sdcp);
   bool sdc_lld_is_write_protected(SDCDriver *sdcp);
-  void sdc_lld_serve_interrupt(SDCDriver *sdcp);
 #ifdef __cplusplus
 }
 #endif

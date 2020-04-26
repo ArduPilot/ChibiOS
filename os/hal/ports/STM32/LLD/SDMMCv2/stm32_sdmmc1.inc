@@ -83,6 +83,7 @@ static inline void sdmmc1_irq_deinit(void) {
 /* Driver interrupt handlers.                                                */
 /*===========================================================================*/
 
+#if 0
 #if STM32_SDMMC1_IS_USED|| defined(__DOXYGEN__)
 /**
  * @brief   SDMMC1 interrupt handler.
@@ -101,6 +102,7 @@ OSAL_IRQ_HANDLER(STM32_SDMMC1_HANDLER) {
 
   OSAL_IRQ_EPILOGUE();
 }
+#endif
 #endif
 
 /*===========================================================================*/
