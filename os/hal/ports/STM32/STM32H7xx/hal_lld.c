@@ -213,7 +213,7 @@ void stm32_clock_init(void) {
   (void)rcc;
 #endif
 
-#if defined(STM32_ENFORCE_H7_REV_XY)
+#if !defined(STM32_DISABLE_ERRATA_2_2_15)
   /* Fix for errata 2.2.15: Reading from AXI SRAM might lead to data
      read corruption.
      AXI->TARG7_FN_MOD.*/
