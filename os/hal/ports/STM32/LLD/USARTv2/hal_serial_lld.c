@@ -143,7 +143,9 @@ static const SerialConfig default_config =
   SERIAL_DEFAULT_BITRATE,
   0,
   USART_CR2_STOP1_BITS,
-  0
+  0,
+  NULL,
+  NULL
 };
 
 #if STM32_SERIAL_USE_USART1 || defined(__DOXYGEN__)
@@ -235,6 +237,8 @@ static void usart_init(SerialDriver *sdp,
                        uint32_t clock) {
   uint32_t brr;
   USART_TypeDef *u = sdp->usart;
+
+  sdp->config = config;
 
   /* Baud rate setting.*/
 #if STM32_SERIAL_USE_LPUART1

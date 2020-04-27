@@ -558,7 +558,9 @@ typedef struct hal_serial_config {
   /* Pointer to the USART registers block.*/                                \
   USART_TypeDef             *usart;                                         \
   /* Mask to be applied on received frames.*/                               \
-  uint8_t                   rxmask;
+  uint8_t                   rxmask;                                         \
+  /* config from start call.*/                                              \
+  const SerialConfig        *config;
 
 /*===========================================================================*/
 /* Driver macros.                                                            */
