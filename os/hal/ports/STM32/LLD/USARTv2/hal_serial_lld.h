@@ -485,7 +485,9 @@ typedef struct {
   /* Clock frequency for the associated USART/UART.*/                       \
   uint32_t                  clock;                                          \
   /* Mask to be applied on received frames.*/                               \
-  uint8_t                   rxmask;
+  uint8_t                   rxmask;                                         \
+  /* config from start call.*/                                              \
+  const SerialConfig        *config;
 
 /*===========================================================================*/
 /* Driver macros.                                                            */
