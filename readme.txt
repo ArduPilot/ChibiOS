@@ -76,12 +76,17 @@
 *** 20.3.1 ***
 - NEW: Updated debug tools to be independent from the toolchain position:
        they now rely on the environment variable CHIBISTUDIO.
-- FIX: Sector count incorrect in STM32G07/8 EFL driver (bug #1085).
-- FIX: Sector size incorrect in STM32F413 EFL driver (bug #1084).
 - NEW: Added dynamic reconfiguration API to lwIP bindings.
+- FIX: Fixed missing symbols in GCC scatter files (bug #1091).
+- FIX: Fixed wrong SAI1 clock selection for STM32G4xx (bug #1090).
+- FIX: Fixed STM32H7xx ADC problem in dual mode (bug #1089).
+- FIX: Fixed invalid CHSEL DMA setting in STM32 UART drivers (bug #1088).
+- FIX: Fixed sector count incorrect in STM32G07/8 EFL driver (bug #1085).
+- FIX: Fixed sector size incorrect in STM32F413 EFL driver (bug #1084).
 - FIX: Fixed wrong arguments for the cacheBufferInvalidate in the STM32 SPI 
        demo (bug #1086).
 - FIX: Fixed race condition in HAL MAC driver (bug #1083).
+- FIX: Fixed STM32H7 compile fails for I2C4 (bug #1082).
 - FIX: Fixed early interrupts enable in ARMv7-M port (bug #1081).
 - FIX: Fixed I2CD4 interrupt vectors are swapped versus I2CD1-I2CD3 (bug #1080).
 - FIX: Fixed incorrect clock check when using PLLSAI1R in ADCv3 (bug #1079).
