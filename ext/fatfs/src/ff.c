@@ -1038,6 +1038,7 @@ DWORD get_fat (		/* 0xFFFFFFFF:Disk error, 1:Internal error, 2..0x7FFFFFFF:Clust
 			}
 			/* go to default */
 #endif
+            /* fall through */
 		default:
 			val = 1;	/* Internal error */
 		}
