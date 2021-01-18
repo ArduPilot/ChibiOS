@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta http-equiv="Content-Style-Type" content="text/css">
 <link rel="up" title="FatFs" href="../00index_e.html">
 <link rel="alternate" hreflang="ja" title="Japanese" href="../ja/open.html">
@@ -42,19 +42,18 @@ FRESULT f_open (
 <tr><td>FA_OPEN_ALWAYS</td><td>Opens the file if it is existing. If not, a new file will be created.</td></tr>
 <tr><td>FA_OPEN_APPEND</td><td>Same as <tt>FA_OPEN_ALWAYS</tt> except the read/write pointer is set end of the file.</td></tr>
 </table>
-Mode flags of POSIX fopen() corresponds to FatFs mode flags as follows:<br>
-<table class="lst">
+Mode flags in POSIX fopen() function corresponds to FatFs mode flags as follows:<br>
+<table class="lst2">
 <tr><th>POSIX</th><th>FatFs</th></tr>
-<tr><td><tt>"r"</tt></td><td><tt>FA_READ</tt></td></tr>
-<tr><td><tt>"r+"</tt></td><td><tt>FA_READ | FA_WRITE</tt></td></tr>
-<tr><td><tt>"w"</tt></td><td><tt>FA_CREATE_ALWAYS | FA_WRITE</tt></td></tr>
-<tr><td><tt>"w+"</tt></td><td><tt>FA_CREATE_ALWAYS | FA_WRITE | FA_READ</tt></td></tr>
-<tr><td><tt>"a"</tt></td><td><tt>FA_OPEN_APPEND | FA_WRITE</tt></td></tr>
-<tr><td><tt>"a+"</tt></td><td><tt>FA_OPEN_APPEND | FA_WRITE | FA_READ</tt></td></tr>
-<tr><td><tt>"x"</tt><sup>*1</sup></td><td><tt>FA_CREATE_NEW | FA_WRITE</tt></td></tr>
-<tr><td><tt>"x+"</tt><sup>*1</sup></td><td><tt>FA_CREATE_NEW | FA_WRITE | FA_READ</tt></td></tr>
+<tr><td>"r"</td><td>FA_READ</td></tr>
+<tr><td>"r+"</td><td>FA_READ | FA_WRITE</td></tr>
+<tr><td>"w"</td><td>FA_CREATE_ALWAYS | FA_WRITE</td></tr>
+<tr><td>"w+"</td><td>FA_CREATE_ALWAYS | FA_WRITE | FA_READ</td></tr>
+<tr><td>"a"</td><td>FA_OPEN_APPEND | FA_WRITE</td></tr>
+<tr><td>"a+"</td><td>FA_OPEN_APPEND | FA_WRITE | FA_READ</td></tr>
+<tr><td>"wx"</td><td>FA_CREATE_NEW | FA_WRITE</td></tr>
+<tr><td>"w+x"</td><td>FA_CREATE_NEW | FA_WRITE | FA_READ</td></tr>
 </table>
-<sup>*1</sup>: glibc extension
 </dd>
 </dl>
 </div>
@@ -94,7 +93,7 @@ Mode flags of POSIX fopen() corresponds to FatFs mode flags as follows:<br>
 
 <div class="para comp">
 <h4>QuickInfo</h4>
-<p>Always available. Only <tt>FA_READ</tt> and <tt>FA_OPEN_EXISTING</tt> are supported when <tt>FF_FS_READONLY == 1</tt>.</p>
+<p>Always available. Only <tt>FA_READ</tt> and <tt>FA_OPEN_EXISTING</tt> are available for the mode flags when <tt><a href="config.html#fs_readonly">FF_FS_READONLY</a> == 1</tt>.</p>
 </div>
 
 
@@ -112,14 +111,14 @@ int main (void)
     FRESULT fr;     <span class="c">/* FatFs return code */</span>
 
 
-    <span class="c">/* Register work area to the default drive */</span>
+    <span class="c">/* Gives a work area to the default drive */</span>
     f_mount(&amp;FatFs, "", 0);
 
     <span class="c">/* Open a text file */</span>
     fr = <em>f_open</em>(&amp;fil, "message.txt", FA_READ);
     if (fr) return (int)fr;
 
-    <span class="c">/* Read all lines and display it */</span>
+    <span class="c">/* Read every line and display it */</span>
     while (f_gets(line, sizeof line, &amp;fil)) {
         printf(line);
     }
@@ -135,16 +134,16 @@ int main (void)
 
 int main (void)
 {
-    FATFS fs[2];         <span class="c">/* Work area (filesystem object) for logical drives */</span>
+    FATFS fs0, fs1;      <span class="c">/* Work area (filesystem object) for logical drives */</span>
     FIL fsrc, fdst;      <span class="c">/* File objects */</span>
     BYTE buffer[4096];   <span class="c">/* File copy buffer */</span>
     FRESULT fr;          <span class="c">/* FatFs function common result code */</span>
     UINT br, bw;         <span class="c">/* File read/write count */</span>
 
 
-    <span class="c">/* Register work area for each logical drive */</span>
-    f_mount(&amp;fs[0], "0:", 0);
-    f_mount(&amp;fs[1], "1:", 0);
+    <span class="c">/* Gives work area to each logical drive */</span>
+    f_mount(&amp;fs0, "0:", 0);
+    f_mount(&amp;fs1, "1:", 0);
 
     <span class="c">/* Open source file on the drive 1 */</span>
     fr = <em>f_open</em>(&amp;fsrc, "1:file.bin", FA_READ);
@@ -156,10 +155,10 @@ int main (void)
 
     <span class="c">/* Copy source to destination */</span>
     for (;;) {
-        fr = f_read(&amp;fsrc, buffer, sizeof buffer, &amp;br);  <span class="c">/* Read a chunk of source file */</span>
-        if (fr || br == 0) break; <span class="c">/* error or eof */</span>
-        fr = f_write(&amp;fdst, buffer, br, &amp;bw);            <span class="c">/* Write it to the destination file */</span>
-        if (fr || bw &lt; br) break; <span class="c">/* error or disk full */</span>
+        f_read(&amp;fsrc, buffer, sizeof buffer, &amp;br);  <span class="c">/* Read a chunk of data from the source file */</span>
+        if (br == 0) break; <span class="c">/* error or eof */</span>
+        f_write(&amp;fdst, buffer, br, &amp;bw);            <span class="c">/* Write it to the destination file */</span>
+        if (bw &lt; br) break; <span class="c">/* error or disk full */</span>
     }
 
     <span class="c">/* Close open files */</span>
@@ -167,8 +166,8 @@ int main (void)
     f_close(&amp;fdst);
 
     <span class="c">/* Unregister work area prior to discard it */</span>
-    f_mount(NULL, "0:", 0);
-    f_mount(NULL, "1:", 0);
+    f_unmount("0:");
+    f_unmount("1:");
 
     return (int)fr;
 }
