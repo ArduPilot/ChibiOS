@@ -256,7 +256,9 @@ typedef struct {
  *
  * @api
  */
+#ifndef osalDbgAssert
 #define osalDbgAssert(c, remark) chDbgAssert(c, remark)
+#endif
 
 /**
  * @brief   Function parameters check.
