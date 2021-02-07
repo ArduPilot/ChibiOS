@@ -77,6 +77,9 @@
 - FIX: Fixed chsnprintf() sign mode/filler mode conflict (bug #1140)
 - NEW: RT, NIL: Renamed _THREADS_QUEUE_DECL to THREADS_QUEUE_DECL for
        consistency.
+- FIX: Fixed FAT time problem in RTC driver (bug #1142).
+- FIX: Fixed Heap allocation of aligned FIFO objects in chFactory (bug #1141).
+- FIX: Fixed chsnprintf() sign mode/filler mode conflict (bug #1140).
 - FIX: Fixed GCC 10 causes warning in factory module (bug #1139).
 - FIX: Fixed C strict aliasing rules violation causes test cases to fail
        (bug #1138).
