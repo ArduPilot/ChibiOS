@@ -77,6 +77,7 @@
 - FIX: Fixed chsnprintf() sign mode/filler mode conflict (bug #1140)
 - NEW: RT, NIL: Renamed _THREADS_QUEUE_DECL to THREADS_QUEUE_DECL for
        consistency.
+- FIX: Fixed missing STM32F765 from registry (bug #1145).
 - FIX: Fixed wrong macro check on STM32 SPIv3 (bug #1144).
 - FIX: Fixed wrong check on STM32 TIM9 timer (bug #1143).
 - FIX: Fixed FAT time problem in RTC driver (bug #1142).
