@@ -341,22 +341,22 @@ static void serve_usart_irq(UARTDriver *uartp) {
       _uart_rx_error_isr_code(uartp, translate_errors(sr));
     }
     _uart_tx2_isr_code(uartp);
+
+    if ((sr & USART_SR_TC) && (cr1 & USART_CR1_TCIE)) {
+      /* TC interrupt cleared and disabled.*/
+      u->SR = ~USART_SR_TC;
+      u->CR1 = cr1 & ~USART_CR1_TCIE;
+
+      /* End of transmission, a callback is generated.*/
+      _uart_tx2_isr_code(uartp);
+    }
+
+    /* Timeout interrupt sources are only checked if enabled in CR1.*/
+    if ((cr1 & USART_CR1_IDLEIE) && (sr & USART_SR_IDLE)) {
+      _uart_timeout_isr_code(uartp);
+    }
   } else {
     uartp->config->irq_cb(uartp);
-  }
-
-  if ((sr & USART_SR_TC) && (cr1 & USART_CR1_TCIE)) {
-    /* TC interrupt cleared and disabled.*/
-    u->SR = ~USART_SR_TC;
-    u->CR1 = cr1 & ~USART_CR1_TCIE;
-
-    /* End of transmission, a callback is generated.*/
-    _uart_tx2_isr_code(uartp);
-  }
-
-  /* Timeout interrupt sources are only checked if enabled in CR1.*/
-  if ((cr1 & USART_CR1_IDLEIE) && (sr & USART_SR_IDLE)) {
-    _uart_timeout_isr_code(uartp);
   }
 }
 
