@@ -142,7 +142,7 @@ void hal_lld_init(void) {
      board files.*/
   rccResetAHB1(~0);
   rccResetAHB2(~0);
-  rccResetAHB3(~(RCC_AHB3RSTR_FMCRST | RCC_AHB3ENR_QSPIEN | RCC_AHB3RSTR_QSPIRST
+  rccResetAHB3(~(RCC_AHB3RSTR_FMCRST | RCC_AHB3RSTR_QSPIRST |
                  0x80000000U));     /* Was RCC_AHB3RSTR_CPURST in Rev-V.*/
   rccResetAHB4(~(RCC_APB4RSTR_SYSCFGRST | STM32_GPIO_EN_MASK));
   rccResetAPB1L(~0);
