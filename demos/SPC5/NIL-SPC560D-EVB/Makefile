@@ -88,7 +88,7 @@ include $(CHIBIOS)/os/common/startup/e200/compilers/GCC/mk/startup_spc560dxx.mk
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/boards/ST_EVB_SPC560D/board.mk
 include $(CHIBIOS)/os/hal/ports/SPC5/SPC560Dxx/platform.mk
-include $(CHIBIOS)/os/hal/osal/nil/osal.mk
+include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/nil/nil.mk
 include $(CHIBIOS)/os/common/ports/e200/compilers/GCC/mk/port.mk
@@ -103,6 +103,7 @@ LDSCRIPT= $(STARTUPLD)/SPC560D40.ld
 # C sources here.
 CSRC = $(STARTUPSRC) \
        $(KERNSRC) \
+       $(LIBSRC) \
        $(PORTSRC) \
        $(OSALSRC) \
        $(HALSRC) \
@@ -119,7 +120,7 @@ ASMSRC =
 ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 
 INCDIR = $(CHIBIOS)/os/license \
-         $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
+         $(STARTUPINC) $(KERNINC) $(LIBINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
          $(CHIBIOS)/os/various
 
