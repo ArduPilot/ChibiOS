@@ -901,7 +901,6 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                      uint8_t *rxbuf, size_t rxbytes,
                                      sysinterval_t timeout) {
   I2C_TypeDef *dp = i2cp->i2c;
-  systime_t start, end;
   msg_t msg;
 
 #ifdef STM32_I2C_ISR_LIMIT
@@ -933,10 +932,6 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   dmaStreamSetMode(i2cp->dmarx, i2cp->rxdmamode);
   dmaStreamSetMemory0(i2cp->dmarx, rxbuf);
   dmaStreamSetTransactionSize(i2cp->dmarx, rxbytes);
-
-  /* Calculating the time window for the timeout on the busy bus condition.*/
-  start = osalOsGetSystemTimeX();
-  end = osalTimeAddX(start, OSAL_MS2I(STM32_I2C_BUSY_TIMEOUT));
 
   i2cp->in_transaction = true;
 
@@ -983,7 +978,6 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                       uint8_t *rxbuf, size_t rxbytes,
                                       sysinterval_t timeout) {
   I2C_TypeDef *dp = i2cp->i2c;
-  systime_t start, end;
   msg_t msg;
 
 #if defined(STM32F1XX_I2C) && !defined(_ARDUPILOT_)
@@ -1020,10 +1014,6 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   dmaStreamSetMode(i2cp->dmarx, i2cp->rxdmamode);
   dmaStreamSetMemory0(i2cp->dmarx, rxbuf);
   dmaStreamSetTransactionSize(i2cp->dmarx, rxbytes);
-
-  /* Calculating the time window for the timeout on the busy bus condition.*/
-  start = osalOsGetSystemTimeX();
-  end = osalTimeAddX(start, OSAL_MS2I(STM32_I2C_BUSY_TIMEOUT));
 
   i2cp->in_transaction = true;
 
