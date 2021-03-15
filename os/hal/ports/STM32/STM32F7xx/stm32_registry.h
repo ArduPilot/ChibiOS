@@ -866,6 +866,10 @@
 #define STM32_I2C3_TX_DMA_CHN               0x00030008
 
 #define STM32_HAS_I2C4                      TRUE
+#define STM32_I2C4_EVENT_HANDLER            Vector1BC
+#define STM32_I2C4_ERROR_HANDLER            Vector1C0
+#define STM32_I2C4_EVENT_NUMBER             95
+#define STM32_I2C4_ERROR_NUMBER             96
 #define STM32_I2C4_RX_DMA_MSK               (STM32_DMA_STREAM_ID_MSK(1, 2) |\
                                              STM32_DMA_STREAM_ID_MSK(1, 1))
 #define STM32_I2C4_RX_DMA_CHN               0x00000280
