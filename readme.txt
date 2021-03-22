@@ -74,8 +74,9 @@
 *****************************************************************************
 
 *** 20.3.4 ***
+- FIX: Fixed TIM register layout difference for STM32G4 series (bug #1148).
 - FIX: Fixed STM32 QUADSPI driver problem when used with DMAv2 (bug #1147).
-- FIX: Fixed incorrect IRQ vector for PVM (bug #1146)
+- FIX: Fixed incorrect IRQ vector for PVM (bug #1146).
 
 *** 20.3.3 ***
 - FIX: Fixed chsnprintf() sign mode/filler mode conflict (bug #1140)
