@@ -167,8 +167,9 @@ void hal_lld_init(void) {
   irqInit();
 
   /* MPU initialization.*/
-#if (STM32_NOCACHE_SRAM1_SRAM2 == TRUE) || (STM32_NOCACHE_SRAM3 == TRUE)
+#if (STM32_NOCACHE_SRAM1_SRAM2 == TRUE) || (STM32_NOCACHE_SRAM3 == TRUE) || (STM32_NOCACHE_SRAM4 == TRUE)
   {
+#if (STM32_NOCACHE_SRAM1_SRAM2 == TRUE) || (STM32_NOCACHE_SRAM3 == TRUE)
     uint32_t base, size;
 
 #if (STM32_NOCACHE_SRAM1_SRAM2 == TRUE) && (STM32_NOCACHE_SRAM3 == TRUE)
@@ -192,6 +193,15 @@ void hal_lld_init(void) {
                        MPU_RASR_ATTR_NON_CACHEABLE |
                        size |
                        MPU_RASR_ENABLE);
+#endif
+#if (STM32_NOCACHE_SRAM4 == TRUE)
+    mpuConfigureRegion(STM32_NOCACHE_SRAM4_MPU_REGION,
+                       0x38000000U,
+                       MPU_RASR_ATTR_AP_RW_RW |
+                       MPU_RASR_ATTR_NON_CACHEABLE |
+                       MPU_RASR_SIZE_64K |
+                       MPU_RASR_ENABLE);
+#endif
     mpuEnable(MPU_CTRL_PRIVDEFENA);
 
     /* Invalidating data cache to make sure that the MPU settings are taken

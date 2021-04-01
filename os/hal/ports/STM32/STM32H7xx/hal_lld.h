@@ -631,6 +631,21 @@
 #endif
 
 /**
+ * @brief   MPU region to be used for no-cache SRAM4 area.
+ */
+#if !defined(STM32_NOCACHE_SRAM4_MPU_REGION) || defined(__DOXYGEN__)
+#define STM32_NOCACHE_SRAM4_MPU_REGION      MPU_REGION_5
+#endif
+
+/**
+ * @brief   Add no-cache attribute to SRAM4.
+ * @note    MPU region STM32_NOCACHE_SRAM4_MPU_REGION is used if enabled.
+ */
+#if !defined(STM32_NOCACHE_SRAM4) || defined(__DOXYGEN__)
+#define STM32_NOCACHE_SRAM4                 FALSE
+#endif
+
+/**
  * @brief   PWR CR1 initializer.
  */
 #if !defined(STM32_PWR_CR1) || defined(__DOXYGEN__)
