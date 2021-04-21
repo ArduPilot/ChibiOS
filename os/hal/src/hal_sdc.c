@@ -333,7 +333,8 @@ static bool sdc_detect_bus_clk(SDCDriver *sdcp, sdcbusclk_t *clk) {
 
   /* Read switch functions' register.*/
   if (sdc_lld_read_special(sdcp, tmp, N, MMCSD_CMD_SWITCH, 0)) {
-    return HAL_FAILED;
+    *clk = SDC_CLK_25MHz; // always return something
+    return HAL_SUCCESS;
   }
 
   /* Check card capabilities parsing acquired data.*/
@@ -343,7 +344,8 @@ static bool sdc_detect_bus_clk(SDCDriver *sdcp, sdcbusclk_t *clk) {
 
     /* Write constructed command and read operation status in single call.*/
     if (sdc_lld_read_special(sdcp, tmp, N, MMCSD_CMD_SWITCH, cmdarg)) {
-      return HAL_FAILED;
+      *clk = SDC_CLK_25MHz; // always return something
+      return HAL_SUCCESS;
     }
 
     /* Check card answer for success status bits.*/
