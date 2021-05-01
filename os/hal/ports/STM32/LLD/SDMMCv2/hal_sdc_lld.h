@@ -278,6 +278,11 @@ struct SDCDriver {
    */
   SDMMC_TypeDef             *sdmmc;
 
+  /**
+   * @brief   Input clock frequency.
+   */
+  uint32_t                  clkfreq;
+    
   // bouncebuffer to support DMA to all memory regions
   struct bouncebuffer_t *bouncebuffer;
 };
