@@ -426,6 +426,7 @@ void sdc_lld_init(void) {
   SDCD1.rtmo   = SDMMC_READ_TIMEOUT;
   SDCD1.wtmo   = SDMMC_WRITE_TIMEOUT;
   SDCD1.sdmmc  = SDMMC1;
+  SDCD1.clkfreq = STM32_SDMMC1CLK;
   nvicEnableVector(STM32_SDMMC1_NUMBER, STM32_SDC_SDMMC1_IRQ_PRIORITY);
 #endif
 
@@ -435,6 +436,7 @@ void sdc_lld_init(void) {
   SDCD2.rtmo   = SDMMC_READ_TIMEOUT;
   SDCD2.wtmo   = SDMMC_WRITE_TIMEOUT;
   SDCD2.sdmmc  = SDMMC2;
+  SDCD2.clkfreq = STM32_SDMMC2CLK;
   nvicEnableVector(STM32_SDMMC2_NUMBER, STM32_SDC_SDMMC2_IRQ_PRIORITY);
 #endif
 }
@@ -508,6 +510,28 @@ void sdc_lld_stop(SDCDriver *sdcp) {
 }
 
 /**
+ * @brief   Calculates a clock divider for the specified frequency.
+ * @note    The divider is calculated to not exceed the required frequency
+ *          in case of non-integer division.
+ *
+ * @param[in] sdcp      pointer to the @p SDCDriver object
+ * @param[in] f         required frequency
+ */
+static uint32_t sdc_lld_clkdiv(SDCDriver *sdcp, uint32_t f) {
+#ifdef STM32_SDC_MAX_CLOCK
+  if (f > STM32_SDC_MAX_CLOCK) {
+      // apply clock limit for maximum reliability
+      f = STM32_SDC_MAX_CLOCK;
+  }
+#endif
+  if (f >= sdcp->clkfreq) {
+    return sdcp->config->slowdown;
+  }
+
+  return sdcp->config->slowdown + (sdcp->clkfreq + (f * 2) - 1) / (f * 2);
+}
+
+/**
  * @brief   Starts the SDIO clock and sets it to init mode (400kHz or less).
  *
  * @param[in] sdcp      pointer to the @p SDCDriver object
@@ -517,11 +541,8 @@ void sdc_lld_stop(SDCDriver *sdcp) {
 void sdc_lld_start_clk(SDCDriver *sdcp) {
 
   /* Initial clock setting: 400kHz, 1bit mode.*/
-  sdcp->sdmmc->CLKCR  = SDMMC_CLKDIV_LS;
+  sdcp->sdmmc->CLKCR  = sdc_lld_clkdiv(sdcp, 400000);
   sdcp->sdmmc->POWER |= SDMMC_POWER_PWRCTRL_0 | SDMMC_POWER_PWRCTRL_1;
-
-  #warning "need SELCLKRX?"
-  //sdcp->sdmmc->CLKCR |= SDMMC_CLKCR_CLKEN;
 
   /* Clock activation delay.*/
   osalThreadSleep(OSAL_MS2I(STM32_SDC_SDMMC_CLOCK_DELAY));
@@ -536,35 +557,24 @@ void sdc_lld_start_clk(SDCDriver *sdcp) {
  * @notapi
  */
 void sdc_lld_set_data_clk(SDCDriver *sdcp, sdcbusclk_t clk) {
-  uint8_t clkdiv_hs = SDMMC_CLKDIV_HS + sdcp->config->slowdown;
-#if STM32_SDC_SDMMC_50MHZ
+
   if (SDC_CLK_50MHz == clk) {
     sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
 #if STM32_SDC_SDMMC_PWRSAV
-                         clkdiv_hs | SDMMC_CLKCR_BYPASS |
-                         SDMMC_CLKCR_PWRSAV;
+                         sdc_lld_clkdiv(sdcp, 50000000) | SDMMC_CLKCR_PWRSAV;
 #else
-                         clkdiv_hs | SDMMC_CLKCR_BYPASS;
+                         sdc_lld_clkdiv(sdcp, 50000000);
 #endif
   }
   else {
 #if STM32_SDC_SDMMC_PWRSAV
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs |
-                         SDMMC_CLKCR_PWRSAV;
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
+                         sdc_lld_clkdiv(sdcp, 25000000) | SDMMC_CLKCR_PWRSAV;
 #else
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
+                         sdc_lld_clkdiv(sdcp, 25000000);
 #endif
   }
-#else
-  (void)clk;
-
-#if STM32_SDC_SDMMC_PWRSAV
-  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs |
-                       SDMMC_CLKCR_PWRSAV;
-#else
-  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
-#endif
-#endif
 }
 
 /**
