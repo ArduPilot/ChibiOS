@@ -184,6 +184,9 @@ void wspi_lld_stop(WSPIDriver *wspip) {
  * @notapi
  */
 void wspi_lld_command(WSPIDriver *wspip, const wspi_command_t *cmdp) {
+  // Clear Flags from previous trx
+  wspip->qspi->FCR = QUADSPI_FCR_CTEF | QUADSPI_FCR_CTCF |
+                     QUADSPI_FCR_CSMF | QUADSPI_FCR_CTOF;
 
 #if STM32_USE_STM32_D1_WORKAROUND == TRUE
   /* If it is a command without address and alternate phases then the command
@@ -231,6 +234,10 @@ void wspi_lld_send(WSPIDriver *wspip, const wspi_command_t *cmdp,
                   STM32_MDMA_CTCR_SINC_INC;         /* Source incremented.  */
   uint32_t ccr  = STM32_MDMA_CCR_PL(STM32_WSPI_QUADSPI1_MDMA_PRIORITY) |
                   STM32_MDMA_CCR_TEIE;              /* On transfer error.   */
+
+  // Clear Flags from previous trx
+  wspip->qspi->FCR = QUADSPI_FCR_CTEF | QUADSPI_FCR_CTCF |
+                     QUADSPI_FCR_CSMF | QUADSPI_FCR_CTOF;
 
   /* MDMA initializations.*/
   mdmaChannelSetSourceX(wspip->mdma, txbuf);
