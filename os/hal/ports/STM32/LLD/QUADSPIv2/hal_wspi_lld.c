@@ -235,7 +235,7 @@ void wspi_lld_send(WSPIDriver *wspip, const wspi_command_t *cmdp,
   mdmaChannelSetDestinationX(wspip->mdma, &wspip->qspi->DR);
   mdmaChannelSetTransactionSizeX(wspip->mdma, n, 0, 0);
   mdmaChannelSetModeX(wspip->mdma, ctcr, ccr);
-  mdmaChannelSetTrigModeX(wspip->mdma, MDMA_REQUEST_QUADSPI_TC);
+  mdmaChannelSetTrigModeX(wspip->mdma, MDMA_REQUEST_QUADSPI_FIFO_TH);
 
   wspip->qspi->DLR = n - 1;
   wspip->qspi->ABR = cmdp->alt;
@@ -281,7 +281,7 @@ void wspi_lld_receive(WSPIDriver *wspip, const wspi_command_t *cmdp,
   mdmaChannelSetTransactionSizeX(wspip->mdma, n, 0, 0);
   mdmaChannelSetModeX(wspip->mdma, ctcr, ccr);
 
-  mdmaChannelSetTrigModeX(wspip->mdma, MDMA_REQUEST_QUADSPI_TC);
+  mdmaChannelSetTrigModeX(wspip->mdma, MDMA_REQUEST_QUADSPI_FIFO_TH);
 
   wspip->qspi->DLR = n - 1;
   wspip->qspi->ABR = cmdp->alt;
