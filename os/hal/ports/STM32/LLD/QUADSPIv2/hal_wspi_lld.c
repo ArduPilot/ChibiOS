@@ -224,7 +224,7 @@ void wspi_lld_send(WSPIDriver *wspip, const wspi_command_t *cmdp,
                   STM32_MDMA_CTCR_SINC_INC;         /* Source incremented.  */
   uint32_t ccr  = STM32_MDMA_CCR_PL(STM32_WSPI_QUADSPI1_MDMA_PRIORITY) |
                   STM32_MDMA_CCR_CTCIE          |   /* On transfer complete.*/
-                  STM32_MDMA_CCR_TCIE;              /* On transfer error.   */
+                  STM32_MDMA_CCR_TEIE;              /* On transfer error.   */
 
   // Clear Flags from previous trx
   wspip->qspi->FCR = QUADSPI_FCR_CTEF | QUADSPI_FCR_CTCF |
@@ -272,8 +272,8 @@ void wspi_lld_receive(WSPIDriver *wspip, const wspi_command_t *cmdp,
                   STM32_MDMA_CTCR_DINC_INC      |   /* Destination incr.    */
                   STM32_MDMA_CTCR_SINC_FIXED;       /* Source fixed.        */
   uint32_t ccr  = STM32_MDMA_CCR_PL(STM32_WSPI_QUADSPI1_MDMA_PRIORITY) |
-                  STM32_MDMA_CCR_CTCIE          |   /* On transfer complete.*/
-                  STM32_MDMA_CCR_TCIE;              /* On transfer error.   */
+                  STM32_MDMA_CCR_CTCIE          |   /* On channel transfer complete.*/
+                  STM32_MDMA_CCR_TEIE;              /* On transfer error.   */
 
   /* MDMA initializations.*/
   mdmaChannelSetSourceX(wspip->mdma, &wspip->qspi->DR);
