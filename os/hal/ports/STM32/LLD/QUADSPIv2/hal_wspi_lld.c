@@ -73,6 +73,13 @@ static void wspi_lld_serve_mdma_interrupt(WSPIDriver *wspip, uint32_t flags) {
   (void)wspip;
   (void)flags;
 
+  if (wspip->qspi->CCR & QUADSPI_CCR_FMODE_0) {  // Receive mode requires this path
+    /* Portable WSPI ISR code defined in the high level driver, note, it is
+     a macro.*/
+    _wspi_isr_code(wspip);
+
+    mdmaChannelDisableX(wspip->mdma);
+  }
   /* DMA errors handling.*/
 #if defined(STM32_WSPI_MDMA_ERROR_HOOK)
   if ((flags & STM32_MDMA_CISR_TEIF) != 0) {
@@ -360,11 +367,13 @@ void wspi_lld_serve_interrupt(WSPIDriver *wspip) {
   wspip->qspi->FCR = QUADSPI_FCR_CTEF | QUADSPI_FCR_CTCF |
                      QUADSPI_FCR_CSMF | QUADSPI_FCR_CTOF;
 
-  /* Portable WSPI ISR code defined in the high level driver, note, it is
+  if (!(wspip->qspi->CCR & QUADSPI_CCR_FMODE_0)) { // Send mode requires this path
+    /* Portable WSPI ISR code defined in the high level driver, note, it is
      a macro.*/
-  _wspi_isr_code(wspip);
+    _wspi_isr_code(wspip);
 
-  mdmaChannelDisableX(wspip->mdma);
+    mdmaChannelDisableX(wspip->mdma);
+  }
 }
 
 #endif /* HAL_USE_WSPI */
