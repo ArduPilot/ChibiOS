@@ -49,7 +49,7 @@
  * @name    Platform identification
  * @{
  */
-#if defined(STM32G431xx) || defined(STM32G441xx) || defined(STM32G471xx) || \
+#if defined(STM32G431xx) || defined(STM32G441xx) || defined(STM32G471xx) || defined(STM32G491xx) || \
     defined(__DOXYGEN__)
 #define PLATFORM_NAME           "STM32G4 Access Line"
 
@@ -67,6 +67,9 @@
 
 #elif defined(STM32GBK1CB)
 #define PLATFORM_NAME           "STM32G4 Mystery Line"
+
+#elif defined(STM32G491xx)
+#define PLATFORM_NAME           "STM32G4 Mainstream Line"
 
 #else
 #error "STM32G4 device not specified"
