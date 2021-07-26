@@ -263,6 +263,10 @@ void __init_ram_areas(void) {
 #endif
 }
 
+#ifndef CRT1_RAMFUNC_ENABLE
+#define CRT1_RAMFUNC_ENABLE 0
+#endif
+
 /**
  * @brief   Performs the initialization of instruction RAM area.
  */
