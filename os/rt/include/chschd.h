@@ -500,6 +500,8 @@ extern "C" {
 /* If the performance code path has been chosen then all the following
    functions are inlined into the various kernel modules.*/
 #if CH_CFG_OPTIMIZE_SPEED == TRUE
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-align"
 static inline void ch_sch_prio_insert(ch_queue_t *tp, ch_queue_t *qp) {
 
   ch_queue_t *cp = qp;
@@ -512,6 +514,7 @@ static inline void ch_sch_prio_insert(ch_queue_t *tp, ch_queue_t *qp) {
   tp->prev->next = tp;
   cp->prev       = tp;
 }
+#pragma GCC diagnostic pop
 #endif /* CH_CFG_OPTIMIZE_SPEED == TRUE */
 
 /**

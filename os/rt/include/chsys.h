@@ -460,10 +460,13 @@ static inline void chSysUnconditionalUnlock(void) {
  *
  * @xclass
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-align"
 static inline thread_t *chSysGetIdleThreadX(void) {
 
   return (thread_t *)ch.rlist.pqueue.prev;
 }
+#pragma GCC diagnostic pop
 #endif /* CH_CFG_NO_IDLE_THREAD == FALSE */
 
 #endif /* CHSYS_H */
