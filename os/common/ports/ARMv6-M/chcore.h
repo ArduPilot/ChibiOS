@@ -416,7 +416,7 @@ struct port_context {
   #define port_switch(ntp, otp) do {                                        \
     struct port_intctx *r13 = (struct port_intctx *)__get_PSP();            \
     if ((stkalign_t *)(void *)(r13 - 1) < (otp)->wabase) {                  \
-      chSysHalt("stack overflow");                                          \
+      CH_CFG_STACK_OVERFLOW_HOOK(otp);										\
     }                                                                       \
     __port_switch(ntp, otp);                                                \
   } while (false)
