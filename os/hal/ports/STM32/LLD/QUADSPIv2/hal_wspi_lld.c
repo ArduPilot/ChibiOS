@@ -144,6 +144,7 @@ void wspi_lld_start(WSPIDriver *wspip) {
                       QUADSPI_CR_TCIE | QUADSPI_CR_DMAEN | QUADSPI_CR_EN | QUADSPI_CR_SSHIFT;
   wspip->qspi->FCR = QUADSPI_FCR_CTEF | QUADSPI_FCR_CTCF |
                      QUADSPI_FCR_CSMF | QUADSPI_FCR_CTOF;
+#endif
 }
 
 /**
