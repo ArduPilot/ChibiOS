@@ -245,6 +245,8 @@ static void i2c_lld_set_filter(I2CDriver *i2cp) {
   }
 
   dp->FLTR = (I2C_FLTR_ANOFF) | (I2C_FLTR_DNF & filter);
+#else
+  (void)i2cp;
 #endif // I2C_FLTR_ANOFF
 }
 
