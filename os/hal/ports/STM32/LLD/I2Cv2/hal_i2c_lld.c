@@ -461,6 +461,8 @@ static bool i2c_lld_check_isr_limit(I2CDriver *i2cp) {
         _i2c_wakeup_error_isr(i2cp);
         return true;
     }
+#else
+    (void)i2cp;
 #endif // STM32_I2C_ISR_LIMIT
     return false;
 }
