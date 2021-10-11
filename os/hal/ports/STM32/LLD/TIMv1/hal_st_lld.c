@@ -282,6 +282,30 @@
 #define ST_ENABLE_STOP()                    DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM14_STOP
 #endif
 
+#elif STM32_ST_USE_TIMER == 15
+
+#if !STM32_HAS_TIM15
+#error "TIM15 not present in the selected device"
+#endif
+
+#if (OSAL_ST_RESOLUTION == 32) && !STM32_TIM15_IS_32BITS
+#error "TIM15 is not a 32bits timer"
+#endif
+
+#define ST_HANDLER                          STM32_TIM15_HANDLER
+#define ST_NUMBER                           STM32_TIM15_NUMBER
+#define ST_CLOCK_SRC                        STM32_TIMCLK1
+#define ST_ENABLE_CLOCK()                   rccEnableTIM15(true)
+#if defined(STM32F1XX)
+#define ST_ENABLE_STOP()                    DBGMCU->CR |= DBGMCU_CR_DBG_TIM15_STOP
+#elif defined(STM32L4XX) || defined(STM32L4XXP) || defined(STM32G4XX)
+#define ST_ENABLE_STOP()                    DBGMCU->APB1FZR1 |= DBGMCU_APB2FZ_DBG_TIM15_STOP
+#elif defined(STM32H7XX)
+#define ST_ENABLE_STOP()                    DBGMCU->APB1LFZ1 |= DBGMCU_APB2FZ_DBG_TIM15
+#else
+#define ST_ENABLE_STOP()                    DBGMCU->APB1FZ |= DBGMCU_APB2_FZ_DBG_TIM15_STOP
+#endif
+
 #elif STM32_ST_USE_TIMER == 21
 
 #if !STM32_HAS_TIM21
