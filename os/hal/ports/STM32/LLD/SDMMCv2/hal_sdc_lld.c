@@ -52,11 +52,17 @@
 #define SDMMC_CLKDIV_HS         (2 - 2)
 #define SDMMC_CLKDIV_LS         (120 - 2)
 
-#define SDMMC_WRITE_TIMEOUT                                                \
+#define SDMMC1_WRITE_TIMEOUT                                                \
   (((STM32_SDMMC1CLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                     \
    STM32_SDC_SDMMC_WRITE_TIMEOUT)
-#define SDMMC_READ_TIMEOUT                                                 \
+#define SDMMC2_WRITE_TIMEOUT                                                \
+  (((STM32_SDMMC2CLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                     \
+   STM32_SDC_SDMMC_WRITE_TIMEOUT)
+#define SDMMC1_READ_TIMEOUT                                                 \
   (((STM32_SDMMC1CLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                     \
+   STM32_SDC_SDMMC_READ_TIMEOUT)
+#define SDMMC2_READ_TIMEOUT                                                 \
+  (((STM32_SDMMC2CLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                     \
    STM32_SDC_SDMMC_READ_TIMEOUT)
 
 #define SDMMC1_DMA_CHANNEL                                                  \
@@ -359,6 +365,7 @@ static void sdc_lld_error_cleanup(SDCDriver *sdcp,
 /* Driver interrupt handlers.                                                */
 /*===========================================================================*/
 
+
 /**
  * @brief   SDMMC1 IRQ handler.
  * @details It just wakes transaction thread, errors handling is performed in
@@ -423,8 +430,8 @@ void sdc_lld_init(void) {
 #if STM32_SDC_USE_SDMMC1
   sdcObjectInit(&SDCD1);
   SDCD1.thread = NULL;
-  SDCD1.rtmo   = SDMMC_READ_TIMEOUT;
-  SDCD1.wtmo   = SDMMC_WRITE_TIMEOUT;
+  SDCD1.rtmo   = SDMMC1_READ_TIMEOUT;
+  SDCD1.wtmo   = SDMMC1_WRITE_TIMEOUT;
   SDCD1.sdmmc  = SDMMC1;
   SDCD1.clkfreq = STM32_SDMMC1CLK;
   nvicEnableVector(STM32_SDMMC1_NUMBER, STM32_SDC_SDMMC1_IRQ_PRIORITY);
@@ -433,8 +440,8 @@ void sdc_lld_init(void) {
 #if STM32_SDC_USE_SDMMC2
   sdcObjectInit(&SDCD2);
   SDCD2.thread = NULL;
-  SDCD2.rtmo   = SDMMC_READ_TIMEOUT;
-  SDCD2.wtmo   = SDMMC_WRITE_TIMEOUT;
+  SDCD2.rtmo   = SDMMC2_READ_TIMEOUT;
+  SDCD2.wtmo   = SDMMC2_WRITE_TIMEOUT;
   SDCD2.sdmmc  = SDMMC2;
   SDCD2.clkfreq = STM32_SDMMC2CLK;
   nvicEnableVector(STM32_SDMMC2_NUMBER, STM32_SDC_SDMMC2_IRQ_PRIORITY);
