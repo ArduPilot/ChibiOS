@@ -70,9 +70,10 @@ void ff_rel_grant(FF_SYNC_t sobj) {
 /*------------------------------------------------------------------------*/
 /* Allocate a memory block                                                */
 /*------------------------------------------------------------------------*/
-void *ff_memalloc(UINT size) {
+extern void *malloc_dma(size_t size);
 
-  return malloc(size);
+void *ff_memalloc(UINT size) {
+  return malloc_dma(size);	/* Allocate a new memory block with POSIX API */
 }
 
 /*------------------------------------------------------------------------*/
