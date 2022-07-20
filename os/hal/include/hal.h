@@ -229,6 +229,10 @@
 #define HAL_USE_WSPI                        FALSE
 #endif
 
+#if !defined(HAL_USE_USB_MSD)
+#define HAL_USE_USB_MSD                        FALSE
+#endif
+
 /*===========================================================================*/
 /* Driver data structures and types.                                         */
 /*===========================================================================*/
@@ -330,7 +334,7 @@ static inline halfreq_t halClockGetPointX(halclkpt_t clkpt) {
 #include "hal_usb.h"
 #include "hal_wdg.h"
 #include "hal_wspi.h"
-
+#include "hal_usb_msd.h"
 /*
  *  The ST driver is a special case, it is only included if the OSAL is
  *  configured to require it.
