@@ -217,7 +217,9 @@ extern "C" {
                 BaseBlockDevice *blkdev, uint8_t *blkbuf,
                 uint8_t *txbuf,
                 const scsi_inquiry_response_t *scsi_inquiry_response,
-                const scsi_unit_serial_number_inquiry_response_t *serialInquiry);
+                const scsi_unit_serial_number_inquiry_response_t *serialInquiry,
+                scsi_block_filesystem_access_t blockFilesystemAccess,
+                scsi_free_filesystem_access_t freeFilesystemAccess);
   void msdStop(USBMassStorageDriver *msdp);
   bool msd_request_hook(USBDriver *usbp);
 #ifdef __cplusplus

@@ -368,9 +368,7 @@ static bool data_read_write10(SCSITarget *scsip, const uint8_t *cmd) {
     for (i=0; i<req.blk_cnt; i++) {
       if (cmd[0] == SCSI_CMD_READ_10) {
         // TODO: block error handling
-        palToggleLine(HAL_GPIO_PIN_SIG1);
         blkRead(blkdev, req.first_lba + i, buf, 1);
-        palToggleLine(HAL_GPIO_PIN_SIG1);
         tr->transmit_async(tr, buf, bs);
       }
       else {
