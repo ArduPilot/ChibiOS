@@ -199,6 +199,18 @@ typedef uint32_t (*scsi_transport_receive_t)(const SCSITransport *transport,
                                              uint8_t *data, size_t len);
 
 /**
+ * @brief Type of block filesystem call.
+ * 
+ */
+typedef void (*scsi_block_filesystem_access_t)(void);
+
+/**
+ * @brief Type of free filesystem call.
+ * 
+ */
+typedef void (*scsi_free_filesystem_access_t)(void);
+
+/**
  * @brief   SCSI transport structure.
  */
 struct SCSITransport {
@@ -216,6 +228,17 @@ struct SCSITransport {
    * @brief   Receive call provided by lower level driver.
    */
   scsi_transport_receive_t      receive;
+
+  /**
+   * @brief   Block Filesystem access.
+   */
+  scsi_block_filesystem_access_t block_filesystem_access;
+
+  /**
+   * @brief   Free Filesystem access.
+   */
+  scsi_free_filesystem_access_t free_filesystem_access;
+
   /**
    * @brief   Transport handler provided by lower level driver.
    */

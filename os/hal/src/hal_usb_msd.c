@@ -267,11 +267,17 @@ static THD_FUNCTION(usb_msd_worker, arg) {
       osalThreadSleepMilliseconds(50);
     }
     else if (cbw_valid(&msdp->cbw, status) && cbw_meaningful(&msdp->cbw)) {
+      if (msdp->scsi_transport.block_filesystem_access) {
+        msdp->scsi_transport.block_filesystem_access();
+      }
       if (SCSI_SUCCESS == scsiExecCmd(&msdp->scsi_target, msdp->cbw.cmd_data)) {
         send_csw(msdp, CSW_STATUS_PASSED, 0);
       }
       else {
         send_csw(msdp, CSW_STATUS_FAILED, scsiResidue(&msdp->scsi_target));
+      }
+      if (msdp->scsi_transport.free_filesystem_access) {
+        msdp->scsi_transport.free_filesystem_access();
       }
     }
     else {
@@ -414,7 +420,9 @@ void msdStart(USBMassStorageDriver *msdp, USBDriver *usbp,
               BaseBlockDevice *blkdev, uint8_t *blkbuf,
               uint8_t *txbuf,
               const scsi_inquiry_response_t *inquiry,
-              const scsi_unit_serial_number_inquiry_response_t *serialInquiry) {
+              const scsi_unit_serial_number_inquiry_response_t *serialInquiry,
+              scsi_block_filesystem_access_t blockFilesystemAccess,
+              scsi_free_filesystem_access_t freeFilesystemAccess) {
 
   osalDbgCheck((msdp != NULL) && (usbp != NULL)
               && (blkdev != NULL) && (blkbuf != NULL));
@@ -434,6 +442,8 @@ void msdStart(USBMassStorageDriver *msdp, USBDriver *usbp,
   msdp->scsi_transport.transmit_async = scsi_transport_transmit_async;
   msdp->scsi_transport.receive  = scsi_transport_receive;
 
+  msdp->scsi_transport.block_filesystem_access = blockFilesystemAccess;
+  msdp->scsi_transport.free_filesystem_access = freeFilesystemAccess;
 
   if (NULL == inquiry) {
     msdp->scsi_config.inquiry_response = &default_scsi_inquiry_response;
