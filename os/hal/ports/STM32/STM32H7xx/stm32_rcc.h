@@ -757,14 +757,19 @@
  *
  * @api
  */
+#ifdef RCC_AHB2ENR_D2SRAM3EN
 #define rccEnableSRAM3(lp) rccEnableAHB2(RCC_AHB2ENR_D2SRAM3EN, lp)
+#else
+#endif
 
 /**
  * @brief   Disables the SRAM3 clock.
  *
  * @api
  */
+#ifdef RCC_AHB2ENR_D2SRAM3EN
 #define rccDisableSRAM3() rccDisableAHB2(RCC_AHB2ENR_D2SRAM3EN)
+#endif
 /** @} */
 
 /**
@@ -974,6 +979,7 @@
  *
  * @api
  */
+#ifdef RCC_AHB1ENR_USB2OTGFSEN
 #define rccEnableUSB2_OTG_FS(lp) rccEnableAHB1(RCC_AHB1ENR_USB2OTGFSEN, lp)
 
 /**
@@ -982,13 +988,16 @@
  * @api
  */
 #define rccDisableUSB2_OTG_FS() rccDisableAHB1(RCC_AHB1ENR_USB2OTGFSEN)
+#endif
 
 /**
  * @brief   Resets the USB2_OTG_FS peripheral.
  *
  * @api
  */
+#ifdef RCC_AHB1RSTR_USB2OTGFSRST
 #define rccResetUSB2_OTG_FS() rccResetAHB1(RCC_AHB1RSTR_USB2OTGFSRST)
+#endif
 
 /**
  * @brief   Enables the USB2_OTG_HS ULPI peripheral clock.
@@ -997,14 +1006,18 @@
  *
  * @api
  */
+#ifdef RCC_AHB1ENR_USB2OTGHSULPIEN
 #define rccEnableUSB2_HSULPI(lp) rccEnableAHB1(RCC_AHB1ENR_USB2OTGHSULPIEN, lp)
+#endif
 
 /**
  * @brief   Disables the USB2_OTG_HS peripheral clock.
  *
  * @api
  */
+#ifdef RCC_AHB1ENR_USB2OTGHSULPIEN
 #define rccDisableUSB2_HSULPI() rccDisableAHB1(RCC_AHB1ENR_USB2OTGHSULPIEN)
+#endif
 /** @} */
 
 /**

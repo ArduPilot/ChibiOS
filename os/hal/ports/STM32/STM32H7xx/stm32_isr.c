@@ -66,9 +66,11 @@
 
 #include "stm32_fdcan1.inc"
 #include "stm32_fdcan2.inc"
-
+#if defined(STM32H730xx)
+#include "stm32_octospi1.inc"
+#else
 #include "stm32_quadspi1.inc"
-
+#endif
 #include "stm32_sdmmc1.inc"
 #include "stm32_sdmmc2.inc"
 
@@ -119,8 +121,11 @@ void irqInit(void) {
   fdcan2_irq_init();
 
   mdma_irq_init();
-
+#if defined(STM32H730xx)
+  octospi1_irq_init();
+#else
   quadspi1_irq_init();
+#endif
 
   sdmmc1_irq_init();
   sdmmc2_irq_init();
@@ -170,7 +175,11 @@ void irqDeinit(void) {
 
   mdma_irq_deinit();
 
+#if defined(STM32H730xx)
+  octospi1_irq_deinit();
+#else
   quadspi1_irq_deinit();
+#endif
 
   sdmmc1_irq_deinit();
   sdmmc2_irq_deinit();

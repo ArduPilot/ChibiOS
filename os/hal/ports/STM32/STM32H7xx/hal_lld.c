@@ -108,7 +108,7 @@ static inline void init_pwr(void) {
   PWR->CR3   = STM32_PWR_CR3;   /* Other bits, lower byte is not changed.   */
   PWR->CPUCR = STM32_PWR_CPUCR;
   PWR->D3CR  = STM32_VOS;
-#if !defined(STM32_ENFORCE_H7_REV_XY)
+#if !defined(STM32_ENFORCE_H7_REV_XY) && !defined(STM32H730xx)
   SYSCFG->PWRCR = STM32_ODEN;
 #endif
   while ((PWR->D3CR & PWR_D3CR_VOSRDY) == 0)
@@ -142,8 +142,13 @@ void hal_lld_init(void) {
      board files.*/
   rccResetAHB1(~0);
   rccResetAHB2(~0);
-  rccResetAHB3(~(RCC_AHB3RSTR_FMCRST | RCC_AHB3RSTR_QSPIRST |
-                 0x80000000U));     /* Was RCC_AHB3RSTR_CPURST in Rev-V.*/
+  rccResetAHB3(~(RCC_AHB3RSTR_FMCRST |
+#if defined(STM32H730xx)
+                RCC_AHB3RSTR_OSPI1RST |
+#else
+                RCC_AHB3RSTR_QSPIRST |
+#endif
+                0x80000000U));     /* Was RCC_AHB3RSTR_CPURST in Rev-V.*/
   rccResetAHB4(~(RCC_APB4RSTR_SYSCFGRST | STM32_GPIO_EN_MASK));
   rccResetAPB1L(~0);
   rccResetAPB1H(~0);
@@ -384,11 +389,19 @@ void stm32_clock_init(void) {
   RCC->D3CFGR = STM32_D3PPRE4;
 
   /* Peripherals clocks.*/
-  RCC->D1CCIPR  = STM32_CKPERSEL  | STM32_SDMMCSEL    | STM32_QSPISEL    |
-                  STM32_FMCSEL;
+  RCC->D1CCIPR  = STM32_CKPERSEL  | STM32_SDMMCSEL    | STM32_FMCSEL     |
+#if defined(STM32H730xx)
+                  STM32_OSPISEL;
+#else
+                  STM32_QSPISEL;
+#endif
   RCC->D2CCIP1R = STM32_SWPSEL    | STM32_FDCANSEL    | STM32_DFSDM1SEL  |
                   STM32_SPDIFSEL  | STM32_SPDIFSEL    | STM32_SPI45SEL   |
+#if defined(STM32H730xx)  
+                  STM32_SPI123SEL | STM32_SAI1SEL;
+#else
                   STM32_SPI123SEL | STM32_SAI23SEL    | STM32_SAI1SEL;
+#endif
   RCC->D2CCIP2R = STM32_LPTIM1SEL | STM32_CECSEL      | STM32_USBSEL     |
                   STM32_I2C123SEL | STM32_RNGSEL      | STM32_USART16SEL |
                   STM32_USART234578SEL;
@@ -424,7 +437,9 @@ void stm32_clock_init(void) {
   /* RAM1 2 and 3 clocks enabled.*/
   rccEnableSRAM1(true);
   rccEnableSRAM2(true);
+#ifdef rccEnableSRAM3
   rccEnableSRAM3(true);
+#endif
 #endif /* STM32_NO_INIT */
 }
 

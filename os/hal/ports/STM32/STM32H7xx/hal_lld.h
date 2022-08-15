@@ -71,6 +71,9 @@
 #elif defined(STM32H750xx)
 #define PLATFORM_NAME           "STM32H750 Value Line Very High Performance with DSP and FPU"
 
+#elif defined(STM32H730xx)
+#define PLATFORM_NAME           "STM32H730 Value Line Very High Performance with DSP and FPU"
+
 #else
 #error "STM32H7xx device not specified"
 #endif
@@ -92,7 +95,11 @@
 /**
  * @brief   Absolute maximum system clock.
  */
+#if defined(STM32H730xx)
+#define STM32_SYSCLK_MAX                550000000
+#else
 #define STM32_SYSCLK_MAX                480000000
+#endif
 
 /**
  * @brief   Maximum SYSCLK clock frequency without voltage boost.
@@ -107,7 +114,11 @@
 /**
  * @brief   Maximum HSE clock frequency.
  */
+#if defined(STM32H730xx)
+#define STM32_HSECLK_MAX                55000000
+#else
 #define STM32_HSECLK_MAX                48000000
+#endif
 
 /**
  * @brief   Maximum HSE clock frequency using an external source.
@@ -306,7 +317,12 @@
 
 #define RCC_D1CCIPR_CKPERSEL_VALUE(n)   ((n) << RCC_D1CCIPR_CKPERSEL_Pos)
 #define RCC_D1CCIPR_SDMMCSEL_VALUE(n)   ((n) << RCC_D1CCIPR_SDMMCSEL_Pos)
+#if STM32_HAS_QUADSPI1 || STM32_HAS_QUADSPI2
 #define RCC_D1CCIPR_QSPISEL_VALUE(n)    ((n) << RCC_D1CCIPR_QSPISEL_Pos)
+#endif
+#if STM32_HAS_OCTOSPI1 || STM32_HAS_OCTOSPI2
+#define RCC_D1CCIPR_OCTOSPISEL_VALUE(n)    ((n) << RCC_D1CCIPR_OCTOSPISEL_Pos)
+#endif
 #define RCC_D1CCIPR_FMCSEL_VALUE(n)     ((n) << RCC_D1CCIPR_FMCSEL_Pos)
 
 #define RCC_D2CCIP1R_SWPSEL_VALUE(n)    ((n) << RCC_D2CCIP1R_SWPSEL_Pos)
@@ -315,15 +331,20 @@
 #define RCC_D2CCIP1R_SPDIFSEL_VALUE(n)  ((n) << RCC_D2CCIP1R_SPDIFSEL_Pos)
 #define RCC_D2CCIP1R_SPI45SEL_VALUE(n)  ((n) << RCC_D2CCIP1R_SPI45SEL_Pos)
 #define RCC_D2CCIP1R_SPI123SEL_VALUE(n) ((n) << RCC_D2CCIP1R_SPI123SEL_Pos)
-#define RCC_D2CCIP1R_SAI23SEL_VALUE(n)  ((n) << RCC_D2CCIP1R_SAI23SEL_Pos)
 #define RCC_D2CCIP1R_SAI1SEL_VALUE(n)   ((n) << RCC_D2CCIP1R_SAI1SEL_Pos)
 
 #define RCC_D2CCIP2R_LPTIM1SEL_VALUE(n) ((n) << RCC_D2CCIP2R_LPTIM1SEL_Pos)
 #define RCC_D2CCIP2R_CECSEL_VALUE(n)    ((n) << RCC_D2CCIP2R_CECSEL_Pos)
 #define RCC_D2CCIP2R_USBSEL_VALUE(n)    ((n) << RCC_D2CCIP2R_USBSEL_Pos)
-#define RCC_D2CCIP2R_I2C123SEL_VALUE(n) ((n) << RCC_D2CCIP2R_I2C123SEL_Pos)
 #define RCC_D2CCIP2R_RNGSEL_VALUE(n)    ((n) << RCC_D2CCIP2R_RNGSEL_Pos)
+#if defined(STM32H730xx)
+#define RCC_D2CCIP2R_I2C123SEL_VALUE(n) ((n) << RCC_D2CCIP2R_I2C1235SEL_Pos)
+#define RCC_D2CCIP2R_USART16SEL_VALUE(n) ((n) << RCC_D2CCIP2R_USART16910SEL_Pos)
+#else
+#define RCC_D2CCIP1R_SAI23SEL_VALUE(n)  ((n) << RCC_D2CCIP1R_SAI23SEL_Pos)
+#define RCC_D2CCIP2R_I2C123SEL_VALUE(n) ((n) << RCC_D2CCIP2R_I2C123SEL_Pos)
 #define RCC_D2CCIP2R_USART16SEL_VALUE(n) ((n) << RCC_D2CCIP2R_USART16SEL_Pos)
+#endif
 #define RCC_D2CCIP2R_USART234578SEL_VALUE(n) ((n) << RCC_D2CCIP2R_USART28SEL_Pos)
 
 #define RCC_D3CCIPR_SPI6SEL_VALUE(n)    ((n) << RCC_D3CCIPR_SPI6SEL_Pos)
@@ -440,12 +461,22 @@
 #define STM32_SDMMCSEL_PLL1_Q_CK        RCC_D1CCIPR_SDMMCSEL_VALUE(0U)
 #define STM32_SDMMCSEL_PLL2_R_CK        RCC_D1CCIPR_SDMMCSEL_VALUE(1U)
 
+#if STM32_HAS_QUADSPI1 || STM32_HAS_QUADSPI2
 #define STM32_QSPISEL_HCLK              RCC_D1CCIPR_QSPISEL_VALUE(0U)
 #define STM32_QSPISEL_PLL1_Q_CK         RCC_D1CCIPR_QSPISEL_VALUE(1U)
 #define STM32_QSPISEL_PLL2_R_CK         RCC_D1CCIPR_QSPISEL_VALUE(2U)
 #define STM32_QSPISEL_PER_CK            RCC_D1CCIPR_QSPISEL_VALUE(3U)
-
 #define STM32_FMCSEL_HCLK               RCC_D1CCIPR_FMCSEL_VALUE(0U)
+#endif
+
+#if STM32_HAS_OCTOSPI1 || STM32_HAS_OCTOSPI2
+#define STM32_OSPISEL_HCLK              RCC_D1CCIPR_OCTOSPISEL_VALUE(0U)
+#define STM32_OSPISEL_PLL1_Q_CK         RCC_D1CCIPR_OCTOSPISEL_VALUE(1U)
+#define STM32_OSPISEL_PLL2_R_CK         RCC_D1CCIPR_OCTOSPISEL_VALUE(2U)
+#define STM32_OSPISEL_PER_CK            RCC_D1CCIPR_OCTOSPISEL_VALUE(3U)
+#define STM32_FMCSEL_HCLK               RCC_D1CCIPR_FMCSEL_VALUE(0U)
+#endif
+
 #define STM32_FMCSEL_PLL1_Q_CK          RCC_D1CCIPR_FMCSEL_VALUE(1U)
 #define STM32_FMCSEL_PLL2_R_CK          RCC_D1CCIPR_FMCSEL_VALUE(2U)
 #define STM32_FMCSEL_PER_CK             RCC_D1CCIPR_FMCSEL_VALUE(3U)
@@ -478,11 +509,13 @@
 #define STM32_SPI123SEL_I2S_CKIN        RCC_D2CCIP1R_SPI123SEL_VALUE(3U)
 #define STM32_SPI123SEL_PER_CK          RCC_D2CCIP1R_SPI123SEL_VALUE(4U)
 
+#ifdef RCC_D2CCIP1R_SAI23SEL_VALUE
 #define STM32_SAI23SEL_PLL1_Q_CK        RCC_D2CCIP1R_SAI23SEL_VALUE(0U)
 #define STM32_SAI23SEL_PLL2_P_CK        RCC_D2CCIP1R_SAI23SEL_VALUE(1U)
 #define STM32_SAI23SEL_PLL3_P_CK        RCC_D2CCIP1R_SAI23SEL_VALUE(2U)
 #define STM32_SAI23SEL_I2S_CKIN         RCC_D2CCIP1R_SAI23SEL_VALUE(3U)
 #define STM32_SAI23SEL_PER_CK           RCC_D2CCIP1R_SAI23SEL_VALUE(4U)
+#endif
 
 #define STM32_SAI1SEL_PLL1_Q_CK         RCC_D2CCIP1R_SAI1SEL_VALUE(0U)
 #define STM32_SAI1SEL_PLL2_P_CK         RCC_D2CCIP1R_SAI1SEL_VALUE(1U)
@@ -1100,15 +1133,31 @@
 /**
  * @brief   QSPI clock source.
  */
+#if STM32_HAS_QUADSPI1 || STM32_HAS_QUADSPI2
 #if !defined(STM32_QSPISEL) || defined(__DOXYGEN__)
 #define STM32_QSPISEL                       STM32_QSPISEL_HCLK
+#endif
+#endif
+
+/**
+ * @brief   QCTOSPI clock source.
+ */
+#if STM32_HAS_OCTOSPI1 || STM32_HAS_OCTOSPI2
+#if !defined(STM32_OSPISEL) || defined(__DOXYGEN__)
+#define STM32_OSPISEL                       STM32_OSPISEL_HCLK
+#endif
 #endif
 
 /**
  * @brief   FMC clock source.
  */
 #if !defined(STM32_FMCSEL) || defined(__DOXYGEN__)
+#if defined(STM32_QSPISEL_HCLK)
 #define STM32_FMCSEL                        STM32_QSPISEL_HCLK
+#endif
+#if defined(STM32_OSPISEL_HCLK)
+#define STM32_FMCSEL                        STM32_OSPISEL_HCLK
+#endif
 #endif
 
 /**
@@ -1156,7 +1205,7 @@
 /**
  * @brief   SAI23 clock source.
  */
-#if !defined(STM32_SAI23SEL) || defined(__DOXYGEN__)
+#if (!defined(STM32_SAI23SEL) && defined(STM32_SAI23SEL_PLL1_Q_CK)) || defined(__DOXYGEN__)
 #define STM32_SAI23SEL                      STM32_SAI23SEL_PLL1_Q_CK
 #endif
 
@@ -1300,6 +1349,10 @@
 #error "Using a wrong mcuconf.h file, STM32H753_MCUCONF not defined"
 #endif
 
+#if defined(STM32H730xx) && !defined(STM32H730_MCUCONF)
+#error "Using a wrong mcuconf.h file, STM32H730_MCUCONF not defined"
+#endif
+
 #if defined(STM32H745xx)&& !defined(STM32H745_MCUCONF)
 #error "Using a wrong mcuconf.h file, STM32H745_MCUCONF not defined"
 #endif
@@ -1339,7 +1392,11 @@
 #define STM32_2WS_THRESHOLD         210000000U
 #define STM32_3WS_THRESHOLD         225000000U
 #define STM32_4WS_THRESHOLD         240000000U
+#if defined(STM32H730xx)
+#define STM32_PLLOUT_MAX            550000000U
+#else
 #define STM32_PLLOUT_MAX            480000000U
+#endif
 #define STM32_PLLOUT_MIN            1500000U
 
 #elif STM32_VOS == STM32_VOS_SCALE2
@@ -1746,8 +1803,8 @@
 /**
  * @brief   PLL1 DIVP field.
  */
-#if ((STM32_PLL1_DIVP_VALUE >= 2) && (STM32_PLL1_DIVP_VALUE <= 128) &&      \
-     ((STM32_PLL1_DIVP_VALUE & 1U) == 0U)) ||                               \
+#if (((STM32_PLL1_DIVP_VALUE >= 2) || ((STM32_PLL1_DIVP_VALUE == 1) && defined(STM32H730xx))) \
+    && (STM32_PLL1_DIVP_VALUE <= 128)) ||           \
     defined(__DOXYGEN__)
 #define STM32_PLL1_DIVP             ((STM32_PLL1_DIVP_VALUE - 1U) << 9U)
 #else
@@ -2777,6 +2834,7 @@
 #error "invalid source selected for STM32_SAI1SEL clock"
 #endif
 
+#ifdef STM32_SAI23SEL
 #if (STM32_SAI23SEL == STM32_SAI23SEL_PLL1_Q_CK) || defined(__DOXYGEN__)
 /**
  * @brief   SAI2 clock.
@@ -2802,6 +2860,7 @@
 #define STM32_SAI3CLK               STM32_PER_CK
 #else
 #error "invalid source selected for STM32_SAI23SEL clock"
+#endif
 #endif
 
 #if (STM32_SAI4ASEL == STM32_SAI4ASEL_PLL1_Q_CK) || defined(__DOXYGEN__)
@@ -2874,6 +2933,7 @@
 #error "invalid source selected for STM32_SDMMCxSEL clock"
 #endif
 
+#if STM32_HAS_QUADSPI1 || STM32_HAS_QUADSPI2
 #if (STM32_QSPISEL == STM32_QSPISEL_HCLK) || defined(__DOXYGEN__)
 /**
  * @brief   QSPI frequency.
@@ -2888,6 +2948,25 @@
 #define STM32_QSPICLK               STM32_PER_CK
 #else
 #error "invalid source selected for STM32_QSPISEL clock"
+#endif
+#endif
+
+#if STM32_HAS_OCTOSPI1 || STM32_HAS_OCTOSPI2
+#if (STM32_OSPISEL == STM32_OSPISEL_HCLK) || defined(__DOXYGEN__)
+/**
+ * @brief   OSPI frequency.
+ */
+#define STM32_OSPICLK               STM32_HCLK
+
+#elif STM32_OSPISEL == STM32_OSPISEL_PLL1_Q_CK
+#define STM32_OSPICLK               STM32_PLL1_Q_CK
+#elif STM32_OSPISEL == STM32_OSPISEL_PLL2_R_CK
+#define STM32_OSPICLK               STM32_PLL2_R_CK
+#elif STM32_OSPISEL == STM32_OSPISEL_PER_CK
+#define STM32_OSPICLK               STM32_PER_CK
+#else
+#error "invalid source selected for STM32_OSPISEL clock"
+#endif
 #endif
 
 #if (STM32_FMCSEL == STM32_FMCSEL_HCLK) || defined(__DOXYGEN__)

@@ -31,7 +31,8 @@
 
 /* Cores.*/
 #if defined(STM32H750xx) || defined(STM32H742xx) ||                         \
-    defined(STM32H743xx) || defined(STM32H753xx)
+    defined(STM32H743xx) || defined(STM32H753xx) ||                         \
+    defined(STM32H730xx)
 #define STM32_HAS_M7                        TRUE
 #define STM32_HAS_M4                        FALSE
 #else
@@ -194,6 +195,10 @@
 #define STM32_HAS_QUADSPI1                  TRUE
 #define STM32_HAS_QUADSPI2                  FALSE
 
+/* OCTOSPI attributes.*/
+#define STM32_HAS_OCTOSPI1                  FALSE
+#define STM32_HAS_OCTOSPI2                  FALSE
+
 /* SDMMC attributes.*/
 #define STM32_HAS_SDMMC1                    TRUE
 #define STM32_HAS_SDMMC2                    TRUE
@@ -355,14 +360,15 @@
 /** @} */
 
 /*===========================================================================*/
-/* STM32H750xx.                                                              */
+/* STM32H750xx. STM32H730xx                                                  */
 /*===========================================================================*/
-#if defined(STM32H750xx) ||                                                 \
+#if defined(STM32H750xx) || defined(STM32H730xx) ||                           \
     defined(__DOXYGEN__)
 
 /* ADC attributes.*/
 #define STM32_HAS_ADC1                      TRUE
 #define STM32_HAS_ADC2                      TRUE
+/* Both chips have ADC3 but not supported in ChibiOS */
 #define STM32_HAS_ADC3                      FALSE
 #define STM32_HAS_ADC4                      FALSE
 
@@ -411,9 +417,14 @@
 #define STM32_HAS_GPIOH                     TRUE
 #define STM32_HAS_GPIOF                     TRUE
 #define STM32_HAS_GPIOG                     TRUE
-#define STM32_HAS_GPIOI                     TRUE
 #define STM32_HAS_GPIOJ                     TRUE
 #define STM32_HAS_GPIOK                     TRUE
+#if defined(STM32H730xx)
+#define STM32_HAS_GPIOI                     FALSE
+#define RCC_AHB4ENR_GPIOIEN                 (0)
+#else
+#define STM32_HAS_GPIOI                     TRUE
+#endif
 #define STM32_GPIO_EN_MASK                  (RCC_AHB4ENR_GPIOAEN |          \
                                              RCC_AHB4ENR_GPIOBEN |          \
                                              RCC_AHB4ENR_GPIOCEN |          \
@@ -432,9 +443,18 @@
 #define STM32_HAS_I2C3                      TRUE
 #define STM32_HAS_I2C4                      TRUE
 
-/* QUADSPI attributes.*/
+/* QUADSPI and OCTOSPI attributes.*/
+#if defined(STM32H730xx)
+#define STM32_HAS_QUADSPI1                  FALSE
+#define STM32_HAS_QUADSPI2                  FALSE
+#define STM32_HAS_OCTOSPI1                  TRUE
+#define STM32_HAS_OCTOSPI2                  TRUE
+#else
 #define STM32_HAS_QUADSPI1                  TRUE
 #define STM32_HAS_QUADSPI2                  FALSE
+#define STM32_HAS_OCTOSPI1                  FALSE
+#define STM32_HAS_OCTOSPI2                  FALSE
+#endif
 
 /* SDMMC attributes.*/
 #define STM32_HAS_SDMMC1                    TRUE
@@ -509,15 +529,15 @@
 #define STM32_TIM14_IS_32BITS               FALSE
 #define STM32_TIM14_CHANNELS                1
 
-#define STM32_HAS_TIM15                     FALSE
+#define STM32_HAS_TIM15                     TRUE
 #define STM32_TIM15_IS_32BITS               FALSE
 #define STM32_TIM15_CHANNELS                2
 
-#define STM32_HAS_TIM16                     FALSE
+#define STM32_HAS_TIM16                     TRUE
 #define STM32_TIM16_IS_32BITS               FALSE
 #define STM32_TIM16_CHANNELS                1
 
-#define STM32_HAS_TIM17                     FALSE
+#define STM32_HAS_TIM17                     TRUE
 #define STM32_TIM17_IS_32BITS               FALSE
 #define STM32_TIM17_CHANNELS                1
 
@@ -543,9 +563,13 @@
 
 /* USB attributes.*/
 #define STM32_OTG_STEPPING                  2
+#if defined(STM32H730xx)
+#define STM32_HAS_OTG1                      FALSE
+#define STM32_OTG1_ENDPOINTS                8
+#else
 #define STM32_HAS_OTG1                      TRUE
 #define STM32_OTG1_ENDPOINTS                8
-
+#endif
 #define STM32_HAS_OTG2                      TRUE
 #define STM32_OTG2_ENDPOINTS                8
 
@@ -572,7 +596,7 @@
 /* DCMI attributes.*/
 #define STM32_HAS_DCMI                      TRUE
 
-#endif /* defined(STM32H750xx) */
+#endif /* defined(STM32H750xx) || defined(STM32H730xx) */
 
 #endif /* STM32_REGISTRY_H */
 
