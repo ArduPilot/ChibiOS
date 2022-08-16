@@ -148,6 +148,9 @@
                 .thumb_func
                 .global _crt0_entry
 _crt0_entry:
+                ldr     R0, =__entry_hook
+                blx     R0
+
                 /* Interrupts are globally masked initially.*/
                 cpsid   i
 
