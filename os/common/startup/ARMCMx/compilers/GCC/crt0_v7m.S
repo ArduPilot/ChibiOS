@@ -169,6 +169,13 @@
 #define CRT0_CPACR_INIT                     0x00F00000
 #endif
 
+/**
+  * @brief   Entry Hook Enabled.
+  */
+#if !defined(CRT0_ENTRY_HOOK) || defined(__DOXYGEN__)
+#define CRT0_ENTRY_HOOK             FALSE
+#endif
+
 /*===========================================================================*/
 /* Code section.                                                             */
 /*===========================================================================*/
@@ -193,6 +200,10 @@
                 .thumb_func
                 .global _crt0_entry
 _crt0_entry:
+#if CRT0_ENTRY_HOOK == TRUE
+                ldr     R0, =__entry_hook
+                blx     R0
+#endif
                 /* Interrupts are globally masked initially.*/
                 cpsid   i
 

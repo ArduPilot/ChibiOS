@@ -143,6 +143,20 @@ void __core_init(void) {
 }
 
 /**
+ * @brief called immediately at Reset
+ * @details This hook is invoked immediately after the Reset Handler
+ * 
+ * @note    This function is a weak symbol.
+ */
+#if !defined(__DOXYGEN__)
+__attribute__((weak))
+#endif
+/*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
+#ifndef __ARDUPILOT__
+void __entry_hook(void) {}
+#endif
+
+/**
  * @brief   Early initialization.
  * @details This hook is invoked immediately after the stack and core
  *          initialization and before the DATA and BSS segments
