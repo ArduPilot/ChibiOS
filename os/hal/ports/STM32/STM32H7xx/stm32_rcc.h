@@ -1036,6 +1036,85 @@
 /** @} */
 
 /**
+ * @name    OCTOSPI peripherals specific RCC operations
+ * @{
+ */
+/**
+ * @brief   Enables the OCTOSPI1 peripheral clock.
+ *
+ * @param[in] lp        low power enable flag
+ *
+ * @api
+ */
+#define rccEnableOCTOSPI1(lp) rccEnableAHB3(RCC_AHB3ENR_OSPI1EN, lp)
+
+/**
+ * @brief   Disables the OCTOSPI1 peripheral clock.
+ *
+ * @api
+ */
+#define rccDisableOCTOSPI1() rccDisableAHB3(RCC_AHB3ENR_OSPI1EN)
+
+/**
+ * @brief   Resets the OCTOSPI1 peripheral.
+ *
+ * @api
+ */
+#define rccResetOCTOSPI1() rccResetAHB3(RCC_AHB3RSTR_OSPI1RST)
+
+/**
+ * @brief   Enables the OCTOSPI2 peripheral clock.
+ *
+ * @param[in] lp        low power enable flag
+ *
+ * @api
+ */
+#define rccEnableOCTOSPI2(lp) rccEnableAHB3(RCC_AHB3ENR_OSPI2EN, lp)
+
+/**
+ * @brief   Disables the OCTOSPI2 peripheral clock.
+ *
+ * @api
+ */
+#define rccDisableOCTOSPI2() rccDisableAHB3(RCC_AHB3ENR_OSPI2EN)
+
+/**
+ * @brief   Resets the OCTOSPI2 peripheral.
+ *
+ * @api
+ */
+#define rccResetOCTOSPI2() rccResetAHB3(RCC_AHB3RSTR_OSPI2RST)
+/** @} */
+
+/**
+ * @name    OCTOSPIM peripheral specific RCC operations
+ * @{
+ */
+/**
+ * @brief   Enables the OCTOSPIM peripheral clock.
+ *
+ * @param[in] lp        low power enable flag
+ *
+ * @api
+ */
+#define rccEnableOCTOSPIM(lp) rccEnableAHB3(RCC_AHB3ENR_IOMNGREN, lp)
+
+/**
+ * @brief   Disables the OCTOSPIM peripheral clock.
+ *
+ * @api
+ */
+#define rccDisableOCTOSPIM() rccDisableAHB3(RCC_AHB3ENR_IOMNGREN)
+
+/**
+ * @brief   Resets the OCTOSPIM peripheral.
+ *
+ * @api
+ */
+#define rccResetOCTOSPIM() rccResetAHB3(RCC_AHB3RSTR_IOMNGRRST)
+/** @} */
+
+/**
  * @name    RNG peripherals specific RCC operations
  * @{
  */
