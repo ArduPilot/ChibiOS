@@ -406,7 +406,7 @@
 #define STM32_HAS_TIM12                     FALSE
 #define STM32_HAS_TIM13                     FALSE
 #define STM32_HAS_TIM14                     FALSE
-#define STM32_HAS_TIM15                     FALSE
+#define STM32_HAS_TIM15                     TRUE
 #define STM32_HAS_TIM16                     FALSE
 #define STM32_HAS_TIM17                     FALSE
 #define STM32_HAS_TIM18                     FALSE
