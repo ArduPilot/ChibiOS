@@ -220,7 +220,7 @@ void wspi_lld_command(WSPIDriver *wspip, const wspi_command_t *cmdp) {
 
   wspip->ospi->CR &= ~OCTOSPI_CR_FMODE;
   wspip->ospi->DLR = 0U;
-  wspip->ospi->TCR = cmdp->dummy;
+  wspip->ospi->TCR = cmdp->dummy | OCTOSPI_TCR_SSHIFT;
   wspip->ospi->CCR = cmdp->cfg;
   wspip->ospi->ABR = cmdp->alt;
   wspip->ospi->IR  = cmdp->cmd;
@@ -273,7 +273,7 @@ void wspi_lld_send(WSPIDriver *wspip, const wspi_command_t *cmdp,
 
   wspip->ospi->CR &= ~OCTOSPI_CR_FMODE;
   wspip->ospi->DLR = n - 1U;
-  wspip->ospi->TCR = cmdp->dummy;
+  wspip->ospi->TCR = cmdp->dummy | OCTOSPI_TCR_SSHIFT;
   wspip->ospi->CCR = cmdp->cfg;
   wspip->ospi->ABR = cmdp->alt;
   wspip->ospi->IR  = cmdp->cmd;
@@ -328,7 +328,7 @@ void wspi_lld_receive(WSPIDriver *wspip, const wspi_command_t *cmdp,
 
   wspip->ospi->CR  = (wspip->ospi->CR & ~OCTOSPI_CR_FMODE) | OCTOSPI_CR_FMODE_0;
   wspip->ospi->DLR = n - 1U;
-  wspip->ospi->TCR = cmdp->dummy;
+  wspip->ospi->TCR = cmdp->dummy | OCTOSPI_TCR_SSHIFT;
   wspip->ospi->CCR = cmdp->cfg;
   wspip->ospi->ABR = cmdp->alt;
   wspip->ospi->IR  = cmdp->cmd;
@@ -358,7 +358,7 @@ void wspi_lld_map_flash(WSPIDriver *wspip,
 
   /* Starting memory mapped mode using the passed parameters.*/
   wspip->ospi->CR   = OCTOSPI_CR_FMODE_1 | OCTOSPI_CR_FMODE_0 | OCTOSPI_CR_EN;
-  wspip->ospi->TCR  = cmdp->dummy;
+  wspip->ospi->TCR  = cmdp->dummy | OCTOSPI_TCR_SSHIFT;
   wspip->ospi->CCR  = cmdp->cfg;
   wspip->ospi->IR   = cmdp->cmd;
   wspip->ospi->ABR  = 0U;
