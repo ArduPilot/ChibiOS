@@ -104,7 +104,11 @@
 /**
  * @brief   Maximum SYSCLK clock frequency without voltage boost.
  */
+#if defined(STM32H730xx)
+#define STM32_SYSCLK_MAX_NOBOOST        520000000
+#else
 #define STM32_SYSCLK_MAX_NOBOOST        400000000
+#endif
 
 /**
  * @brief   Absolute maximum HCLK clock.
