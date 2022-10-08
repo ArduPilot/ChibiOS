@@ -140,10 +140,12 @@ DRESULT disk_write (
   switch (pdrv) {
 #if HAL_USE_MMC_SPI
   case MMC:
-    if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
+    if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY) {
         return RES_NOTRDY;
-    if (mmcIsWriteProtected(&FATFS_HAL_DEVICE))
+    }
+    if (mmcIsWriteProtected(&FATFS_HAL_DEVICE)) {
         return RES_WRPRT;
+    }
 	FATFS_RETRY(mmcStartSequentialWrite(&FATFS_HAL_DEVICE, sector));
 	while (count > 0) {
 	  FATFS_RETRY(mmcSequentialWrite(&FATFS_HAL_DEVICE, buff));
