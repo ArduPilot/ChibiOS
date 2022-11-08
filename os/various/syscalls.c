@@ -207,12 +207,14 @@ int _kill(int pid, int sig) {
 
 /***************************************************************************/
 
+#ifndef _ARDUPILOT_
 __attribute__((used))
 int _getpid(void) {
 
   return 1;
   abort();
 }
+#endif
 
 /***************************************************************************/
 /* Only used in C++ mode.*/
