@@ -908,6 +908,10 @@ void sd_lld_serve_interrupt(SerialDriver *sdp) {
     }
     osalSysUnlockFromISR();
   }
+
+  if (isr & USART_ISR_IDLE) {
+      _serial_irq_code(sdp);
+  }
 }
 
 #endif /* HAL_USE_SERIAL */
