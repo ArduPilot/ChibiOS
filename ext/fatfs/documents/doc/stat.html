@@ -28,7 +28,7 @@ FRESULT f_stat (
 <dt>path</dt>
 <dd>Pointer to the null-terminated string that specifies the <a href="filename.html">object</a> to get its information. The object must not be the root direcotry.</dd>
 <dt>fno</dt>
-<dd>Pointer to the blank <tt>FILINFO</tt> structure to store the information of the object. Set null pointer if it is not needed.</dd>
+<dd>Pointer to the blank <tt>FILINFO</tt> structure to store the information of the object. Set null pointer if this information is not needed.</dd>
 </dl>
 </div>
 
@@ -54,7 +54,7 @@ FRESULT f_stat (
 
 <div class="para desc">
 <h4>Description</h4>
-<p>The <tt>f_stat</tt> function checks the existence of a file or sub-directory. If not exist, the function returns with <tt>FR_NO_FILE</tt>. If exist, the function returns with <tt>FR_OK</tt> and the informations about the object, size, timestamp and attribute, is stored to the file information structure. For details of the file information, refer to the <tt>FILINFO</tt> structure and <a href="readdir.html"><tt>f_readdir</tt></a> function.</p>
+<p>The <tt>f_stat</tt> function checks the existence of a file or sub-directory in the directory. If not exist, the function returns with <tt>FR_NO_FILE</tt>. If exist, the function returns with <tt>FR_OK</tt> and the informations about the object, size, timestamp and attribute, is stored to the file information structure. For details of the file information, refer to the <tt>FILINFO</tt> structure and <a href="readdir.html"><tt>f_readdir</tt></a> function.</p>
 </div>
 
 
@@ -73,7 +73,7 @@ FRESULT f_stat (
 
     printf("Test for 'file.txt'...\n");
 
-    fr = f_stat("file.txt", &amp;fno);
+    fr = <em>f_stat</em>("file.txt", &amp;fno);
     switch (fr) {
 
     case FR_OK:
