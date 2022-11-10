@@ -556,6 +556,7 @@ extern "C" {
   void eicu_lld_stop(EICUDriver *eicup);
   void eicu_lld_enable(EICUDriver *eicup);
   void eicu_lld_disable(EICUDriver *eicup);
+  void eicu_lld_serve_interrupt(EICUDriver *eicup);
 #ifdef __cplusplus
 }
 #endif

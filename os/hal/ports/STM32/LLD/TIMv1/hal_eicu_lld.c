@@ -162,7 +162,7 @@ EICUDriver EICUD14;
  *
  * @param[in] eicup     Pointer to the @p EICUDriver object
  */
-static void eicu_lld_serve_interrupt(EICUDriver *eicup) {
+void eicu_lld_serve_interrupt(EICUDriver *eicup) {
   uint16_t sr;
   sr = eicup->tim->SR;
 
@@ -441,32 +441,6 @@ OSAL_IRQ_HANDLER(STM32_TIM8_CC_HANDLER) {
   OSAL_IRQ_EPILOGUE();
 }
 #endif /* STM32_EICU_USE_TIM8 */
-
-#if STM32_EICU_USE_TIM9
-#if !defined(STM32_TIM9_HANDLER) && defined(STM32_TIM1_BRK_TIM9_HANDLER)
-#define STM32_TIM9_HANDLER STM32_TIM1_BRK_TIM9_HANDLER
-#define STM32_TIM9_NUMBER STM32_TIM1_BRK_TIM9_NUMBER
-#endif
-#if !defined(STM32_TIM9_HANDLER)
-#error "STM32_TIM9_HANDLER not defined"
-#endif
-/**
- * @brief   TIM9 interrupt handler.
- * @note    It is assumed that the various sources are only activated if the
- *          associated callback pointer is not equal to @p NULL in order to not
- *          perform an extra check in a potentially critical interrupt handler.
- *
- * @isr
- */
-OSAL_IRQ_HANDLER(STM32_TIM9_HANDLER) {
-
-  OSAL_IRQ_PROLOGUE();
-
-  eicu_lld_serve_interrupt(&EICUD9);
-
-  OSAL_IRQ_EPILOGUE();
-}
-#endif /* STM32_EICU_USE_TIM9 */
 
 #if STM32_EICU_USE_TIM12
 #if !defined(STM32_TIM12_HANDLER)
@@ -748,7 +722,6 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD9 == eicup) {
       rccEnableTIM9(FALSE);
       rccResetTIM9();
-      nvicEnableVector(STM32_TIM9_NUMBER, STM32_EICU_TIM9_IRQ_PRIORITY);
       eicup->channels = 2;
       eicup->clock = STM32_TIMCLK2;
     }
@@ -915,7 +888,6 @@ void eicu_lld_stop(EICUDriver *eicup) {
 #endif
 #if STM32_EICU_USE_TIM9
     if (&EICUD9 == eicup) {
-      nvicDisableVector(STM32_TIM9_NUMBER);
       rccDisableTIM9();
     }
 #endif
