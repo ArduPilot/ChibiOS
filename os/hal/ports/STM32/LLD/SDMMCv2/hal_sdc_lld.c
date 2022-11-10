@@ -63,7 +63,8 @@ SDCDriver SDCD2;
  * @brief   SDIO default configuration.
  */
 static const SDCConfig sdc_default_cfg = {
-  SDC_MODE_4BIT
+  SDC_MODE_4BIT,
+  0
 };
 
 #if STM32_SDC_USE_SDMMC1 || defined(__DOXYGEN__)
@@ -89,12 +90,17 @@ static uint32_t __nocache_sd2_wbuf[1];
  * @param[in] f         required frequency
  */
 static uint32_t sdc_lld_clkdiv(SDCDriver *sdcp, uint32_t f) {
-
+#ifdef STM32_SDC_MAX_CLOCK
+  if (f > STM32_SDC_MAX_CLOCK) {
+      // apply clock limit for maximum reliability
+      f = STM32_SDC_MAX_CLOCK;
+  }
+#endif
   if (f >= sdcp->clkfreq) {
-    return 0;
+    return sdcp->config->slowdown;
   }
 
-  return (sdcp->clkfreq + (f * 2) - 1) / (f * 2);
+  return sdcp->config->slowdown + (sdcp->clkfreq + (f * 2) - 1) / (f * 2);
 }
 
 /**
