@@ -94,7 +94,9 @@ static const SerialConfig default_config =
   SERIAL_DEFAULT_BITRATE,
   0,
   USART_CR2_STOP1_BITS,
-  0
+  0,
+  NULL,
+  NULL
 };
 
 /*===========================================================================*/
@@ -777,6 +779,10 @@ void sd_lld_serve_interrupt(SerialDriver *sdp) {
       u->CR1 = cr1 & ~USART_CR1_TCIE;
     }
     osalSysUnlockFromISR();
+  }
+
+  if (sr & USART_SR_IDLE) {
+      _serial_irq_code(sdp);
   }
 }
 
