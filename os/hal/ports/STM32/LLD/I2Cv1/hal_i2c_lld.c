@@ -213,6 +213,8 @@ static void i2c_lld_set_clock(I2CDriver *i2cp) {
 
   dp->CCR = regCCR;
 }
+
+#ifdef I2C_FLTR_ANOFF
 /**
  * @brief   Set filter params.
  *
@@ -221,7 +223,6 @@ static void i2c_lld_set_clock(I2CDriver *i2cp) {
  * @notapi
  */
 static void i2c_lld_set_filter(I2CDriver *i2cp) {
-#ifdef I2C_FLTR_ANOFF
   I2C_TypeDef *dp = i2cp->i2c;
   i2cdutycycle_t duty = i2cp->config->duty_cycle;
   uint8_t filter;
@@ -249,8 +250,8 @@ static void i2c_lld_set_filter(I2CDriver *i2cp) {
   }
 
   dp->FLTR = (I2C_FLTR_ANOFF) | (I2C_FLTR_DNF & filter);
-#endif // I2C_FLTR_ANOFF
 }
+#endif // I2C_FLTR_ANOFF
 
 /**
  * @brief   Set operation mode of I2C hardware.
@@ -780,7 +781,9 @@ void i2c_lld_start(I2CDriver *i2cp) {
 
   /* Setup I2C parameters.*/
   i2c_lld_set_clock(i2cp);
+#ifdef I2C_FLTR_ANOFF
   i2c_lld_set_filter(i2cp);
+#endif
   i2c_lld_set_opmode(i2cp);
 
   /* Ready to go.*/
