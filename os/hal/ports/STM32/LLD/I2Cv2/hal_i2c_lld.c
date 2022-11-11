@@ -448,6 +448,7 @@ static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint32_t isr) {
  * and normal interrupt acknowledgement doesn't work
  */
 static bool i2c_lld_check_isr_limit(I2CDriver *i2cp) {
+    (void)i2cp;
 #ifdef STM32_I2C_ISR_LIMIT
     if (i2cp->isr_count++ > i2cp->isr_limit) {
         i2cp->errors |= I2C_ISR_LIMIT;
