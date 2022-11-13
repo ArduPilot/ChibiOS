@@ -133,7 +133,13 @@ typedef enum {
   SDC_CLK_50MHz
 } sdcbusclk_t;
 
+#if defined(HAL_LLD_SELECT_SDC_V1) || defined(__DOXYGEN__)
+#include "hal_sdc_v1_lld.h"
+#endif
+
+#if !defined(HAL_LLD_SELECT_SDC_V1) || defined(__DOXYGEN__)
 #include "hal_sdc_lld.h"
+#endif
 
 /*===========================================================================*/
 /* Driver macros.                                                            */
