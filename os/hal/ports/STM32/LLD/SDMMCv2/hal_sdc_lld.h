@@ -242,6 +242,15 @@ struct SDCDriver {
    * @brief   Thread waiting for I/O completion IRQ.
    */
   thread_reference_t        thread;
+    /**
+   * @brief     DTIMER register value for read operations.
+   */
+  uint32_t                  rtmo;
+  /**
+   * @brief     DTIMER register value for write operations.
+   */
+  uint32_t                  wtmo;
+
   /**
    * @brief   Pointer to the SDMMC registers block.
    * @note    Needed for debugging aid.
