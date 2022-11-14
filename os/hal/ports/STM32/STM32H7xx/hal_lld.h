@@ -35,7 +35,6 @@
  * @brief   Requires use of SPIv2 driver model.
  */
 #define HAL_LLD_SELECT_SPI_V2           TRUE
-#define HAL_LLD_SELECT_SDC_V1           TRUE
 
 /**
  * @brief   Sub-family identifier
