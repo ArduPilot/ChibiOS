@@ -50,7 +50,7 @@
 /**
  * @brief   Requires use of SPIv2 driver model.
  */
-#define HAL_LLD_SELECT_SPI_V2           TRUE
+//#define HAL_LLD_SELECT_SPI_V2           TRUE
 
 /*===========================================================================*/
 /* Driver pre-compile time settings.                                         */
