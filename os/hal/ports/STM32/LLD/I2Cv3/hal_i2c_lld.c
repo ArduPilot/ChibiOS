@@ -532,8 +532,10 @@ static bool i2c_lld_check_isr_limit(I2CDriver *i2cp) {
     if (i2cp->isr_count++ > i2cp->isr_limit) {
         i2cp->errors |= I2C_ISR_LIMIT;
         i2c_lld_reset(i2cp);
+#if STM32_I2C_USE_DMA == TRUE
         i2c_lld_stop_rx_dma(i2cp);
         i2c_lld_stop_tx_dma(i2cp);
+#endif
         _i2c_wakeup_error_isr(i2cp);
         return true;
     }
