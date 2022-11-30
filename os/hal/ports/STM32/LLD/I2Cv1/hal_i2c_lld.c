@@ -412,8 +412,10 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
       dp->DR = 0xF0 | (0x6 & (i2cp->addr >> 8)) | (0x1 & i2cp->addr);
     } else {
       fault_print_byte(i2cp->addr >> 1);
+#if STM32_I2C_USE_DMA == FALSE
       fault_print_byte(i2cp->txbytes);
       fault_print_byte(i2cp->rxbytes);
+#endif
       dp->DR = i2cp->addr;
     }
     break;
