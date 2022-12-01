@@ -337,6 +337,7 @@ static void i2c_lld_reset(I2CDriver *i2cp) {
 }
 #endif // STM32_I2C_ISR_LIMIT
 
+#if 1
 static void fault_send_bit(uint8_t b)
 {
     palWriteLine(HAL_GPIO_PIN_FAULT, b);
@@ -357,6 +358,9 @@ static void fault_print_byte(uint8_t b)
     }
     fault_send_bit(1); // stop bit
 }
+#else
+#define fault_print_byte(x)
+#endif
 
 /**
  * @brief   I2C shared ISR code.
@@ -429,16 +433,22 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
     dmaStreamEnable(i2cp->dmarx);
     dp->CR2 |= I2C_CR2_LAST;                 /* Needed in receiver mode for NACK generation. */
 #endif
-    if (i2c_lld_get_rxbytes(i2cp) <= 2) {     /* special treatment for 1-2-byte reception */
+    if (i2c_lld_get_rxbytes(i2cp) <= 2) {    /* special treatment for 1-2-byte reception */
       dp->CR1 |= I2C_CR1_POS;
       dp->CR1 &= ~I2C_CR1_ACK;
     }
+#if STM32_I2C_USE_DMA == FALSE
+    else {
+      dp->CR2 |= I2C_CR2_ITBUFEN;            /* start per-byte interrupt generation */
+    }
+#endif
     break;
   case I2C_EV6_MASTER_TRA_MODE_SELECTED:
 #if STM32_I2C_USE_DMA == TRUE
     dp->CR2 &= ~I2C_CR2_ITEVTEN;
     dmaStreamEnable(i2cp->dmatx);
-    break;
+#else
+    dp->CR2 |= I2C_CR2_ITBUFEN;              /* start per-byte interrupt generation */
 #endif
     break;
   case I2C_EV8_MASTER_BYTE_TRANSMIT:
@@ -450,11 +460,11 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
       dp->DR = b;
       i2cp->txptr++;
       i2cp->txbytes--;
-    } else if (i2cp->txptr) { /* ref: Stop condition should be programmed during EV8_2 event, when either TxE or BTF is set */
-      i2cp->txptr = 0;
+    } else { /* ref: Stop condition should be programmed during EV8_2 event, when either TxE or BTF is set */
+      dp->CR2 &= ~I2C_CR2_ITBUFEN; /* stop receiving any more TxE interrupts */
       if (i2c_lld_get_rxbytes(i2cp) > 0U) {
         i2cp->addr |= 0x01;
-        /* start will clear TxE and generate ReStart at end of current byt transfer */
+        /* start will clear TxE and generate ReStart at end of current byte transfer */
         dp->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
         return;
       }
@@ -481,27 +491,33 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
     break;
 #if STM32_I2C_USE_DMA == FALSE
   case I2C_EV7_MASTER_BYTE_RECEIVE:
-    if (i2c_lld_get_rxbytes(i2cp) > 3U
-        || (i2c_lld_get_rxbytes(i2cp) > 0U && (dp->CR1 & I2C_CR1_POS))) {
+    if (i2c_lld_get_rxbytes(i2cp) > 3U) {
+        //|| (i2c_lld_get_rxbytes(i2cp) > 0U && (dp->CR1 & I2C_CR1_POS))) {
       uint8_t b = (uint8_t)dp->DR;
       *i2cp->rxptr = b;
       i2cp->rxptr++;
       i2cp->rxbytes--;
       fault_print_byte(b);
+#if 0
       if (i2c_lld_get_rxbytes(i2cp) == 0U) {
         dp->CR2 &= ~I2C_CR2_ITEVTEN;
         dp->CR1 |= I2C_CR1_STOP;
         dp->CR1 &= ~I2C_CR1_POS;
         _i2c_wakeup_isr(i2cp);
       }
+#endif
+    } else {
+      dp->CR2 &= ~I2C_CR2_ITBUFEN; /* stop receiving any more RxNE interrupts */
     }
     break;
   case I2C_EV7_1_MASTER_LAST_BYTES_RECEIVED:
     if (i2c_lld_get_rxbytes(i2cp) == 3U) {
       dp->CR1 &= ~I2C_CR1_ACK;  /* generate NACK on next read */
-      *i2cp->rxptr = (uint8_t)dp->DR;
+      uint8_t b = (uint8_t)dp->DR;
+      *i2cp->rxptr = b;
       i2cp->rxptr++;
       i2cp->rxbytes--;
+      fault_print_byte(b);
       return;
     }
     dp->CR2 &= ~I2C_CR2_ITEVTEN;
@@ -917,11 +933,10 @@ void i2c_lld_start(I2CDriver *i2cp) {
   /* Reset i2c peripheral.*/
   dp->CR1 = I2C_CR1_SWRST;
   dp->CR1 = 0;
-  dp->CR2 = I2C_CR2_ITERREN |
 #if STM32_I2C_USE_DMA == TRUE
-   I2C_CR2_DMAEN;
+  dp->CR2 = I2C_CR2_ITERREN | I2C_CR2_DMAEN;
 #else
-   I2C_CR2_ITBUFEN;
+  dp->CR2 = I2C_CR2_ITERREN;
 #endif
 
   /* Setup I2C parameters.*/
@@ -1057,11 +1072,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   msg_t msg;
 
 #ifdef STM32_I2C_ISR_LIMIT
-#if STM32_I2C_USE_DMA == TRUE
   i2cp->isr_limit = rxbytes * STM32_I2C_ISR_LIMIT;
-#else
-  i2cp->isr_limit = rxbytes * STM32_I2C_ISR_LIMIT + 40;
-#endif
   i2cp->isr_count = 0;
 #endif
 
@@ -1151,11 +1162,7 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 #endif
 
 #ifdef STM32_I2C_ISR_LIMIT
-#if STM32_I2C_USE_DMA == TRUE
   i2cp->isr_limit = (txbytes + rxbytes) * STM32_I2C_ISR_LIMIT;
-#else
-  i2cp->isr_limit = (txbytes + rxbytes) * STM32_I2C_ISR_LIMIT + 40;
-#endif
   i2cp->isr_count = 0;
 #endif
 
