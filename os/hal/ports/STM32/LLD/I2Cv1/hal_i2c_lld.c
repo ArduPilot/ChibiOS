@@ -181,16 +181,20 @@ static void i2c_lld_abort_operation(I2CDriver *i2cp) {
  *
  * @notapi
  */
-static void i2c_lld_stop_operation(I2CDriver *i2cp) {
+static void i2c_lld_stop_operation(I2CDriver *i2cp, uint32_t rxbytes) {
   I2C_TypeDef *dp = i2cp->i2c;
-
-#if STM32_I2C_USE_DMA == FALSE
-  i2cp->txbytes = 0;
-  i2cp->rxbytes = 0;
-#endif
 
   dp->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN);
   dp->CR1 |= I2C_CR1_STOP;       /* stop will clear TxE / RxNE */
+#if STM32_I2C_USE_DMA == FALSE
+  while (rxbytes-- > 0) {        /* read pending bytes if necessary */
+    i2c_lld_read_byte(i2cp);
+  }
+  i2cp->txbytes = 0;
+  i2cp->rxbytes = 0;
+#else
+  (void)rxbytes;
+#endif
   _i2c_wakeup_isr(i2cp);
 }
 
@@ -427,15 +431,19 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
     dmaStreamEnable(i2cp->dmarx);
     dp->CR2 |= I2C_CR2_LAST;                 /* Needed in receiver mode for NACK generation. */
 #endif
-    if (i2c_lld_get_rxbytes(i2cp) <= 2) {    /* special treatment for 1-2-byte reception */
-      dp->CR1 |= I2C_CR1_POS;
-      dp->CR1 &= ~I2C_CR1_ACK;
+    switch (i2c_lld_get_rxbytes(i2cp)) {
+      case 2:    /* special treatment for 1-2-byte reception */
+        dp->CR1 |= I2C_CR1_POS;
+        dp->CR1 &= ~I2C_CR1_ACK;
+        break;
+      case 1:
+        dp->CR1 &= ~I2C_CR1_ACK;
+        dp->CR2 |= I2C_CR2_ITBUFEN;            /* start per-byte interrupt generation */
+        break;
+      default:
+        dp->CR2 |= I2C_CR2_ITBUFEN;            /* start per-byte interrupt generation */
+        break;
     }
-#if STM32_I2C_USE_DMA == FALSE
-    else {
-      dp->CR2 |= I2C_CR2_ITBUFEN;            /* start per-byte interrupt generation */
-    }
-#endif
     break;
   case I2C_EV6_MASTER_TRA_MODE_SELECTED:
 #if STM32_I2C_USE_DMA == TRUE
@@ -457,7 +465,7 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
         dp->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
         return;
       }
-      i2c_lld_stop_operation(i2cp);
+      i2c_lld_stop_operation(i2cp, 0);
     }
     break;
 #endif
@@ -471,31 +479,44 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
       dp->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
       return;
     }
-    i2c_lld_stop_operation(i2cp);
+    i2c_lld_stop_operation(i2cp, 0);
     break;
 #if STM32_I2C_USE_DMA == FALSE
-  case I2C_EV7_MASTER_BYTE_RECEIVE:
-    if (i2c_lld_get_rxbytes(i2cp) > 3U) {
+  case I2C_EV7_MASTER_BYTE_RECEIVE: {
+    uint32_t rxbytes = i2c_lld_get_rxbytes(i2cp);
+    if (rxbytes > 3U) {
       i2c_lld_read_byte(i2cp);
-    } else {
+      if (i2c_lld_get_rxbytes(i2cp) == 3U) {
+        dp->CR2 &= ~I2C_CR2_ITBUFEN; /* stop receiving any more RxNE interrupts */
+      }
+    } else if (i2c_lld_get_rxbytes(i2cp) == 3U) {
       dp->CR2 &= ~I2C_CR2_ITBUFEN; /* stop receiving any more RxNE interrupts */
+    } else if (rxbytes <= 1) {
+      i2c_lld_stop_operation(i2cp, rxbytes);
     }
     break;
-  case I2C_EV7_1_MASTER_LAST_BYTES_RECEIVED:
-    if (i2c_lld_get_rxbytes(i2cp) == 3U) {
-      dp->CR1 &= ~I2C_CR1_ACK;  /* generate NACK on next read */
-      i2c_lld_read_byte(i2cp);
-      return;
+  }
+  case I2C_EV7_1_MASTER_LAST_BYTES_RECEIVED: {
+    uint32_t rxbytes = i2c_lld_get_rxbytes(i2cp);
+    switch (rxbytes) {
+      case 4:
+        dp->CR2 &= ~I2C_CR2_ITBUFEN;
+        i2c_lld_read_byte(i2cp);
+        break;
+      case 3:
+        dp->CR2 &= ~I2C_CR2_ITBUFEN;
+        dp->CR1 &= ~I2C_CR1_ACK;  /* generate NACK on next read */
+        i2c_lld_read_byte(i2cp);
+        break;
+      case 2:
+      case 1:
+        i2c_lld_stop_operation(i2cp, rxbytes);
+        break;
+      default:
+        i2c_lld_read_byte(i2cp);
     }
-    dp->CR2 &= ~I2C_CR2_ITEVTEN;
-    dp->CR1 |= I2C_CR1_STOP;
-    dp->CR1 &= ~I2C_CR1_POS;
-    i2c_lld_read_byte(i2cp);
-    if (i2cp->rxbytes > 0) {
-      i2c_lld_read_byte(i2cp);
-    }
-    _i2c_wakeup_isr(i2cp);
     break;
+  }
 #endif
   default:
 	  break;
