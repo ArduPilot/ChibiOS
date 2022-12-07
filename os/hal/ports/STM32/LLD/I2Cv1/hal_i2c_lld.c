@@ -468,8 +468,14 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
       i2c_lld_stop_operation(i2cp, 0);
     }
     break;
-#endif
   case I2C_EV8_2_MASTER_BYTE_TRANSMITTED:
+    if (i2cp->txbytes > 0U) {
+      i2c_lld_write_byte(i2cp);
+      return;
+    }
+#else
+  case I2C_EV8_2_MASTER_BYTE_TRANSMITTED:
+#endif
     /* Catches BTF event after the end of transmission.*/
     (void)dp->DR; /* clear BTF.*/
 
