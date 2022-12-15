@@ -271,6 +271,7 @@ static bool sdc_lld_wait_transaction_end(SDCDriver *sdcp, uint32_t n,
   sdcp->sdmmc->DCTRL    = 0;
 
   if ((sdcp->sdmmc->STA & SDMMC_STA_DATAEND) == 0) {
+    sdcp->sdmmc->ICR = SDMMC_ICR_ALL_FLAGS;
     osalSysUnlock();
     return HAL_FAILED;
   }
@@ -689,6 +690,8 @@ bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
 
   if (sdc_lld_wait_transaction_end(sdcp, 1, sdcp->resp))
     goto error;
+
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, bytes);
 
   return HAL_SUCCESS;
 
