@@ -35,6 +35,7 @@
     defined(STM32H7B0xx)  ||                                                \
     defined(STM32H723xx)  || defined(STM32H733xx)  ||                       \
     defined(STM32H725xx)  || defined(STM32H735xx)  ||                       \
+    defined(STM32H730xx)  ||                                                \
     defined(STM32H742xx)  ||                                                \
     defined(STM32H743xx)  || defined(STM32H753xx)  ||                       \
     defined(STM32H7A3xx)  || defined(STM32H7B3xx)  ||                       \
@@ -364,10 +365,11 @@
 #endif /* defined(STM32H743xx) || defined(STM32H753xx) */
 
 /*===========================================================================*/
-/* STM32H723xx, STM32H733xx, STM32H725xx, STM32H735xx.                       */
+/* STM32H723xx, STM32H733xx, STM32H725xx, STM32H735xx, STM32H730xx.          */
 /*===========================================================================*/
 #if defined(STM32H723xx)  || defined(STM32H733xx)  ||                       \
     defined(STM32H725xx)  || defined(STM32H735xx)  ||                       \
+    defined(STM32H730xx) ||                                                 \
     defined(__DOXYGEN__)
 
 /* ADC attributes.*/
@@ -597,7 +599,8 @@
 #define STM32_HAS_DCMI                      TRUE
 
 #endif /* defined(STM32H723xx) || defined(STM32H733xx) ||
-          defined(STM32H725xx) || defined(STM32H735xx) */
+          defined(STM32H725xx) || defined(STM32H735xx) ||
+          defined(STM32H730xx) */
 
 /*===========================================================================*/
 /* STM32H7A3xx, STM32H7B3xx, STM32H7A3xxQ, STM32H7B3xxQ.                     */
@@ -833,8 +836,8 @@
 /* DCMI attributes.*/
 #define STM32_HAS_DCMI                      TRUE
 
-#endif /* defined(STM32H723xx) || defined(STM32H733xx) ||
-          defined(STM32H725xx) || defined(STM32H735xx) */
+#endif /* defined(STM32H7A3xx)  || defined(STM32H7B3xx) ||
+          defined(STM32H7A3xxQ) || defined(STM32H7B3xxQ) */
 
 /*===========================================================================*/
 /* STM32H750xx.                                                              */
