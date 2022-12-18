@@ -52,11 +52,22 @@
  * @{
  */
 /**
- * @brief   Timeout before assuming a failure while waiting for card idle.
- * @note    Time is in milliseconds.
+ * @brief   Delays insertions.
+ * @details If enabled this options inserts delays into the card waiting
+ *          routines releasing some extra CPU time for the threads with
+ *          lower priority, this may slow down the driver a bit however.
+ *          This option is recommended also if the SPI driver does not
+ *          use a DMA channel and heavily loads the CPU.
  */
 #if !defined(MMC_IDLE_TIMEOUT_MS) || defined(__DOXYGEN__)
 #define MMC_IDLE_TIMEOUT_MS             1000
+#endif
+
+/**
+ * @brief   Mutual exclusion on the SPI bus.
+ */
+#if !defined(MMC_USE_MUTUAL_EXCLUSION) || defined(__DOXYGEN__)
+#define MMC_USE_MUTUAL_EXCLUSION        TRUE
 #endif
 
 /**
@@ -141,10 +152,6 @@ typedef struct {
    * @brief   Addresses use blocks instead of bytes.
    */
   bool                                  block_addresses;
-  /**
-   * @brief   Pointer to an un-cacheable buffer of size @p MMC_BUFFER_SIZE.
-   */
-  uint8_t                               *buffer;
 } mmc_spi_driver_t;
 
 /**

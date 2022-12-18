@@ -1161,8 +1161,8 @@ void uart_lld_serve_interrupt(UARTDriver *uartp) {
 
   if (sr & (USART_SR_LBD | USART_SR_ORE | USART_SR_NE |
             USART_SR_FE  | USART_SR_PE)) {
-      u->SR = ~USART_SR_LBD;
-      _uart_rx_error_isr_code(uartp, translate_errors(sr));
+    u->SR = ~USART_SR_LBD;
+    _uart_rx_error_isr_code(uartp, translate_errors(sr));
   }
 
   if ((sr & USART_SR_TC) && (cr1 & USART_CR1_TCIE)) {

@@ -1069,7 +1069,7 @@ void spi_lld_unselect(SPIDriver *spip) {
  */
 msg_t spi_lld_ignore(SPIDriver *spip, size_t n) {
 
-  osalDbgAssert(n < 65536, "unsupported DMA transfer size");
+  osalDbgAssert(n <= STM32_DMA_MAX_TRANSFER, "unsupported DMA transfer size");
 
 #if defined(STM32_SPI_DMA_REQUIRED) && defined(STM32_SPI_BDMA_REQUIRED)
   if (spip->is_bdma)
