@@ -193,7 +193,7 @@ void st_lld_init(void) {
   TCCR1A     = 0;
   TCCR1B     = _BV(WGM12);
 
-  /* start disabled. */
+  /* Start disabled. */
   TCCR1C     = 0;
   OCR1A      = 0;
   TCNT1      = 0;
