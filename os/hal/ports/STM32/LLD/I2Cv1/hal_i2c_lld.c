@@ -184,7 +184,7 @@ static void i2c_lld_abort_operation(I2CDriver *i2cp) {
 static void i2c_lld_stop_operation(I2CDriver *i2cp, uint32_t rxbytes) {
   I2C_TypeDef *dp = i2cp->i2c;
 
-  dp->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN);
+  dp->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN | I2C_CR2_ITERREN);
   dp->CR1 |= I2C_CR1_STOP;       /* stop will clear TxE / RxNE */
 #if STM32_I2C_USE_DMA == FALSE
   while (rxbytes-- > 0) {        /* read pending bytes if necessary */
@@ -927,9 +927,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
   dp->CR1 = I2C_CR1_SWRST;
   dp->CR1 = 0;
 #if STM32_I2C_USE_DMA == TRUE
-  dp->CR2 = I2C_CR2_ITERREN | I2C_CR2_DMAEN;
-#else
-  dp->CR2 = I2C_CR2_ITERREN;
+  dp->CR2 = I2C_CR2_DMAEN;
 #endif
 
   /* Setup I2C parameters.*/
@@ -1104,7 +1102,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   i2cp->in_transaction = true;
 
   /* Starts the operation.*/
-  dp->CR2 |= I2C_CR2_ITEVTEN;
+  dp->CR2 |= I2C_CR2_ITEVTEN | I2C_CR2_ITERREN;
   dp->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
 
   /* Waits for the operation completion or a timeout.*/
@@ -1197,7 +1195,7 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   i2cp->in_transaction = true;
 
   /* Starts the operation.*/
-  dp->CR2 |= I2C_CR2_ITEVTEN;
+  dp->CR2 |= I2C_CR2_ITEVTEN | I2C_CR2_ITERREN;
   dp->CR1 |= I2C_CR1_START;
 
   /* Waits for the operation completion or a timeout.*/
