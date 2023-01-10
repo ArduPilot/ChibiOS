@@ -42,11 +42,6 @@
 #define spiReceive spiReceiveHook
 #endif
 
-#define SDCARD_READ_WAIT_USEC       250
-#define SDCARD_TIMEOUT_READ         (1000000/SDCARD_READ_WAIT_USEC)
-#define SDCARD_WRITE_WAIT_USEC      500
-#define SDCARD_TIMEOUT_WRITE        (1000000/SDCARD_WRITE_WAIT_USEC)
-
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -183,18 +178,18 @@ static bool mmc_read(void *instance, uint32_t startblk,
   do {
     if (mmcStartSequentialRead(mmcp, startblk)) {
       break;
-  }
+    }
 
-  while (n > 0U) {
+    while (n > 0U) {
       if (mmcSequentialRead(mmcp, buffer)) {
         break;
-    }
-    buffer += MMCSD_BLOCK_SIZE;
-    n--;
+      }
+      buffer += MMCSD_BLOCK_SIZE;
+      n--;
 
       if (mmcStopSequentialRead(mmcp)) {
         break;
-  }
+      }
     }
 
     err = HAL_SUCCESS;
@@ -219,19 +214,19 @@ static bool mmc_write(void *instance, uint32_t startblk,
   do {
     if (mmcStartSequentialWrite(mmcp, startblk)) {
       break;
-  }
+    }
 
-  while (n > 0U) {
+    while (n > 0U) {
       if (mmcSequentialWrite(mmcp, buffer)) {
         break;
+      }
+      buffer += MMCSD_BLOCK_SIZE;
+      n--;
     }
-    buffer += MMCSD_BLOCK_SIZE;
-    n--;
-  }
 
     if (mmcStopSequentialWrite(mmcp)) {
       break;
-  }
+    }
 
     err = HAL_SUCCESS;
   } while (false);
@@ -315,39 +310,10 @@ static bool mmc_wait_idle(MMCDriver *mmcp) {
     }
 
     /* Trying to be nice with the other threads.*/
-    osalThreadSleepMicroseconds(SDCARD_WRITE_WAIT_USEC);
-  } while (++i < SDCARD_TIMEOUT_WRITE);
+    osalThreadSleepMilliseconds(1);
+  } while (++i < MMC_IDLE_TIMEOUT_MS);
 
   return HAL_FAILED;
-}
-
-/**
- * @brief   Waits an response from read operation
- *
- * @param[in] mmcp      pointer to the @p MMCDriver object
- * @return first non-idle byte or 0xFF if timeout
- *
- * @notapi
- */
-static uint8_t mmc_wait_nonidle(MMCDriver *mmcp) {
-  int i;
-
-  for (i = 0; i < 16; i++) {
-    spiReceive(mmcp->config->spip, 1, mmcp->buffer);
-    if (mmcp->buffer[0] != 0xFFU) {
-      return mmcp->buffer[0];
-    }
-  }
-  /* Looks like it is a long wait.*/
-  for (i = 0; i < SDCARD_TIMEOUT_READ; i++) {
-    spiReceive(mmcp->config->spip, 1, mmcp->buffer);
-    if (mmcp->buffer[0] != 0xFFU) {
-      return mmcp->buffer[0];
-    }
-    /* Trying to be nice with the other threads.*/
-    osalThreadSleepMicroseconds(SDCARD_READ_WAIT_USEC);
-  }
-  return 0xFF;
 }
 
 /**
@@ -365,7 +331,7 @@ static uint8_t mmc_wait_nonidle(MMCDriver *mmcp) {
 static bool mmc_send_hdr(MMCDriver *mmcp, uint8_t cmd, uint32_t arg) {
 
   /* Wait for the bus to become idle if a write operation was in progress.*/
-  if (cmd != MMCSD_CMD_GO_IDLE_STATE && mmc_wait_idle(mmcp) == HAL_FAILED) {
+  if (mmc_wait_idle(mmcp) == HAL_FAILED) {
     return HAL_FAILED;
   }
 
@@ -506,6 +472,7 @@ static bool mmc_send_command_R3(MMCDriver *mmcp, uint8_t cmd, uint32_t arg,
  * @notapi
  */
 static bool mmc_read_CxD(MMCDriver *mmcp, uint8_t cmd, uint32_t cxd[4]) {
+  unsigned i;
   uint8_t r1;
   uint8_t *bp;
 
@@ -520,22 +487,25 @@ static bool mmc_read_CxD(MMCDriver *mmcp, uint8_t cmd, uint32_t cxd[4]) {
   }
 
   /* Wait for data availability.*/
-  if (mmc_wait_nonidle(mmcp) == 0xFEU) {
-    uint32_t *wp;
+  for (i = 0U; i < MMC_WAIT_DATA; i++) {
+    spiReceive(mmcp->config->spip, 1, mmcp->buffer);
+    if (mmcp->buffer[0] == 0xFEU) {
+      uint32_t *wp;
 
-    spiReceive(mmcp->config->spip, 16, mmcp->buffer);
-    bp = mmcp->buffer;
-    for (wp = &cxd[3]; wp >= cxd; wp--) {
-      *wp = ((uint32_t)bp[0] << 24U) | ((uint32_t)bp[1] << 16U) |
-            ((uint32_t)bp[2] << 8U)  | (uint32_t)bp[3];
-      bp += 4;
+      spiReceive(mmcp->config->spip, 16, mmcp->buffer);
+      bp = mmcp->buffer;
+      for (wp = &cxd[3]; wp >= cxd; wp--) {
+        *wp = ((uint32_t)bp[0] << 24U) | ((uint32_t)bp[1] << 16U) |
+              ((uint32_t)bp[2] << 8U)  | (uint32_t)bp[3];
+        bp += 4;
+      }
+
+      /* CRC ignored then end of transaction. */
+      spiIgnore(mmcp->config->spip, 2);
+      spiUnselect(mmcp->config->spip);
+
+      return HAL_SUCCESS;
     }
-
-    /* CRC ignored then end of transaction. */
-    spiIgnore(mmcp->config->spip, 2);
-    spiUnselect(mmcp->config->spip);
-
-    return HAL_SUCCESS;
   }
 
   spiUnselect(mmcp->config->spip);
@@ -568,9 +538,9 @@ void mmcInit(void) {
  */
 void mmcObjectInit(MMCDriver *mmcp, uint8_t *buffer) {
 
-  mmcp->vmt = &mmc_vmt;
-  mmcp->state = BLK_STOP;
-  mmcp->config = NULL;
+  mmcp->vmt             = &mmc_vmt;
+  mmcp->state           = BLK_STOP;
+  mmcp->config          = NULL;
   mmcp->block_addresses = false;
   mmcp->buffer          = buffer;
 }
@@ -881,6 +851,7 @@ failed:
  * @api
  */
 bool mmcSequentialRead(MMCDriver *mmcp, uint8_t *buffer) {
+  unsigned i;
 
   osalDbgCheck((mmcp != NULL) && (buffer != NULL));
 
@@ -888,13 +859,17 @@ bool mmcSequentialRead(MMCDriver *mmcp, uint8_t *buffer) {
     return HAL_FAILED;
   }
 
-  if (mmc_wait_nonidle(mmcp) == 0xFEU) {
-    spiReceive(mmcp->config->spip, MMCSD_BLOCK_SIZE, mmcp->buffer);
-    /* CRC ignored. */
-    spiIgnore(mmcp->config->spip, 2);
-    return HAL_SUCCESS;
-   }
-  /* Timeout or read error*/
+  for (i = 0; i < MMC_WAIT_DATA; i++) {
+    spiReceive(mmcp->config->spip, 1, mmcp->buffer);
+    if (mmcp->buffer[0] == 0xFEU) {
+      spiReceive(mmcp->config->spip, MMCSD_BLOCK_SIZE, buffer);
+      /* CRC ignored. */
+      spiIgnore(mmcp->config->spip, 2);
+      return HAL_SUCCESS;
+    }
+  }
+
+  /* Timeout.*/
   spiUnselect(mmcp->config->spip);
 
   mmcp->state = BLK_READY;
