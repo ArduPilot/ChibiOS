@@ -141,10 +141,10 @@ void wspi_lld_start(WSPIDriver *wspip) {
                       QUADSPI_CR_EN;
 #else
   wspip->qspi->CR  = ((STM32_WSPI_QUADSPI1_PRESCALER_VALUE - 1U) << 24U) |
-                      QUADSPI_CR_TCIE | QUADSPI_CR_DMAEN | QUADSPI_CR_EN | QUADSPI_CR_SSHIFT;
+                      QUADSPI_CR_TCIE | QUADSPI_CR_DMAEN | QUADSPI_CR_EN;
+#endif
   wspip->qspi->FCR = QUADSPI_FCR_CTEF | QUADSPI_FCR_CTCF |
                      QUADSPI_FCR_CSMF | QUADSPI_FCR_CTOF;
-#endif
 }
 
 /**
