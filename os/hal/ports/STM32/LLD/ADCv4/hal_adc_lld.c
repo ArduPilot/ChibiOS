@@ -680,10 +680,10 @@ void adc_lld_start_conversion(ADCDriver *adcp) {
     adcp->adcs->ISR   = adcp->adcs->ISR;
     /* If a callback is set enable the overflow and analog watch dog interrupts. */
     if (grpp->error_cb != NULL) {
-    adcp->adcs->IER   = ADC_IER_OVRIE | ADC_IER_AWD1IE |
-                                        ADC_IER_AWD2IE |
-                                        ADC_IER_AWD3IE;
-
+      adcp->adcs->IER   = ADC_IER_OVRIE | ADC_IER_AWD1IE |
+                                          ADC_IER_AWD2IE |
+                                          ADC_IER_AWD3IE;
+    }
     /* Configuring the CCR register with the user-specified settings
       in the conversion group configuration structure, static settings are
       preserved.*/
@@ -726,13 +726,12 @@ void adc_lld_start_conversion(ADCDriver *adcp) {
     /* ADC configuration.*/
     adcp->adcm->CFGR  = cfgr;
     adcp->adcs->CFGR  = cfgr;
-  }
-}
+  } else
 #endif /* STM32_ADC_DUAL_MODE == TRUE && STM32_ADC_USE_ADC12 == TRUE */
 
 #if STM32_ADC_DUAL_MODE == FALSE || STM32_ADC_USE_ADC3 == TRUE
   /* Configuration for ADC3 and single mode ADC1 */
-
+  {
     adcp->adcm->CFGR2   = grpp->cfgr2;
     adcp->adcm->PCSEL   = grpp->pcsel;
     adcp->adcm->LTR1    = grpp->ltr1;
@@ -752,7 +751,12 @@ void adc_lld_start_conversion(ADCDriver *adcp) {
 
     /* ADC configuration.*/
     adcp->adcm->CFGR  = cfgr;
-#endif
+  }
+#else
+  {
+    // nothing to do
+  }
+#endif /* STM32_ADC_DUAL_MODE == FALSE || STM32_ADC_USE_ADC3 == TRUE */
 
   /* Starting conversion.*/
   adcp->adcm->CR   |= ADC_CR_ADSTART;
