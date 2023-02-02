@@ -581,6 +581,7 @@ typedef struct
   __IO uint32_t SR2;        /*!< I2C Status register 2,      Address offset: 0x18 */
   __IO uint32_t CCR;        /*!< I2C Clock control register, Address offset: 0x1C */
   __IO uint32_t TRISE;      /*!< I2C TRISE register,         Address offset: 0x20 */
+  __IO uint32_t FLTR;       /*!< I2C FLTR register,          Address offset: 0x24 */
 } I2C_TypeDef;
 
 /** 
@@ -9324,6 +9325,13 @@ typedef struct
 #define I2C_TRISE_TRISE_Msk       (0x3FU << I2C_TRISE_TRISE_Pos)               /*!< 0x0000003F */
 #define I2C_TRISE_TRISE           I2C_TRISE_TRISE_Msk                          /*!<Maximum Rise Time in Fast/Standard mode (Master mode) */
 
+/******************  Bit definition for I2C_FLTR register  *******************/
+#define I2C_FLTR_DNF_Pos          (0U)                                         
+#define I2C_FLTR_DNF_Msk          (0xFU << I2C_FLTR_DNF_Pos)                   /*!< 0x0000000F */
+#define I2C_FLTR_DNF              I2C_FLTR_DNF_Msk                             /*!<Digital Noise Filter */
+#define I2C_FLTR_ANOFF_Pos        (4U)                                         
+#define I2C_FLTR_ANOFF_Msk        (0x1U << I2C_FLTR_ANOFF_Pos)                 /*!< 0x00000010 */
+#define I2C_FLTR_ANOFF            I2C_FLTR_ANOFF_Msk                           /*!<Analog Noise Filter OFF */
 
 /******************************************************************************/
 /*                                                                            */
