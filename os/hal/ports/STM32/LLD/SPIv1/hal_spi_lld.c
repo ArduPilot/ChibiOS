@@ -352,6 +352,7 @@ void spi_lld_start(SPIDriver *spip) {
                                     (stm32_dmaisr_t)spi_lld_serve_tx_interrupt,
                                     (void *)spip);
       osalDbgAssert(spip->dmatx != NULL, "unable to allocate stream");
+      rccResetSPI1();
       rccEnableSPI1(true);
     }
 #endif
@@ -367,6 +368,7 @@ void spi_lld_start(SPIDriver *spip) {
                                     (stm32_dmaisr_t)spi_lld_serve_tx_interrupt,
                                     (void *)spip);
       osalDbgAssert(spip->dmatx != NULL, "unable to allocate stream");
+      rccResetSPI2();
       rccEnableSPI2(true);
     }
 #endif
@@ -382,6 +384,7 @@ void spi_lld_start(SPIDriver *spip) {
                                     (stm32_dmaisr_t)spi_lld_serve_tx_interrupt,
                                     (void *)spip);
       osalDbgAssert(spip->dmatx != NULL, "unable to allocate stream");
+      rccResetSPI3();
       rccEnableSPI3(true);
     }
 #endif
@@ -397,6 +400,7 @@ void spi_lld_start(SPIDriver *spip) {
                                     (stm32_dmaisr_t)spi_lld_serve_tx_interrupt,
                                     (void *)spip);
       osalDbgAssert(spip->dmatx != NULL, "unable to allocate stream");
+      rccResetSPI4();
       rccEnableSPI4(true);
     }
 #endif
@@ -412,6 +416,7 @@ void spi_lld_start(SPIDriver *spip) {
                                     (stm32_dmaisr_t)spi_lld_serve_tx_interrupt,
                                     (void *)spip);
       osalDbgAssert(spip->dmatx != NULL, "unable to allocate stream");
+      rccResetSPI5();
       rccEnableSPI5(true);
     }
 #endif
@@ -427,6 +432,7 @@ void spi_lld_start(SPIDriver *spip) {
                                     (stm32_dmaisr_t)spi_lld_serve_tx_interrupt,
                                     (void *)spip);
       osalDbgAssert(spip->dmatx != NULL, "unable to allocate stream");
+      rccResetSPI6();
       rccEnableSPI6(true);
     }
 #endif
