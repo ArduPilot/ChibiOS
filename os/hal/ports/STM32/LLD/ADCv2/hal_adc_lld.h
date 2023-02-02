@@ -171,6 +171,8 @@
 #define STM32_ADC_USE_ADC3                  FALSE
 #endif
 
+#if !defined(_ARDUPILOT_)
+
 /**
  * @brief   DMA stream used for ADC1 operations.
  */
@@ -191,6 +193,8 @@
 #if !defined(STM32_ADC_ADC3_DMA_STREAM) || defined(__DOXYGEN__)
 #define STM32_ADC_ADC3_DMA_STREAM           STM32_DMA_STREAM_ID(2, 1)
 #endif
+
+#endif // !_ARDUPILOT_
 
 /**
  * @brief   ADC1 DMA priority (0..3|lowest..highest).
