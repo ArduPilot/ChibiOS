@@ -491,13 +491,12 @@ const stm32_dma_stream_t *dmaStreamAllocI(uint32_t id,
                                           uint32_t priority,
                                           stm32_dmaisr_t func,
                                           void *param) {
-  uint32_t i, startid, endid;
+  uint32_t i, startid=id, endid=id;
 
   osalDbgCheckClassI();
 
   if (id < STM32_DMA_STREAMS) {
     startid = id;
-    endid   = id;
   }
 #if STM32_DMA_SUPPORTS_DMAMUX == TRUE
   else if (id == STM32_DMA_STREAM_ID_ANY) {
