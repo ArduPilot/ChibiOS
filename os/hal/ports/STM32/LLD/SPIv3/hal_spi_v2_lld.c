@@ -1100,11 +1100,11 @@ msg_t spi_lld_ignore(SPIDriver *spip, size_t n) {
 #endif
 #if defined(STM32_SPI_BDMA_REQUIRED)
   {
-    bdmaStreamSetMemory(spip->rx.bdma, &spip->rxsink);
+    bdmaStreamSetMemory(spip->rx.bdma, spip->config->rxsink?spip->config->rxsink:&spip->rxsink);
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode);
 
-    bdmaStreamSetMemory(spip->tx.bdma, &spip->txsource);
+    bdmaStreamSetMemory(spip->tx.bdma, spip->config->txsource?spip->config->txsource:&spip->txsource);
     bdmaStreamSetTransactionSize(spip->tx.bdma, n);
     bdmaStreamSetMode(spip->tx.bdma, spip->txdmamode);
 
@@ -1117,11 +1117,11 @@ msg_t spi_lld_ignore(SPIDriver *spip, size_t n) {
 #endif
 #if defined(STM32_SPI_DMA_REQUIRED)
   {
-    dmaStreamSetMemory0(spip->rx.dma, &spip->rxsink);
+    dmaStreamSetMemory0(spip->rx.dma, spip->config->rxsink?spip->config->rxsink:&spip->rxsink);
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode);
 
-    dmaStreamSetMemory0(spip->tx.dma, &spip->txsource);
+    dmaStreamSetMemory0(spip->tx.dma, spip->config->txsource?spip->config->txsource:&spip->txsource);
     dmaStreamSetTransactionSize(spip->tx.dma, n);
     dmaStreamSetMode(spip->tx.dma, spip->txdmamode);
 
@@ -1219,7 +1219,7 @@ msg_t spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf) {
 #endif
 #if defined(STM32_SPI_BDMA_REQUIRED)
   {
-    bdmaStreamSetMemory(spip->rx.bdma, &spip->rxsink);
+    bdmaStreamSetMemory(spip->rx.bdma, spip->config->rxsink?spip->config->rxsink:&spip->rxsink);
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode);
 
@@ -1236,7 +1236,7 @@ msg_t spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf) {
 #endif
 #if defined(STM32_SPI_DMA_REQUIRED)
   {
-    dmaStreamSetMemory0(spip->rx.dma, &spip->rxsink);
+    dmaStreamSetMemory0(spip->rx.dma, spip->config->rxsink?spip->config->rxsink:&spip->rxsink);
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode);
 
@@ -1281,7 +1281,7 @@ msg_t spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf) {
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode | STM32_BDMA_CR_MINC);
 
-    bdmaStreamSetMemory(spip->tx.bdma, &spip->txsource);
+    bdmaStreamSetMemory(spip->tx.bdma, spip->config->txsource?spip->config->txsource:&spip->txsource);
     bdmaStreamSetTransactionSize(spip->tx.bdma, n);
     bdmaStreamSetMode(spip->tx.bdma, spip->txdmamode);
 
@@ -1298,7 +1298,7 @@ msg_t spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf) {
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode | STM32_DMA_CR_MINC);
 
-    dmaStreamSetMemory0(spip->tx.dma, &spip->txsource);
+    dmaStreamSetMemory0(spip->tx.dma, spip->config->txsource?spip->config->txsource:&spip->txsource);
     dmaStreamSetTransactionSize(spip->tx.dma, n);
     dmaStreamSetMode(spip->tx.dma, spip->txdmamode);
 
