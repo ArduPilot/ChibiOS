@@ -520,6 +520,7 @@ void spi_lld_start(SPIDriver *spip) {
                                      (stm32_dmaisr_t)spi_lld_serve_dma_tx_interrupt,
                                      (void *)spip);
       osalDbgAssert(spip->tx.dma != NULL, "unable to allocate stream");
+      rccResetSPI1();
       rccEnableSPI1(true);
       dmaSetRequestSource(spip->rx.dma, STM32_DMAMUX1_SPI1_RX);
       dmaSetRequestSource(spip->tx.dma, STM32_DMAMUX1_SPI1_TX);
@@ -537,6 +538,7 @@ void spi_lld_start(SPIDriver *spip) {
                                      (stm32_dmaisr_t)spi_lld_serve_dma_tx_interrupt,
                                      (void *)spip);
       osalDbgAssert(spip->tx.dma != NULL, "unable to allocate stream");
+      rccResetSPI2();
       rccEnableSPI2(true);
       dmaSetRequestSource(spip->rx.dma, STM32_DMAMUX1_SPI2_RX);
       dmaSetRequestSource(spip->tx.dma, STM32_DMAMUX1_SPI2_TX);
@@ -554,6 +556,7 @@ void spi_lld_start(SPIDriver *spip) {
                                      (stm32_dmaisr_t)spi_lld_serve_dma_tx_interrupt,
                                      (void *)spip);
       osalDbgAssert(spip->tx.dma != NULL, "unable to allocate stream");
+      rccResetSPI3();
       rccEnableSPI3(true);
       dmaSetRequestSource(spip->rx.dma, STM32_DMAMUX1_SPI3_RX);
       dmaSetRequestSource(spip->tx.dma, STM32_DMAMUX1_SPI3_TX);
@@ -571,6 +574,7 @@ void spi_lld_start(SPIDriver *spip) {
                                      (stm32_dmaisr_t)spi_lld_serve_dma_tx_interrupt,
                                      (void *)spip);
       osalDbgAssert(spip->tx.dma != NULL, "unable to allocate stream");
+      rccResetSPI4();
       rccEnableSPI4(true);
       dmaSetRequestSource(spip->rx.dma, STM32_DMAMUX1_SPI4_RX);
       dmaSetRequestSource(spip->tx.dma, STM32_DMAMUX1_SPI4_TX);
@@ -588,6 +592,7 @@ void spi_lld_start(SPIDriver *spip) {
                                      (stm32_dmaisr_t)spi_lld_serve_dma_tx_interrupt,
                                      (void *)spip);
       osalDbgAssert(spip->tx.dma != NULL, "unable to allocate stream");
+      rccResetSPI5();
       rccEnableSPI5(true);
       dmaSetRequestSource(spip->rx.dma, STM32_DMAMUX1_SPI5_RX);
       dmaSetRequestSource(spip->tx.dma, STM32_DMAMUX1_SPI5_TX);
@@ -605,6 +610,7 @@ void spi_lld_start(SPIDriver *spip) {
                                       (stm32_dmaisr_t)spi_lld_serve_bdma_tx_interrupt,
                                       (void *)spip);
       osalDbgAssert(spip->tx.dma != NULL, "unable to allocate stream");
+      rccResetSPI6();
       rccEnableSPI6(true);
       bdmaSetRequestSource(spip->rx.bdma, STM32_DMAMUX2_SPI6_RX);
       bdmaSetRequestSource(spip->tx.bdma, STM32_DMAMUX2_SPI6_TX);
@@ -834,11 +840,11 @@ void spi_lld_ignore(SPIDriver *spip, size_t n) {
 #endif
 #if defined(STM32_SPI_BDMA_REQUIRED)
   {
-    bdmaStreamSetMemory(spip->rx.bdma, &dummyrx);
+	bdmaStreamSetMemory(spip->rx.bdma, spip->config->dummyrx?spip->config->dummyrx:&dummyrx);
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode);
 
-    bdmaStreamSetMemory(spip->tx.bdma, &dummytx);
+    bdmaStreamSetMemory(spip->tx.bdma, spip->config->dummytx?spip->config->dummytx:&dummytx);
     bdmaStreamSetTransactionSize(spip->tx.bdma, n);
     bdmaStreamSetMode(spip->tx.bdma, spip->txdmamode);
 
@@ -851,11 +857,11 @@ void spi_lld_ignore(SPIDriver *spip, size_t n) {
 #endif
 #if defined(STM32_SPI_DMA_REQUIRED)
   {
-    dmaStreamSetMemory0(spip->rx.dma, &dummyrx);
+    dmaStreamSetMemory0(spip->rx.dma, spip->config->dummyrx?spip->config->dummyrx:&dummyrx);
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode);
 
-    dmaStreamSetMemory0(spip->tx.dma, &dummytx);
+    dmaStreamSetMemory0(spip->tx.dma, spip->config->dummytx?spip->config->dummytx:&dummytx);
     dmaStreamSetTransactionSize(spip->tx.dma, n);
     dmaStreamSetMode(spip->tx.dma, spip->txdmamode);
 
@@ -951,7 +957,7 @@ void spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf) {
 #endif
 #if defined(STM32_SPI_BDMA_REQUIRED)
   {
-    bdmaStreamSetMemory(spip->rx.bdma, &dummyrx);
+    bdmaStreamSetMemory(spip->rx.bdma, spip->config->dummyrx?spip->config->dummyrx:&dummyrx);
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode);
 
@@ -968,7 +974,7 @@ void spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf) {
 #endif
 #if defined(STM32_SPI_DMA_REQUIRED)
   {
-    dmaStreamSetMemory0(spip->rx.dma, &dummyrx);
+	dmaStreamSetMemory0(spip->rx.dma, spip->config->dummyrx?spip->config->dummyrx:&dummyrx);
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode);
 
@@ -1012,7 +1018,7 @@ void spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf) {
     bdmaStreamSetTransactionSize(spip->rx.bdma, n);
     bdmaStreamSetMode(spip->rx.bdma, spip->rxdmamode | STM32_BDMA_CR_MINC);
 
-    bdmaStreamSetMemory(spip->tx.bdma, &dummytx);
+    bdmaStreamSetMemory(spip->tx.bdma, spip->config->dummytx?spip->config->dummytx:&dummytx);
     bdmaStreamSetTransactionSize(spip->tx.bdma, n);
     bdmaStreamSetMode(spip->tx.bdma, spip->txdmamode);
 
@@ -1029,7 +1035,7 @@ void spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf) {
     dmaStreamSetTransactionSize(spip->rx.dma, n);
     dmaStreamSetMode(spip->rx.dma, spip->rxdmamode | STM32_DMA_CR_MINC);
 
-    dmaStreamSetMemory0(spip->tx.dma, &dummytx);
+    dmaStreamSetMemory0(spip->tx.dma, spip->config->dummytx?spip->config->dummytx:&dummytx);
     dmaStreamSetTransactionSize(spip->tx.dma, n);
     dmaStreamSetMode(spip->tx.dma, spip->txdmamode);
 
