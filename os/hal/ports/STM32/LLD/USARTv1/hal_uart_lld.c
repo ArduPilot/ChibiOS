@@ -1152,33 +1152,37 @@ size_t uart_lld_stop_receive(UARTDriver *uartp) {
  * @param[in] uartp     pointer to the @p UARTDriver object
  */
 void uart_lld_serve_interrupt(UARTDriver *uartp) {
-  uint16_t sr;
-  USART_TypeDef *u = uartp->usart;
-  uint32_t cr1 = u->CR1;
+  if (uartp->config->irq_cb == NULL) {
+    uint16_t sr;
+    USART_TypeDef *u = uartp->usart;
+    uint32_t cr1 = u->CR1;
 
-  sr = u->SR;   /* SR reset step 1.*/
+    sr = u->SR;   /* SR reset step 1.*/
 
-  if (sr & (USART_SR_LBD | USART_SR_ORE | USART_SR_NE |
-            USART_SR_FE  | USART_SR_PE)) {
+    if (sr & (USART_SR_LBD | USART_SR_ORE | USART_SR_NE |
+              USART_SR_FE  | USART_SR_PE)) {
 
-    (void)u->DR;  /* SR reset step 2 - clear ORE.*/
+      (void)u->DR;  /* SR reset step 2 - clear ORE.*/
 
-    u->SR = ~USART_SR_LBD;
-    _uart_rx_error_isr_code(uartp, translate_errors(sr));
-  }
+      u->SR = ~USART_SR_LBD;
+      _uart_rx_error_isr_code(uartp, translate_errors(sr));
+    }
 
-  if ((sr & USART_SR_TC) && (cr1 & USART_CR1_TCIE)) {
-    /* TC interrupt cleared and disabled.*/
-    u->SR = ~USART_SR_TC;
-    u->CR1 = cr1 & ~USART_CR1_TCIE;
+    if ((sr & USART_SR_TC) && (cr1 & USART_CR1_TCIE)) {
+      /* TC interrupt cleared and disabled.*/
+      u->SR = ~USART_SR_TC;
+      u->CR1 = cr1 & ~USART_CR1_TCIE;
 
-    /* End of transmission, a callback is generated.*/
-    _uart_tx2_isr_code(uartp);
-  }
+      /* End of transmission, a callback is generated.*/
+      _uart_tx2_isr_code(uartp);
+    }
 
-  /* Timeout interrupt sources are only checked if enabled in CR1.*/
-  if ((cr1 & USART_CR1_IDLEIE) && (sr & USART_SR_IDLE)) {
-    _uart_timeout_isr_code(uartp);
+    /* Timeout interrupt sources are only checked if enabled in CR1.*/
+    if ((cr1 & USART_CR1_IDLEIE) && (sr & USART_SR_IDLE)) {
+      _uart_timeout_isr_code(uartp);
+    }
+  } else {
+    uartp->config->irq_cb(uartp);
   }
 }
 
