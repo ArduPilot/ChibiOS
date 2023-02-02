@@ -178,6 +178,7 @@ typedef struct {
    * @brief   Bus width.
    */
   sdcbusmode_t  bus_width;
+
   /* End of the mandatory fields.*/
   /**
    * @brief   Bus slowdown.
@@ -249,6 +250,9 @@ struct SDCDriver {
    * @brief   Buffer for internal operations.
    */
   uint8_t                   buf[MMCSD_BLOCK_SIZE];
+
+  // bouncebuffer to support DMA to all memory regions
+  struct bouncebuffer_t *bouncebuffer;
 };
 
 /*===========================================================================*/
