@@ -296,7 +296,7 @@ const stm32_bdma_stream_t *bdmaStreamAllocI(uint32_t id,
                                             uint32_t priority,
                                             stm32_bdmaisr_t func,
                                             void *param) {
-  uint32_t i, startid, endid;
+  uint32_t i, startid=id, endid=id;
 
   osalDbgCheckClassI();
 
