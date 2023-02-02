@@ -134,6 +134,13 @@
 #endif
 
 /**
+ * @brief   RAM Functions initialization switch.
+ */
+#if !defined(CRT0_INIT_RAMFUNCS) || defined(__DOXYGEN__)
+#define CRT0_INIT_RAMFUNCS                  TRUE
+#endif
+
+/**
  * @brief   RAM areas initialization switch.
  */
 #if !defined(CRT0_INIT_RAM_AREAS) || defined(__DOXYGEN__)
@@ -247,6 +254,10 @@ _crt0_entry:
                 movs    r0, #CRT0_CONTROL_INIT
                 msr     CONTROL, r0
                 isb
+
+#if CRT0_INIT_RAMFUNCS == TRUE
+                bl      __init_ramfunc_area
+#endif
 
 #if CRT0_INIT_CORE == TRUE
                 /* Core initialization.*/
