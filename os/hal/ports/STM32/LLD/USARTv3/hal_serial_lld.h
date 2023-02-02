@@ -597,6 +597,13 @@
 /* Driver data structures and types.                                         */
 /*===========================================================================*/
 
+typedef void (*uartirq_t)(void* sd);
+
+#define _serial_irq_code(sd) {                                      \
+  if ((sd)->config->irq_cb != NULL)                                 \
+    (sd)->config->irq_cb((sd)->config->ctx);                        \
+}
+
 /**
  * @brief   STM32 Serial Driver configuration structure.
  * @details An instance of this structure must be passed to @p sdStart()
@@ -623,6 +630,14 @@ typedef struct hal_serial_config {
    * @brief Initialization value for the CR3 register.
    */
   uint32_t                  cr3;
+  /**
+   * @brief Set callback from irq
+   */
+  uartirq_t                 irq_cb;
+  /**
+   * @pointer to ctx
+   */
+  void*                     ctx;
 } SerialConfig;
 
 /**
@@ -642,7 +657,9 @@ typedef struct hal_serial_config {
   /* Clock frequency for the associated USART/UART.*/                       \
   uint32_t                  clock;                                          \
   /* Mask to be applied on received frames.*/                               \
-  uint8_t                   rxmask;
+  uint8_t                   rxmask;                                         \
+  /* config from start call.*/                                              \
+  const SerialConfig        *config;
 
 /*===========================================================================*/
 /* Driver macros.                                                            */
