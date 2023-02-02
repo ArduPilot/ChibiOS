@@ -185,6 +185,12 @@ typedef struct {
    */
   sdcbusmode_t  bus_width;
   /* End of the mandatory fields.*/
+
+  /**
+   * @brief bus slowdown
+   * This is an additional slowdown applied to high speed bus operation
+   */
+  uint8_t slowdown;
 } SDCConfig;
 
 /**
@@ -236,6 +242,15 @@ struct SDCDriver {
    * @brief   Thread waiting for I/O completion IRQ.
    */
   thread_reference_t        thread;
+    /**
+   * @brief     DTIMER register value for read operations.
+   */
+  uint32_t                  rtmo;
+  /**
+   * @brief     DTIMER register value for write operations.
+   */
+  uint32_t                  wtmo;
+
   /**
    * @brief   Pointer to the SDMMC registers block.
    * @note    Needed for debugging aid.
@@ -249,6 +264,9 @@ struct SDCDriver {
    * @brief   Uncached word buffer for small transfers.
    */
   uint32_t                  *resp;
+
+  // bouncebuffer to support DMA to all memory regions
+  struct bouncebuffer_t *bouncebuffer;
 };
 
 /*===========================================================================*/
