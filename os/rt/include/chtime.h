@@ -197,10 +197,14 @@ typedef uint32_t time_conv_t;
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define TIME_MS2I(msecs)  ((sysinterval_t)((time_conv_t)(msecs))*(time_conv_t)1000)
+#else
 #define TIME_MS2I(msecs)                                                    \
   ((sysinterval_t)((((time_conv_t)(msecs) *                                 \
                      (time_conv_t)CH_CFG_ST_FREQUENCY) +                    \
                     (time_conv_t)999) / (time_conv_t)1000))
+#endif
 
 /**
  * @brief   Microseconds to time interval.
@@ -215,10 +219,14 @@ typedef uint32_t time_conv_t;
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define TIME_US2I(usecs) ((sysinterval_t)(usecs))
+#else
 #define TIME_US2I(usecs)                                                    \
   ((sysinterval_t)((((time_conv_t)(usecs) *                                 \
                      (time_conv_t)CH_CFG_ST_FREQUENCY) +                    \
                     (time_conv_t)999999) / (time_conv_t)1000000))
+#endif
 
 /**
  * @brief   Time interval to seconds.
@@ -251,10 +259,15 @@ typedef uint32_t time_conv_t;
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define TIME_I2MS(interval)                                                 \
+  (time_msecs_t)(((time_conv_t)(interval)+999)/(time_conv_t)1000)
+#else
 #define TIME_I2MS(interval)                                                 \
   (time_msecs_t)((((time_conv_t)(interval) * (time_conv_t)1000) +           \
                   (time_conv_t)CH_CFG_ST_FREQUENCY - (time_conv_t)1) /      \
                  (time_conv_t)CH_CFG_ST_FREQUENCY)
+#endif
 
 /**
  * @brief   Time interval to microseconds.
@@ -269,10 +282,14 @@ typedef uint32_t time_conv_t;
  *
  * @api
  */
+#if CH_CFG_ST_FREQUENCY == 1000000
+#define TIME_I2US(interval) ((time_usecs_t)(interval))
+#else
 #define TIME_I2US(interval)                                                 \
   (time_usecs_t)((((time_conv_t)(interval) * (time_conv_t)1000000) +        \
                   (time_conv_t)CH_CFG_ST_FREQUENCY - (time_conv_t)1) /      \
                  (time_conv_t)CH_CFG_ST_FREQUENCY)
+#endif
 /** @} */
 
 /*===========================================================================*/
@@ -328,10 +345,12 @@ static inline sysinterval_t chTimeS2I(time_secs_t secs) {
  */
 static inline sysinterval_t chTimeMS2I(time_msecs_t msec) {
   time_conv_t ticks;
-
+#if CH_CFG_ST_FREQUENCY == 1000000
+  ticks = msec*(time_conv_t)1000;
+#else
   ticks = (((time_conv_t)msec * (time_conv_t)CH_CFG_ST_FREQUENCY) +
            (time_conv_t)999) / (time_conv_t)1000;
-
+#endif
   chDbgAssert(ticks <= (time_conv_t)TIME_MAX_INTERVAL,
               "conversion overflow");
 
@@ -350,10 +369,12 @@ static inline sysinterval_t chTimeMS2I(time_msecs_t msec) {
  */
 static inline sysinterval_t chTimeUS2I(time_usecs_t usec) {
   time_conv_t ticks;
-
+#if CH_CFG_ST_FREQUENCY == 1000000
+  ticks = usec;
+#else
   ticks = (((time_conv_t)usec * (time_conv_t)CH_CFG_ST_FREQUENCY) +
            (time_conv_t)999999) / (time_conv_t)1000000;
-
+#endif
   chDbgAssert(ticks <= (time_conv_t)TIME_MAX_INTERVAL,
               "conversion overflow");
 
@@ -395,11 +416,13 @@ static inline time_secs_t chTimeI2S(sysinterval_t interval) {
  */
 static inline time_msecs_t chTimeI2MS(sysinterval_t interval) {
   time_conv_t msecs;
-
+#if CH_CFG_ST_FREQUENCY == 1000000
+  msecs = ((interval + (time_conv_t)999)/(time_conv_t)1000);
+#else
   msecs = (((time_conv_t)interval * (time_conv_t)1000) +
            (time_conv_t)CH_CFG_ST_FREQUENCY - (time_conv_t)1) /
           (time_conv_t)CH_CFG_ST_FREQUENCY;
-
+#endif
   chDbgAssert(msecs < (time_conv_t)((time_msecs_t)-1),
               "conversion overflow");
 
@@ -418,17 +441,43 @@ static inline time_msecs_t chTimeI2MS(sysinterval_t interval) {
  */
 static inline time_usecs_t chTimeI2US(sysinterval_t interval) {
   time_conv_t usecs;
-
+#if CH_CFG_ST_FREQUENCY == 1000000
+  usecs = (time_conv_t)interval;
+#else
   usecs = (((time_conv_t)interval * (time_conv_t)1000000) +
            (time_conv_t)CH_CFG_ST_FREQUENCY - (time_conv_t)1) /
           (time_conv_t)CH_CFG_ST_FREQUENCY;
-
+#endif
   chDbgAssert(usecs <= (time_conv_t)((time_usecs_t)-1),
               "conversion overflow");
 
   return (time_usecs_t)usecs;
 }
 
+/**
+ * @brief   Time interval to microseconds 64 bit if supported.
+ * @details Converts from system interval to microseconds.
+ * @note    The result is rounded up to the next microsecond boundary.
+ *
+ * @param[in] interval  interval in ticks
+ * @return              The number of microseconds.
+ *
+ * @special
+ */
+static inline time_usecs_t chTimeI2US64(sysinterval_t interval) {
+  time_conv_t usecs;
+#if CH_CFG_ST_FREQUENCY == 1000000
+  usecs = (time_conv_t)interval;
+#else
+  usecs = (((time_conv_t)interval * (time_conv_t)1000000) +
+           (time_conv_t)CH_CFG_ST_FREQUENCY - (time_conv_t)1) /
+          (time_conv_t)CH_CFG_ST_FREQUENCY;
+#endif
+  chDbgAssert(usecs <= (time_conv_t)((time_usecs_t)-1),
+              "conversion overflow");
+
+  return (time_conv_t)usecs;
+}
 /**
  * @brief   Adds an interval to a system time returning a system time.
  *
