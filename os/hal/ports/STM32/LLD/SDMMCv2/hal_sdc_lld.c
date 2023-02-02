@@ -28,6 +28,8 @@
 
 #if HAL_USE_SDC || defined(__DOXYGEN__)
 
+#include "bouncebuffer.h"
+
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -61,7 +63,8 @@ SDCDriver SDCD2;
  * @brief   SDIO default configuration.
  */
 static const SDCConfig sdc_default_cfg = {
-  SDC_MODE_4BIT
+  SDC_MODE_4BIT,
+  0
 };
 
 #if STM32_SDC_USE_SDMMC1 || defined(__DOXYGEN__)
@@ -78,6 +81,9 @@ static uint32_t __nocache_sd2_wbuf[1];
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
+#define SDMMC_WRITE_TIMEOUT_TICKS(card_clk, clkdiv) (((card_clk / (clkdiv * 2)) / 1000) * STM32_SDC_SDMMC_WRITE_TIMEOUT)
+#define SDMMC_READ_TIMEOUT_TICKS(card_clk, clkdiv) (((card_clk / (clkdiv * 2)) / 1000) * STM32_SDC_SDMMC_READ_TIMEOUT)
+
 /**
  * @brief   Calculates a clock divider for the specified frequency.
  * @note    The divider is calculated to not exceed the required frequency
@@ -87,12 +93,17 @@ static uint32_t __nocache_sd2_wbuf[1];
  * @param[in] f         required frequency
  */
 static uint32_t sdc_lld_clkdiv(SDCDriver *sdcp, uint32_t f) {
-
+#ifdef STM32_SDC_MAX_CLOCK
+  if (f > STM32_SDC_MAX_CLOCK) {
+      // apply clock limit for maximum reliability
+      f = STM32_SDC_MAX_CLOCK;
+  }
+#endif
   if (f >= sdcp->clkfreq) {
-    return 0;
+    return sdcp->config->slowdown;
   }
 
-  return (sdcp->clkfreq + (f * 2) - 1) / (f * 2);
+  return sdcp->config->slowdown + (sdcp->clkfreq + (f * 2) - 1) / (f * 2);
 }
 
 /**
@@ -113,7 +124,7 @@ static bool sdc_lld_prepare_read_bytes(SDCDriver *sdcp,
                                        uint8_t *buf, uint32_t bytes) {
   osalDbgCheck(bytes < 0x1000000);
 
-  sdcp->sdmmc->DTIMER = STM32_SDC_SDMMC_READ_TIMEOUT;
+  sdcp->sdmmc->DTIMER = sdcp->rtmo;
 
   /* Checks for errors and waits for the card to be ready for reading.*/
   if (_sdc_wait_for_transfer_state(sdcp))
@@ -128,12 +139,11 @@ static bool sdc_lld_prepare_read_bytes(SDCDriver *sdcp,
   sdcp->sdmmc->DLEN  = bytes;
 
   /* Transfer modes.*/
-  sdcp->sdmmc->DCTRL = SDMMC_DCTRL_DTDIR |
+  sdcp->sdmmc->DCTRL = SDMMC_DCTRL_DTDIR | SDMMC_DCTRL_FIFORST |
                        SDMMC_DCTRL_DTMODE_0;    /* Multibyte data transfer.*/
 
   /* Prepares IDMA.*/
   sdcp->sdmmc->IDMABASE0 = (uint32_t)buf;
-  sdcp->sdmmc->IDMACTRL  = SDMMC_IDMA_IDMAEN;
 
   return HAL_SUCCESS;
 }
@@ -162,13 +172,13 @@ static bool sdc_lld_prepare_read(SDCDriver *sdcp, uint32_t startblk,
 
   if (n > 1) {
     /* Send read multiple blocks command to card.*/
-    if (sdc_lld_send_cmd_short_crc(sdcp, SDMMC_CMD_CMDTRANS | MMCSD_CMD_READ_MULTIPLE_BLOCK,
+    if (sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_READ_MULTIPLE_BLOCK,
                                    startblk, resp) || MMCSD_R1_ERROR(resp[0]))
       return HAL_FAILED;
   }
   else {
     /* Send read single block command.*/
-    if (sdc_lld_send_cmd_short_crc(sdcp, SDMMC_CMD_CMDTRANS | MMCSD_CMD_READ_SINGLE_BLOCK,
+    if (sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_READ_SINGLE_BLOCK,
                                    startblk, resp) || MMCSD_R1_ERROR(resp[0]))
       return HAL_FAILED;
   }
@@ -200,13 +210,13 @@ static bool sdc_lld_prepare_write(SDCDriver *sdcp, uint32_t startblk,
 
   if (n > 1) {
     /* Write multiple blocks command.*/
-    if (sdc_lld_send_cmd_short_crc(sdcp, SDMMC_CMD_CMDTRANS | MMCSD_CMD_WRITE_MULTIPLE_BLOCK,
+    if (sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_WRITE_MULTIPLE_BLOCK,
                                    startblk, resp) || MMCSD_R1_ERROR(resp[0]))
       return HAL_FAILED;
   }
   else {
     /* Write single block command.*/
-    if (sdc_lld_send_cmd_short_crc(sdcp, SDMMC_CMD_CMDTRANS | MMCSD_CMD_WRITE_BLOCK,
+    if (sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_WRITE_BLOCK,
                                    startblk, resp) || MMCSD_R1_ERROR(resp[0]))
       return HAL_FAILED;
   }
@@ -231,6 +241,11 @@ static bool sdc_lld_wait_transaction_end(SDCDriver *sdcp, uint32_t n,
   /* Note the mask is checked before going to sleep because the interrupt
      may have occurred before reaching the critical zone.*/
   osalSysLock();
+
+  /* start the DMA operation */
+  sdcp->sdmmc->IDMACTRL = SDMMC_IDMA_IDMAEN;
+  sdcp->sdmmc->DCTRL |= SDMMC_DCTRL_DTEN;
+
   if (sdcp->sdmmc->MASK != 0)
     osalThreadSuspendS(&sdcp->thread);
 
@@ -246,6 +261,7 @@ static bool sdc_lld_wait_transaction_end(SDCDriver *sdcp, uint32_t n,
 
   /* Clearing status.*/
   sdcp->sdmmc->ICR      = SDMMC_ICR_ALL_FLAGS;
+
   osalSysUnlock();
 
   /* Finalize transaction.*/
@@ -298,9 +314,9 @@ static void sdc_lld_error_cleanup(SDCDriver *sdcp,
                                   uint32_t *resp) {
   uint32_t sta = sdcp->sdmmc->STA;
 
-  /* Clearing status.*/
-  sta = sdcp->sdmmc->STA;
-  sdcp->sdmmc->ICR = sta;
+  sdcp->sdmmc->IDMACTRL = 0;
+  sdcp->sdmmc->ICR   = SDMMC_ICR_ALL_FLAGS;
+  sdcp->sdmmc->DCTRL = SDMMC_DCTRL_FIFORST;
   sdc_lld_collect_errors(sdcp, sta);
 
   if (n > 1)
@@ -325,6 +341,8 @@ void sdc_lld_init(void) {
 #if STM32_SDC_USE_SDMMC1
   sdcObjectInit(&SDCD1);
   SDCD1.thread  = NULL;
+  SDCD1.rtmo   = STM32_SDC_SDMMC_READ_TIMEOUT;
+  SDCD1.wtmo   = STM32_SDC_SDMMC_WRITE_TIMEOUT;
   SDCD1.sdmmc   = SDMMC1;
   SDCD1.clkfreq = STM32_SDMMC1CLK;
   SDCD1.buf     = __nocache_sd1_buf;
@@ -334,6 +352,8 @@ void sdc_lld_init(void) {
 #if STM32_SDC_USE_SDMMC2
   sdcObjectInit(&SDCD2);
   SDCD2.thread  = NULL;
+  SDCD2.rtmo   = STM32_SDC_SDMMC_READ_TIMEOUT;
+  SDCD2.wtmo   = STM32_SDC_SDMMC_WRITE_TIMEOUT;
   SDCD2.sdmmc   = SDMMC2;
   SDCD2.clkfreq = STM32_SDMMC2CLK;
   SDCD2.buf     = __nocache_sd2_buf;
@@ -423,7 +443,10 @@ void sdc_lld_stop(SDCDriver *sdcp) {
 void sdc_lld_start_clk(SDCDriver *sdcp) {
 
   /* Initial clock setting: 400kHz, 1bit mode.*/
-  sdcp->sdmmc->CLKCR  = sdc_lld_clkdiv(sdcp, 400000);
+  uint32_t clkdiv = sdc_lld_clkdiv(sdcp, 400000);
+  sdcp->sdmmc->CLKCR  = clkdiv;
+  sdcp->rtmo = SDMMC_READ_TIMEOUT_TICKS(sdcp->clkfreq, clkdiv);
+  sdcp->wtmo = SDMMC_WRITE_TIMEOUT_TICKS(sdcp->clkfreq, clkdiv);
   sdcp->sdmmc->POWER |= SDMMC_POWER_PWRCTRL_0 | SDMMC_POWER_PWRCTRL_1;
 /* TODO sdcp->sdmmc->CLKCR |= SDMMC_CLKCR_CLKEN;*/
 
@@ -442,21 +465,27 @@ void sdc_lld_start_clk(SDCDriver *sdcp) {
 void sdc_lld_set_data_clk(SDCDriver *sdcp, sdcbusclk_t clk) {
 
   if (SDC_CLK_50MHz == clk) {
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
+    uint32_t clkdiv = sdc_lld_clkdiv(sdcp, 50000000);
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFE00U) |
 #if STM32_SDC_SDMMC_PWRSAV
-                         sdc_lld_clkdiv(sdcp, 50000000) | SDMMC_CLKCR_PWRSAV;
+                          clkdiv | SDMMC_CLKCR_PWRSAV;
 #else
-                         sdc_lld_clkdiv(sdcp, 50000000);
+                          clkdiv;
 #endif
+    sdcp->rtmo = SDMMC_READ_TIMEOUT_TICKS(sdcp->clkfreq, clkdiv);
+    sdcp->wtmo = SDMMC_WRITE_TIMEOUT_TICKS(sdcp->clkfreq, clkdiv);
   }
   else {
+    uint32_t clkdiv = sdc_lld_clkdiv(sdcp, 25000000);
 #if STM32_SDC_SDMMC_PWRSAV
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
-                         sdc_lld_clkdiv(sdcp, 25000000) | SDMMC_CLKCR_PWRSAV;
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFE00U) |
+                          clkdiv | SDMMC_CLKCR_PWRSAV;
 #else
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
-                         sdc_lld_clkdiv(sdcp, 25000000);
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFE00U) |
+                          clkdiv;
 #endif
+    sdcp->rtmo = SDMMC_READ_TIMEOUT_TICKS(sdcp->clkfreq, clkdiv);
+    sdcp->wtmo = SDMMC_WRITE_TIMEOUT_TICKS(sdcp->clkfreq, clkdiv);
   }
 }
 
@@ -641,19 +670,26 @@ bool sdc_lld_send_cmd_long_crc(SDCDriver *sdcp, uint8_t cmd, uint32_t arg,
 bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
                           uint8_t cmd, uint32_t arg) {
 
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, bytes)) {
+      return HAL_FAILED;
+  }
+
   if (sdc_lld_prepare_read_bytes(sdcp, buf, bytes))
     goto error;
 
-  if (sdc_lld_send_cmd_short_crc(sdcp, SDMMC_CMD_CMDTRANS | cmd, arg, sdcp->resp) ||
+  if (sdc_lld_send_cmd_short_crc(sdcp, cmd, arg, sdcp->resp) ||
       MMCSD_R1_ERROR(sdcp->resp[0]))
     goto error;
 
   if (sdc_lld_wait_transaction_end(sdcp, 1, sdcp->resp))
     goto error;
 
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, bytes);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, bytes);
   sdc_lld_error_cleanup(sdcp, 1, sdcp->resp);
   return HAL_FAILED;
 }
@@ -677,11 +713,15 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
 
   osalDbgCheck(blocks < 0x1000000 / MMCSD_BLOCK_SIZE);
 
-  sdcp->sdmmc->DTIMER = STM32_SDC_SDMMC_READ_TIMEOUT;
+  sdcp->sdmmc->DTIMER = sdcp->rtmo;
 
   /* Checks for errors and waits for the card to be ready for reading.*/
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
+
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
 
   /* Setting up data transfer.*/
   sdcp->sdmmc->ICR   = SDMMC_ICR_ALL_FLAGS;
@@ -692,13 +732,12 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   sdcp->sdmmc->DLEN  = blocks * MMCSD_BLOCK_SIZE;
 
   /* Transfer modes.*/
-  sdcp->sdmmc->DCTRL = SDMMC_DCTRL_DTDIR |
+  sdcp->sdmmc->DCTRL = SDMMC_DCTRL_DTDIR | SDMMC_DCTRL_FIFORST |
                        SDMMC_DCTRL_DBLOCKSIZE_3 |
                        SDMMC_DCTRL_DBLOCKSIZE_0;
 
   /* Prepares IDMA.*/
   sdcp->sdmmc->IDMABASE0 = (uint32_t)buf;
-  sdcp->sdmmc->IDMACTRL  = SDMMC_IDMA_IDMAEN;
 
   if (sdc_lld_prepare_read(sdcp, startblk, blocks, sdcp->resp) == true)
     goto error;
@@ -706,9 +745,12 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (sdc_lld_wait_transaction_end(sdcp, blocks, sdcp->resp) == true)
     goto error;
 
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, blocks * MMCSD_BLOCK_SIZE);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, blocks * MMCSD_BLOCK_SIZE);
   sdc_lld_error_cleanup(sdcp, blocks, sdcp->resp);
   return HAL_FAILED;
 }
@@ -732,11 +774,15 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
 
   osalDbgCheck(blocks < 0x1000000 / MMCSD_BLOCK_SIZE);
 
-  sdcp->sdmmc->DTIMER = STM32_SDC_SDMMC_WRITE_TIMEOUT;
+  sdcp->sdmmc->DTIMER = sdcp->wtmo;
 
   /* Checks for errors and waits for the card to be ready for writing.*/
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
+
+  if (!bouncebuffer_setup_write(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
 
   /* Setting up data transfer.*/
   sdcp->sdmmc->ICR   = SDMMC_ICR_ALL_FLAGS;
@@ -747,12 +793,11 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   sdcp->sdmmc->DLEN  = blocks * MMCSD_BLOCK_SIZE;
 
   /* Transfer modes.*/
-  sdcp->sdmmc->DCTRL = SDMMC_DCTRL_DBLOCKSIZE_3 |
+  sdcp->sdmmc->DCTRL = SDMMC_DCTRL_DBLOCKSIZE_3 | SDMMC_DCTRL_FIFORST |
                        SDMMC_DCTRL_DBLOCKSIZE_0;
 
   /* Prepares IDMA.*/
   sdcp->sdmmc->IDMABASE0 = (uint32_t)buf;
-  sdcp->sdmmc->IDMACTRL  = SDMMC_IDMA_IDMAEN;
 
   if (sdc_lld_prepare_write(sdcp, startblk, blocks, sdcp->resp) == true)
     goto error;
@@ -760,9 +805,12 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (sdc_lld_wait_transaction_end(sdcp, blocks, sdcp->resp) == true)
     goto error;
 
+  bouncebuffer_finish_write(sdcp->bouncebuffer, buf);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_write(sdcp->bouncebuffer, buf);
   sdc_lld_error_cleanup(sdcp, blocks, sdcp->resp);
   return HAL_FAILED;
 }
@@ -785,20 +833,21 @@ bool sdc_lld_read(SDCDriver *sdcp, uint32_t startblk,
                   uint8_t *buf, uint32_t blocks) {
 
 #if STM32_SDC_SDMMC_UNALIGNED_SUPPORT
-  uint32_t i;
-  for (i = 0; i < blocks; i++) {
-    if (sdc_lld_read_aligned(sdcp, startblk, sdcp->buf, 1))
-      return HAL_FAILED;
-    memcpy(buf, sdcp->buf, MMCSD_BLOCK_SIZE);
-    buf += MMCSD_BLOCK_SIZE;
-    startblk++;
+  if (((unsigned)buf & 3) != 0) {
+    uint32_t i;
+    for (i = 0; i < blocks; i++) {
+      if (sdc_lld_read_aligned(sdcp, startblk, sdcp->buf, 1))
+        return HAL_FAILED;
+      memcpy(buf, sdcp->buf, MMCSD_BLOCK_SIZE);
+      buf += MMCSD_BLOCK_SIZE;
+      startblk++;
+    }
+    return HAL_SUCCESS;
   }
-  return HAL_SUCCESS;
 #else /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
   osalDbgAssert((((unsigned)buf & 3) == 0), "unaligned buffer");
-
-  return sdc_lld_read_aligned(sdcp, startblk, buf, blocks);
 #endif /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
+  return sdc_lld_read_aligned(sdcp, startblk, buf, blocks);
 }
 
 /**
@@ -819,20 +868,21 @@ bool sdc_lld_write(SDCDriver *sdcp, uint32_t startblk,
                    const uint8_t *buf, uint32_t blocks) {
 
 #if STM32_SDC_SDMMC_UNALIGNED_SUPPORT
-  uint32_t i;
-  for (i = 0; i < blocks; i++) {
-    memcpy(sdcp->buf, buf, MMCSD_BLOCK_SIZE);
-    buf += MMCSD_BLOCK_SIZE;
-    if (sdc_lld_write_aligned(sdcp, startblk, sdcp->buf, 1))
-      return HAL_FAILED;
-    startblk++;
+  if (((unsigned)buf & 3) != 0) {
+    uint32_t i;
+    for (i = 0; i < blocks; i++) {
+      memcpy(sdcp->buf, buf, MMCSD_BLOCK_SIZE);
+      buf += MMCSD_BLOCK_SIZE;
+      if (sdc_lld_write_aligned(sdcp, startblk, sdcp->buf, 1))
+        return HAL_FAILED;
+      startblk++;
+    }
+    return HAL_SUCCESS;
   }
-  return HAL_SUCCESS;
 #else /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
   osalDbgAssert((((unsigned)buf & 3) == 0), "unaligned buffer");
-
-  return sdc_lld_write_aligned(sdcp, startblk, buf, blocks);
 #endif /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
+  return sdc_lld_write_aligned(sdcp, startblk, buf, blocks);
 }
 
 /**
@@ -860,11 +910,11 @@ bool sdc_lld_sync(SDCDriver *sdcp) {
  */
 void sdc_lld_serve_interrupt(SDCDriver *sdcp) {
 
+  osalSysLockFromISR();
   /* Disables the source but the status flags are not reset because the
      read/write functions needs to check them.*/
   sdcp->sdmmc->MASK = 0;
 
-  osalSysLockFromISR();
   osalThreadResumeI(&sdcp->thread, MSG_OK);
   osalSysUnlockFromISR();
 }
