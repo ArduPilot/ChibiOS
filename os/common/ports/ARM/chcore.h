@@ -360,7 +360,7 @@ struct port_context {
 #define port_switch(ntp, otp) {                                             \
   register struct port_intctx *r13 asm ("r13");                             \
   if ((stkalign_t *)(r13 - 1) < otp->wabase)                                \
-    chSysHalt("stack overflow");                                            \
+    CH_CFG_STACK_OVERFLOW_HOOK(otp);                                        \
   __port_switch_thumb(ntp, otp);                                             \
 }
 #else
@@ -373,7 +373,7 @@ struct port_context {
 #define port_switch(ntp, otp) {                                             \
   register struct port_intctx *r13 asm ("r13");                             \
   if ((stkalign_t *)(r13 - 1) < otp->wabase)                                \
-  chSysHalt("stack overflow");                                              \
+  CH_CFG_STACK_OVERFLOW_HOOK(otp);                                          \
   __port_switch_arm(ntp, otp);                                               \
 }
 #else
