@@ -153,7 +153,9 @@ static const SerialConfig default_config =
   SERIAL_DEFAULT_BITRATE,
   0,
   USART_CR2_STOP1_BITS,
-  0
+  0,
+  NULL,
+  NULL
 };
 
 #if STM32_SERIAL_USE_USART1 || defined(__DOXYGEN__)
@@ -259,6 +261,8 @@ static void usart_init(SerialDriver *sdp,
                        const SerialConfig *config) {
   uint32_t brr, clock;
   USART_TypeDef *u = sdp->usart;
+
+  sdp->config = config;
 
   /* Baud rate setting.*/
   clock = sdp->clock;
@@ -1035,6 +1039,9 @@ void sd_lld_serve_interrupt(SerialDriver *sdp) {
       u->CR1 = cr1 & ~USART_CR1_TCIE;
     }
     osalSysUnlockFromISR();
+  }
+  if (isr & USART_ISR_IDLE) {
+      _serial_irq_code(sdp);
   }
 }
 
