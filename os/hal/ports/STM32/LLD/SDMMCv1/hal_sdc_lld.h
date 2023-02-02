@@ -339,6 +339,9 @@ struct SDCDriver {
    * @brief   Uncached word buffer for small transfers.
    */
   uint32_t                  *resp;
+
+  // bouncebuffer to support DMA to all memory regions
+  struct bouncebuffer_t *bouncebuffer;
 };
 
 /*===========================================================================*/
