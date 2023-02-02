@@ -249,6 +249,45 @@ static void i2c_lld_set_clock(I2CDriver *i2cp) {
   dp->CCR = regCCR;
 }
 
+#ifdef I2C_FLTR_ANOFF
+/**
+ * @brief   Set filter params.
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+static void i2c_lld_set_filter(I2CDriver *i2cp) {
+  I2C_TypeDef *dp = i2cp->i2c;
+  i2cdutycycle_t duty = i2cp->config->duty_cycle;
+  uint8_t filter;
+
+  if (duty == STD_DUTY_CYCLE) {
+    if (I2C_CLK_FREQ <= 5) {
+      filter = 2;
+    } else if (I2C_CLK_FREQ <= 10) {
+      filter = 12;
+    } else {
+      filter = 15;
+    }
+  } else {
+    if (I2C_CLK_FREQ <= 10) {
+      filter = 0;
+    } else if (I2C_CLK_FREQ <= 20) {
+      filter = 1;
+    } else if (I2C_CLK_FREQ <= 30) {
+      filter = 7;
+    } else if (I2C_CLK_FREQ <= 40) {
+      filter = 13;
+    } else {
+      filter = 15;
+    }
+  }
+
+  dp->FLTR = (I2C_FLTR_ANOFF) | (I2C_FLTR_DNF & filter);
+}
+#endif // I2C_FLTR_ANOFF
+
 /**
  * @brief   Set operation mode of I2C hardware.
  *
@@ -277,6 +316,35 @@ static void i2c_lld_set_opmode(I2CDriver *i2cp) {
   dp->CR1 = regCR1;
 }
 
+#ifdef STM32_I2C_ISR_LIMIT
+/**
+ * @brief reset I2C peripheral
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+static void i2c_lld_reset(I2CDriver *i2cp) {
+#if STM32_I2C_USE_I2C1
+    if (&I2CD1 == i2cp) {
+      rccResetI2C1();
+    }
+#endif /* STM32_I2C_USE_I2C1 */
+
+#if STM32_I2C_USE_I2C2
+    if (&I2CD2 == i2cp) {
+      rccResetI2C2();
+    }
+#endif /* STM32_I2C_USE_I2C2 */
+
+#if STM32_I2C_USE_I2C3
+    if (&I2CD3 == i2cp) {
+      rccResetI2C3();
+    }
+#endif /* STM32_I2C_USE_I2C3 */
+}
+#endif // STM32_I2C_ISR_LIMIT
+
 /**
  * @brief   I2C shared ISR code.
  *
@@ -288,6 +356,30 @@ static void i2c_lld_serve_event_interrupt(I2CDriver *i2cp) {
   I2C_TypeDef *dp = i2cp->i2c;
   uint32_t regSR2 = dp->SR2;
   uint32_t event = dp->SR1;
+
+#ifdef STM32_I2C_ISR_LIMIT
+    if (i2cp->isr_count++ > i2cp->isr_limit) {
+        i2cp->errors |= I2C_ISR_LIMIT;
+        if (i2cp->dmatx)
+            dmaStreamDisable(i2cp->dmatx);
+        if (i2cp->dmarx)
+            dmaStreamDisable(i2cp->dmarx);
+        dp->CR1 |= I2C_CR1_SWRST;
+        dp->CR1 &= ~I2C_CR1_PE;
+        i2c_lld_reset(i2cp);
+        _i2c_wakeup_error_isr(i2cp);
+        return;
+    }
+#endif
+
+  if (!i2cp->in_transaction) {
+      // we have an interrupt while not inside an I2C operation. This
+      // can happen with sufficient bus noise. The best we can do is
+      // disable the peripheral and reset it
+      dp->CR1 |= I2C_CR1_SWRST;
+      dp->CR1 &= ~I2C_CR1_PE;
+      return;
+  }
 
   /* Interrupts are disabled just before dmaStreamEnable() because there
      is no need of interrupts until next transaction begin. All the work is
@@ -463,8 +555,30 @@ static void i2c_lld_serve_tx_end_irq(I2CDriver *i2cp, uint32_t flags) {
 static void i2c_lld_serve_error_interrupt(I2CDriver *i2cp, uint16_t sr) {
 
   /* Clears interrupt flags just to be safe.*/
+  if (i2cp->dmatx)
   dmaStreamDisable(i2cp->dmatx);
+  if (i2cp->dmarx)
   dmaStreamDisable(i2cp->dmarx);
+
+#ifdef STM32_I2C_ISR_LIMIT
+    if (i2cp->isr_count++ > i2cp->isr_limit) {
+        i2cp->errors |= I2C_ISR_LIMIT;
+        i2cp->i2c->CR1 |= I2C_CR1_SWRST;
+        i2cp->i2c->CR1 &= ~I2C_CR1_PE;
+        i2c_lld_reset(i2cp);
+        _i2c_wakeup_error_isr(i2cp);
+        return;
+    }
+#endif
+
+  if (!i2cp->in_transaction) {
+      // we have an interrupt while not inside an I2C operation. This
+      // can happen with sufficient bus noise. The best we can do is
+      // disable the peripheral and reset it
+      i2cp->i2c->CR1 |= I2C_CR1_SWRST;
+      i2cp->i2c->CR1 &= ~I2C_CR1_PE;
+      return;
+  }
 
   i2cp->errors = I2C_NO_ERROR;
 
@@ -774,6 +888,9 @@ void i2c_lld_start(I2CDriver *i2cp) {
 
   /* Setup I2C parameters.*/
   i2c_lld_set_clock(i2cp);
+#ifdef I2C_FLTR_ANOFF
+  i2c_lld_set_filter(i2cp);
+#endif
   i2c_lld_set_opmode(i2cp);
 
   /* Ready to go.*/
@@ -826,6 +943,48 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 }
 
 /**
+ * @brief   Disable DMA, disable interrupts, but leave the peripheral enabled
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+void i2c_lld_soft_stop(I2CDriver *i2cp) {
+
+  /* If not in stopped state then disables the I2C clock.*/
+  if (i2cp->state != I2C_STOP) {
+
+    /* I2C disable.*/
+    dmaStreamFreeI(i2cp->dmatx);
+    dmaStreamFreeI(i2cp->dmarx);
+    i2cp->dmatx = NULL;
+    i2cp->dmarx = NULL;
+
+#if STM32_I2C_USE_I2C1
+    if (&I2CD1 == i2cp) {
+      nvicDisableVector(I2C1_EV_IRQn);
+      nvicDisableVector(I2C1_ER_IRQn);
+    }
+#endif
+
+#if STM32_I2C_USE_I2C2
+    if (&I2CD2 == i2cp) {
+      nvicDisableVector(I2C2_EV_IRQn);
+      nvicDisableVector(I2C2_ER_IRQn);
+    }
+#endif
+
+#if STM32_I2C_USE_I2C3
+    if (&I2CD3 == i2cp) {
+      nvicDisableVector(I2C3_EV_IRQn);
+      nvicDisableVector(I2C3_ER_IRQn);
+    }
+#endif
+  }
+}
+
+
+/**
  * @brief   Receives data via the I2C bus as master.
  * @details Number of receiving bytes must be more than 1 on STM32F1x. This is
  *          hardware restriction.
@@ -852,8 +1011,12 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                      uint8_t *rxbuf, size_t rxbytes,
                                      sysinterval_t timeout) {
   I2C_TypeDef *dp = i2cp->i2c;
-  systime_t start, end;
   msg_t msg;
+
+#ifdef STM32_I2C_ISR_LIMIT
+  i2cp->isr_limit = rxbytes * STM32_I2C_ISR_LIMIT;
+  i2cp->isr_count = 0;
+#endif
 
 #if defined(STM32F1XX_I2C)
   osalDbgCheck(rxbytes > 1);
@@ -869,6 +1032,13 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   /* Initializes driver fields, LSB = 1 -> receive.*/
   i2cp->addr = (addr << 1) | 0x01;
 
+  /* we expect the bus to not be busy when this is called. If it is
+   * busy then immediately fail and let higher level code restart
+   * I2C. Note that we return with lock held. */
+  if ((dp->SR2 & I2C_SR2_BUSY) || (dp->CR1 & I2C_CR1_STOP)) {
+      return MSG_TIMEOUT;
+  }
+
   /* Releases the lock from high level driver.*/
   osalSysUnlock();
 
@@ -877,29 +1047,9 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   dmaStreamSetMemory0(i2cp->dmarx, rxbuf);
   dmaStreamSetTransactionSize(i2cp->dmarx, rxbytes);
 
-  /* Calculating the time window for the timeout on the busy bus condition.*/
-  start = osalOsGetSystemTimeX();
-  end = osalTimeAddX(start, OSAL_MS2I(STM32_I2C_BUSY_TIMEOUT));
-
-  /* Waits until BUSY flag is reset or, alternatively, for a timeout
-     condition.*/
-  while (true) {
     osalSysLock();
 
-    /* If the bus is not busy then the operation can continue, note, the
-       loop is exited in the locked state.*/
-    if (!(dp->SR2 & I2C_SR2_BUSY) && !(dp->CR1 & I2C_CR1_STOP))
-      break;
-
-    /* If the system time went outside the allowed window then a timeout
-       condition is returned.*/
-    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
-      dmaStreamDisable(i2cp->dmarx);
-      return MSG_TIMEOUT;
-    }
-
-    osalSysUnlock();
-  }
+  i2cp->in_transaction = true;
 
   /* Starts the operation.*/
   dp->CR2 |= I2C_CR2_ITEVTEN;
@@ -907,9 +1057,9 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   /* Waits for the operation completion or a timeout.*/
   msg = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
-  if (msg != MSG_OK) {
     dmaStreamDisable(i2cp->dmarx);
-  }
+
+  i2cp->in_transaction = false;
 
   return msg;
 }
@@ -944,22 +1094,32 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                       uint8_t *rxbuf, size_t rxbytes,
                                       sysinterval_t timeout) {
   I2C_TypeDef *dp = i2cp->i2c;
-  systime_t start, end;
   msg_t msg;
 
-#if defined(STM32F1XX_I2C)
+#if defined(STM32F1XX_I2C) && !defined(_ARDUPILOT_)
   osalDbgCheck((rxbytes == 0) || ((rxbytes > 1) && (rxbuf != NULL)));
 #endif
 
 #if (I2C_SUPPORTS_SLAVE_MODE == TRUE)
   i2cp->isMaster = true;
 #endif /* I2C_SUPPORTS_SLAVE_MODE == TRUE */
+#ifdef STM32_I2C_ISR_LIMIT
+  i2cp->isr_limit = (txbytes + rxbytes) * STM32_I2C_ISR_LIMIT;
+  i2cp->isr_count = 0;
+#endif
 
   /* Resetting error flags for this transfer.*/
   i2cp->errors = I2C_NO_ERROR;
 
   /* Initializes driver fields, LSB = 0 -> transmit.*/
   i2cp->addr = (addr << 1);
+
+  /* we expect the bus to not be busy when this is called. If it is
+   * busy then immediately fail and let higher level code restart
+   * I2C. Note that we return with lock held. */
+  if ((dp->SR2 & I2C_SR2_BUSY) || (dp->CR1 & I2C_CR1_STOP)) {
+      return MSG_TIMEOUT;
+  }
 
   /* Releases the lock from high level driver.*/
   osalSysUnlock();
@@ -974,30 +1134,9 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   dmaStreamSetMemory0(i2cp->dmarx, rxbuf);
   dmaStreamSetTransactionSize(i2cp->dmarx, rxbytes);
 
-  /* Calculating the time window for the timeout on the busy bus condition.*/
-  start = osalOsGetSystemTimeX();
-  end = osalTimeAddX(start, OSAL_MS2I(STM32_I2C_BUSY_TIMEOUT));
-
-  /* Waits until BUSY flag is reset or, alternatively, for a timeout
-     condition.*/
-  while (true) {
     osalSysLock();
 
-    /* If the bus is not busy then the operation can continue, note, the
-       loop is exited in the locked state.*/
-    if (!(dp->SR2 & I2C_SR2_BUSY) && !(dp->CR1 & I2C_CR1_STOP))
-      break;
-
-    /* If the system time went outside the allowed window then a timeout
-       condition is returned.*/
-    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
-      dmaStreamDisable(i2cp->dmatx);
-      dmaStreamDisable(i2cp->dmarx);
-      return MSG_TIMEOUT;
-    }
-
-    osalSysUnlock();
-  }
+  i2cp->in_transaction = true;
 
   /* Starts the operation.*/
   dp->CR2 |= I2C_CR2_ITEVTEN;
@@ -1005,10 +1144,10 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   /* Waits for the operation completion or a timeout.*/
   msg = osalThreadSuspendTimeoutS(&i2cp->thread, timeout);
-  if (msg != MSG_OK) {
     dmaStreamDisable(i2cp->dmatx);
     dmaStreamDisable(i2cp->dmarx);
-  }
+
+  i2cp->in_transaction = false;
 
   return msg;
 }
