@@ -28,6 +28,8 @@
 
 #if HAL_USE_SDC || defined(__DOXYGEN__)
 
+#include "bouncebuffer.h"
+
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -61,7 +63,9 @@ static union {
  * @brief   SDIO default configuration.
  */
 static const SDCConfig sdc_default_cfg = {
-  SDC_MODE_4BIT
+  NULL,
+  SDC_MODE_4BIT,
+  0
 };
 
 /*===========================================================================*/
@@ -446,18 +450,18 @@ void sdc_lld_start_clk(SDCDriver *sdcp) {
  * @notapi
  */
 void sdc_lld_set_data_clk(SDCDriver *sdcp, sdcbusclk_t clk) {
-
+  uint8_t clkdiv_hs = STM32_SDIO_DIV_HS + sdcp->config->slowdown;
 #if STM32_SDC_SDIO_50MHZ
   if (SDC_CLK_50MHz == clk) {
-    sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | STM32_SDIO_DIV_HS
+	sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | clkdiv_hs |
                                                           | SDIO_CLKCR_BYPASS;
   }
   else
-    sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | STM32_SDIO_DIV_HS;
+	sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
 #else
   (void)clk;
 
-  sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | STM32_SDIO_DIV_HS;
+  sdcp->sdio->CLKCR = (sdcp->sdio->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
 #endif
 }
 
@@ -642,6 +646,10 @@ bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
                           uint8_t cmd, uint32_t arg) {
   uint32_t resp[1];
 
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, bytes)) {
+      return HAL_FAILED;
+  }
+
   if (sdc_lld_prepare_read_bytes(sdcp, buf, bytes))
     goto error;
 
@@ -652,9 +660,12 @@ bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
   if (sdc_lld_wait_transaction_end(sdcp, 1, resp))
     goto error;
 
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, bytes);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, 0);
   sdc_lld_error_cleanup(sdcp, 1, resp);
   return HAL_FAILED;
 }
@@ -685,6 +696,10 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
 
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
+
   /* Prepares the DMA channel for writing.*/
   dmaStreamSetMemory0(sdcp->dma, buf);
   dmaStreamSetTransactionSize(sdcp->dma,
@@ -714,9 +729,12 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (sdc_lld_wait_transaction_end(sdcp, blocks, resp) == true)
     goto error;
 
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, blocks * MMCSD_BLOCK_SIZE);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, 0);
   sdc_lld_error_cleanup(sdcp, blocks, resp);
   return HAL_FAILED;
 }
@@ -747,6 +765,10 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
 
+  if (!bouncebuffer_setup_write(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
+  
   /* Prepares the DMA channel for writing.*/
   dmaStreamSetMemory0(sdcp->dma, buf);
   dmaStreamSetTransactionSize(sdcp->dma,
@@ -776,9 +798,12 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (sdc_lld_wait_transaction_end(sdcp, blocks, resp) == true)
     goto error;
 
+  bouncebuffer_finish_write(sdcp->bouncebuffer, buf);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_write(sdcp->bouncebuffer, buf);
   sdc_lld_error_cleanup(sdcp, blocks, resp);
   return HAL_FAILED;
 }
