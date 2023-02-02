@@ -142,6 +142,8 @@
 #define STM32_I2C_DMA_ERROR_HOOK(i2cp)      osalSysHalt("DMA failure")
 #endif
 
+#if !defined(_ARDUPILOT_)
+
 #if STM32_ADVANCED_DMA || defined(__DOXYGEN__)
 
 /**
@@ -202,6 +204,8 @@
 #define STM32_I2C_I2C2_TX_DMA_STREAM        STM32_DMA_STREAM_ID(1, 4)
 
 #endif /* !STM32_ADVANCED_DMA*/
+
+#endif // !_ARDUPILOT_
 
 /* Flag for the whole STM32F1XX family. */
 #if defined(STM32F10X_LD_VL) || defined(STM32F10X_MD_VL) || \
@@ -461,6 +465,23 @@ struct hal_i2c_driver {
    * @brief     Pointer to the I2Cx registers block.
    */
   I2C_TypeDef               *i2c;
+
+#ifdef STM32_I2C_ISR_LIMIT
+  /**
+   * @brief count of interrupts since transfer start
+   */
+  uint32_t                  isr_count;
+
+  /**
+   * @brief limit of interrupts for this transfer
+   */
+  uint32_t                  isr_limit;
+#endif
+
+  /**
+     true when we are in an I2C transaction
+   */
+  bool                      in_transaction;
 };
 
 /*===========================================================================*/
@@ -500,6 +521,7 @@ extern "C" {
   void i2c_lld_init(void);
   void i2c_lld_start(I2CDriver *i2cp);
   void i2c_lld_stop(I2CDriver *i2cp);
+  void i2c_lld_soft_stop(I2CDriver *i2cp);
   msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                         const uint8_t *txbuf, size_t txbytes,
                                         uint8_t *rxbuf, size_t rxbytes,
