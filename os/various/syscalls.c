@@ -183,7 +183,7 @@ int _isatty_r(struct _reent *r, int fd) {
 }
 
 /***************************************************************************/
-
+#ifndef _ARDUPILOT_
 __attribute__((used))
 void _exit(int status) {
 
@@ -192,9 +192,10 @@ void _exit(int status) {
   chSysHalt("exit");
   abort();
 }
+#endif
 
 /***************************************************************************/
-
+#ifndef _ARDUPILOT_
 __attribute__((used))
 int _kill(int pid, int sig) {
 
@@ -204,15 +205,18 @@ int _kill(int pid, int sig) {
   chSysHalt("kill");
   abort();
 }
+#endif
 
 /***************************************************************************/
 
+#ifndef _ARDUPILOT_
 __attribute__((used))
 int _getpid(void) {
 
   return 1;
   abort();
 }
+#endif
 
 /***************************************************************************/
 /* Only used in C++ mode.*/
