@@ -438,7 +438,7 @@ struct port_context {
 #define port_switch(ntp, otp) {                                             \
   register struct port_intctx *sp asm ("%r1");                              \
   if ((stkalign_t *)(void *)(sp - 1) < otp->wabase)                         \
-    chSysHalt("stack overflow");                                            \
+    CH_CFG_STACK_OVERFLOW_HOOK(otp);                                        \
   _port_switch(ntp, otp);                                                   \
 }
 #endif
