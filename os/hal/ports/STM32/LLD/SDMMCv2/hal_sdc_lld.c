@@ -28,6 +28,8 @@
 
 #if HAL_USE_SDC || defined(__DOXYGEN__)
 
+#include "bouncebuffer.h"
+
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -687,6 +689,10 @@ bool sdc_lld_send_cmd_long_crc(SDCDriver *sdcp, uint8_t cmd, uint32_t arg,
 bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
                           uint8_t cmd, uint32_t arg) {
 
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, bytes)) {
+      return HAL_FAILED;
+  }
+
   if (sdc_lld_prepare_read_bytes(sdcp, buf, bytes))
     goto error;
 
@@ -697,9 +703,12 @@ bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
   if (sdc_lld_wait_transaction_end(sdcp, 1, sdcp->resp))
     goto error;
 
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, bytes);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, bytes);
   sdc_lld_error_cleanup(sdcp, 1, sdcp->resp);
   return HAL_FAILED;
 }
@@ -729,6 +738,10 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
 
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
+
   /* Prepares IDMA.*/
   sdcp->sdmmc->IDMABASE0 = (uint32_t)buf;
   sdcp->sdmmc->IDMACTRL  = SDMMC_IDMA_IDMAEN;
@@ -754,9 +767,12 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (sdc_lld_wait_transaction_end(sdcp, blocks, sdcp->resp) == true)
     goto error;
 
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, blocks * MMCSD_BLOCK_SIZE);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, blocks * MMCSD_BLOCK_SIZE);
   sdc_lld_error_cleanup(sdcp, blocks, sdcp->resp);
   return HAL_FAILED;
 }
@@ -786,6 +802,10 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
 
+  if (!bouncebuffer_setup_write(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
+
   /* Prepares IDMA.*/
   sdcp->sdmmc->IDMABASE0 = (uint32_t)buf;
   sdcp->sdmmc->IDMACTRL  = SDMMC_IDMA_IDMAEN;
@@ -810,9 +830,12 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (sdc_lld_wait_transaction_end(sdcp, blocks, sdcp->resp) == true)
     goto error;
 
+  bouncebuffer_finish_write(sdcp->bouncebuffer, buf);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_write(sdcp->bouncebuffer, buf);
   sdc_lld_error_cleanup(sdcp, blocks, sdcp->resp);
   return HAL_FAILED;
 }
