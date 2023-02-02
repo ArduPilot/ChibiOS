@@ -269,10 +269,26 @@ typedef struct SDCDriver SDCDriver;
  */
 typedef struct {
   /**
+   * @brief   Working area for memory consuming operations.
+   * @note    Buffer must be word aligned and big enough to store 512 bytes.
+   * @note    It is mandatory for detecting MMC cards bigger than 2GB else it
+   *          can be @p NULL. SD cards do NOT need it.
+   * @note    Memory pointed by this buffer is only used by @p sdcConnect(),
+   *          afterward it can be reused for other purposes.
+   */
+  uint8_t       *scratchpad;
+  /**
    * @brief   Bus width.
    */
   sdcbusmode_t  bus_width;
   /* End of the mandatory fields.*/
+
+  /**
+   * @brief bus slowdown
+   * This is an additional slowdown applied to high speed bus operation
+   */
+  uint8_t slowdown;
+
 } SDCConfig;
 
 /**
@@ -341,10 +357,14 @@ struct SDCDriver {
    * @note      Needed for debugging aid.
    */
   SDMMC_TypeDef             *sdmmc;
+
   /**
    * @brief   Buffer for internal operations.
    */
   uint8_t                   buf[MMCSD_BLOCK_SIZE];
+
+  // bouncebuffer to support DMA to all memory regions
+  struct bouncebuffer_t *bouncebuffer;
 };
 
 /*===========================================================================*/
