@@ -95,6 +95,9 @@ void halInit(void) {
 #if (HAL_USE_ICU == TRUE) || defined(__DOXYGEN__)
   icuInit();
 #endif
+#if (HAL_USE_EICU == TRUE) || defined(__DOXYGEN__)
+  eicuInit();
+#endif
 #if (HAL_USE_MAC == TRUE) || defined(__DOXYGEN__)
   macInit();
 #endif
