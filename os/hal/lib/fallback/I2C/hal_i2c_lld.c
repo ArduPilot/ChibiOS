@@ -329,6 +329,18 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 }
 
 /**
+ * @brief   Deactivates the I2C peripheral.
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+void i2c_lld_soft_stop(I2CDriver *i2cp) {
+  /* just stop if there's no "soft stop option" */
+  i2c_lld_stop(i2cp);
+}
+
+/**
  * @brief   Receives data via the I2C bus as master.
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object
