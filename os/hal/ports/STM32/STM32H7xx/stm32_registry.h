@@ -259,6 +259,10 @@
 #define STM32_HAS_TIM8                      TRUE
 #define STM32_TIM8_IS_32BITS                FALSE
 #define STM32_TIM8_CHANNELS                 6
+#define STM32_TIM8_UP_HANDLER               VectorF0
+#define STM32_TIM8_CC_HANDLER               VectorF8
+#define STM32_TIM8_UP_NUMBER                44
+#define STM32_TIM8_CC_NUMBER                46
 
 #define STM32_HAS_TIM12                     TRUE
 #define STM32_TIM12_IS_32BITS               FALSE
@@ -336,6 +340,19 @@
 
 /* DCMI attributes.*/
 #define STM32_HAS_DCMI                      TRUE
+
+/* FDCAN attrubutes */
+#define STM32_HAS_FDCAN1                    TRUE
+#define STM32_FDCAN1_IT0_HANDLER            Vector8C
+#define STM32_FDCAN1_IT1_HANDLER            Vector94
+#define STM32_FDCAN1_IT0_NUMBER             19
+#define STM32_FDCAN1_IT1_NUMBER             21
+
+#define STM32_HAS_FDCAN2                    TRUE
+#define STM32_FDCAN2_IT0_HANDLER            Vector90
+#define STM32_FDCAN2_IT1_HANDLER            Vector98
+#define STM32_FDCAN2_IT0_NUMBER             20
+#define STM32_FDCAN2_IT1_NUMBER             22
 
 #endif /* defined(STM32H743xx) || defined(STM32H753xx) */
 
