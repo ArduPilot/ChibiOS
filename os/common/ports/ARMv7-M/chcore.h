@@ -699,16 +699,19 @@ struct port_context {
  */
 #define PORT_IRQ_EPILOGUE() __port_irq_epilogue()
 
+#ifndef PORT_IRQ_ATTRIBUTES
+#define PORT_IRQ_ATTRIBUTES
+#endif
+
 /**
  * @brief   IRQ handler function declaration.
  * @note    @p id can be a function name or a vector number depending on the
  *          port implementation.
  */
 #ifdef __cplusplus
-  #define PORT_IRQ_HANDLER(id) extern "C" void id(void)
-
+#define PORT_IRQ_HANDLER(id) extern "C" PORT_IRQ_ATTRIBUTES void id(void)
 #else
-  #define PORT_IRQ_HANDLER(id) void id(void)
+#define PORT_IRQ_HANDLER(id) PORT_IRQ_ATTRIBUTES void id(void)
 #endif
 
 /**
@@ -740,8 +743,8 @@ struct port_context {
   #if PORT_ENABLE_GUARD_PAGES == FALSE
     #define port_switch(ntp, otp) do {                                      \
       struct port_intctx *r13 = (struct port_intctx *)__get_PSP();          \
-      if ((stkline_t *)(void *)(r13 - 1) < (otp)->wabase) {                 \
-        chSysHalt("stack overflow");                                        \
+      if ((stkline_t *)(void *)(r13 - 1) < (otp)->wabase) {                \
+        CH_CFG_STACK_OVERFLOW_HOOK(otp);									\
       }                                                                     \
       __port_switch(ntp, otp);                                              \
     } while (false)
