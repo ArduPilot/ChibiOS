@@ -21,6 +21,7 @@
 
 #include "hal.h"
 #include "ff.h"
+#include "stdlib.h"
 
 #if FF_FS_REENTRANT
 /*------------------------------------------------------------------------*/
@@ -71,7 +72,7 @@ void ff_rel_grant(FF_SYNC_t sobj) {
 /*------------------------------------------------------------------------*/
 void *ff_memalloc(UINT size) {
 
-  return chHeapAlloc(NULL, size);
+  return malloc(size);
 }
 
 /*------------------------------------------------------------------------*/
@@ -79,6 +80,6 @@ void *ff_memalloc(UINT size) {
 /*------------------------------------------------------------------------*/
 void ff_memfree(void *mblock) {
 
-  chHeapFree(mblock);
+  free(mblock);
 }
 #endif /* FF_USE_LFN == 3 */
