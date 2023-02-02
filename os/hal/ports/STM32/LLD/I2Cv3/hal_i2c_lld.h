@@ -423,6 +423,9 @@
 #if !defined(STM32_BDMA_REQUIRED)
 #define STM32_BDMA_REQUIRED
 #endif
+#if !defined(STM32_I2C_BDMA_REQUIRED)
+#define STM32_I2C_BDMA_REQUIRED
+#endif
 #endif
 #else /* STM32_I2C4_USE_BDMA != TRUE */
 
@@ -618,6 +621,22 @@ struct hal_i2c_driver {
    */
   bool                      isMaster;
 #endif /* I2C_SUPPORTS_SLAVE_MODE == TRUE */
+#ifdef STM32_I2C_ISR_LIMIT
+  /**
+   * @brief count of interrupts since transfer start
+   */
+  uint32_t                  isr_count;
+
+  /**
+   * @brief limit of interrupts for this transfer
+   */
+  uint32_t                  isr_limit;
+#endif
+
+  /**
+     true when we are in an I2C transaction
+   */
+  bool                      in_transaction;
 };
 
 /*===========================================================================*/
@@ -666,6 +685,7 @@ extern "C" {
   void i2c_lld_init(void);
   void i2c_lld_start(I2CDriver *i2cp);
   void i2c_lld_stop(I2CDriver *i2cp);
+  void i2c_lld_soft_stop(I2CDriver *i2cp);
   msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                         const uint8_t *txbuf, size_t txbytes,
                                         uint8_t *rxbuf, size_t rxbytes,
