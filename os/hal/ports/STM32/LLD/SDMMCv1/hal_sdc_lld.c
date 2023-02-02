@@ -28,6 +28,8 @@
 
 #if HAL_USE_SDC || defined(__DOXYGEN__)
 
+#include "bouncebuffer.h"
+
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -92,7 +94,8 @@ SDCDriver SDCD2;
  * @brief   SDIO default configuration.
  */
 static const SDCConfig sdc_default_cfg = {
-  SDC_MODE_4BIT
+  SDC_MODE_4BIT,
+  0
 };
 
 /*===========================================================================*/
@@ -537,33 +540,33 @@ void sdc_lld_start_clk(SDCDriver *sdcp) {
  * @notapi
  */
 void sdc_lld_set_data_clk(SDCDriver *sdcp, sdcbusclk_t clk) {
-
+  uint8_t clkdiv_hs = SDMMC_CLKDIV_HS + sdcp->config->slowdown;
 #if STM32_SDC_SDMMC_50MHZ
   if (SDC_CLK_50MHz == clk) {
     sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
 #if STM32_SDC_SDMMC_PWRSAV
-                         SDMMC_CLKDIV_HS | SDMMC_CLKCR_BYPASS |
+                         clkdiv_hs | SDMMC_CLKCR_BYPASS |
                          SDMMC_CLKCR_PWRSAV;
 #else
-                         SDMMC_CLKDIV_HS | SDMMC_CLKCR_BYPASS;
+                         clkdiv_hs | SDMMC_CLKCR_BYPASS;
 #endif
   }
   else {
 #if STM32_SDC_SDMMC_PWRSAV
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | SDMMC_CLKDIV_HS |
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs |
                          SDMMC_CLKCR_PWRSAV;
 #else
-    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | SDMMC_CLKDIV_HS;
+    sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
 #endif
   }
 #else
   (void)clk;
 
 #if STM32_SDC_SDMMC_PWRSAV
-  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | SDMMC_CLKDIV_HS |
+  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs |
                        SDMMC_CLKCR_PWRSAV;
 #else
-  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | SDMMC_CLKDIV_HS;
+  sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) | clkdiv_hs;
 #endif
 #endif
 }
@@ -749,6 +752,10 @@ bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
                           uint8_t cmd, uint32_t arg) {
   uint32_t resp[1];
 
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, bytes)) {
+      return HAL_FAILED;
+  }
+
   if (sdc_lld_prepare_read_bytes(sdcp, buf, bytes))
     goto error;
 
@@ -759,9 +766,12 @@ bool sdc_lld_read_special(SDCDriver *sdcp, uint8_t *buf, size_t bytes,
   if (sdc_lld_wait_transaction_end(sdcp, 1, resp))
     goto error;
 
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, bytes);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, bytes);
   sdc_lld_error_cleanup(sdcp, 1, resp);
   return HAL_FAILED;
 }
@@ -792,6 +802,10 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
 
+  if (!bouncebuffer_setup_read(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
+
   /* Prepares the DMA channel for writing.*/
   dmaStreamSetMemory0(sdcp->dma, buf);
   dmaStreamSetTransactionSize(sdcp->dma,
@@ -820,9 +834,12 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (sdc_lld_wait_transaction_end(sdcp, blocks, resp) == true)
     goto error;
 
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, blocks * MMCSD_BLOCK_SIZE);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_read(sdcp->bouncebuffer, buf, blocks * MMCSD_BLOCK_SIZE);
   sdc_lld_error_cleanup(sdcp, blocks, resp);
   return HAL_FAILED;
 }
@@ -853,6 +870,10 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (_sdc_wait_for_transfer_state(sdcp))
     return HAL_FAILED;
 
+  if (!bouncebuffer_setup_write(sdcp->bouncebuffer, &buf, blocks * MMCSD_BLOCK_SIZE)) {
+      return HAL_FAILED;
+  }
+
   /* Prepares the DMA channel for writing.*/
   dmaStreamSetMemory0(sdcp->dma, buf);
   dmaStreamSetTransactionSize(sdcp->dma,
@@ -881,9 +902,12 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   if (sdc_lld_wait_transaction_end(sdcp, blocks, resp) == true)
     goto error;
 
+  bouncebuffer_finish_write(sdcp->bouncebuffer, buf);
+
   return HAL_SUCCESS;
 
 error:
+  bouncebuffer_finish_write(sdcp->bouncebuffer, buf);
   sdc_lld_error_cleanup(sdcp, blocks, resp);
   return HAL_FAILED;
 }
@@ -906,20 +930,21 @@ bool sdc_lld_read(SDCDriver *sdcp, uint32_t startblk,
                   uint8_t *buf, uint32_t blocks) {
 
 #if STM32_SDC_SDMMC_UNALIGNED_SUPPORT
-  uint32_t i;
-  for (i = 0; i < blocks; i++) {
-    if (sdc_lld_read_aligned(sdcp, startblk, sdcp->buf, 1))
-      return HAL_FAILED;
-    memcpy(buf, sdcp->buf, MMCSD_BLOCK_SIZE);
-    buf += MMCSD_BLOCK_SIZE;
-    startblk++;
+  if (((unsigned)buf & 3) != 0) {
+    uint32_t i;
+    for (i = 0; i < blocks; i++) {
+      if (sdc_lld_read_aligned(sdcp, startblk, sdcp->buf, 1))
+        return HAL_FAILED;
+      memcpy(buf, sdcp->buf, MMCSD_BLOCK_SIZE);
+      buf += MMCSD_BLOCK_SIZE;
+      startblk++;
+    }
+    return HAL_SUCCESS;
   }
-  return HAL_SUCCESS;
 #else /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
   osalDbgAssert((((unsigned)buf & 3) == 0), "unaligned buffer");
-
-  return sdc_lld_read_aligned(sdcp, startblk, buf, blocks);
 #endif /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
+  return sdc_lld_read_aligned(sdcp, startblk, buf, blocks);
 }
 
 /**
@@ -940,20 +965,21 @@ bool sdc_lld_write(SDCDriver *sdcp, uint32_t startblk,
                    const uint8_t *buf, uint32_t blocks) {
 
 #if STM32_SDC_SDMMC_UNALIGNED_SUPPORT
-  uint32_t i;
-  for (i = 0; i < blocks; i++) {
-    memcpy(sdcp->buf, buf, MMCSD_BLOCK_SIZE);
-    buf += MMCSD_BLOCK_SIZE;
-    if (sdc_lld_write_aligned(sdcp, startblk, sdcp->buf, 1))
-      return HAL_FAILED;
-    startblk++;
+  if (((unsigned)buf & 3) != 0) {
+    uint32_t i;
+    for (i = 0; i < blocks; i++) {
+      memcpy(sdcp->buf, buf, MMCSD_BLOCK_SIZE);
+      buf += MMCSD_BLOCK_SIZE;
+      if (sdc_lld_write_aligned(sdcp, startblk, sdcp->buf, 1))
+        return HAL_FAILED;
+      startblk++;
+    }
+    return HAL_SUCCESS;
   }
-  return HAL_SUCCESS;
 #else /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
   osalDbgAssert((((unsigned)buf & 3) == 0), "unaligned buffer");
-
-  return sdc_lld_write_aligned(sdcp, startblk, buf, blocks);
 #endif /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
+  return sdc_lld_write_aligned(sdcp, startblk, buf, blocks);
 }
 
 /**
