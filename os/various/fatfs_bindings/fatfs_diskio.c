@@ -33,6 +33,15 @@ extern RTCDriver RTCD1;
 /*-----------------------------------------------------------------------*/
 /* Correspondence between physical drive number and physical drive.      */
 
+#define MMC     0
+#define SDC     0
+
+/*
+  retry all disk operations up to 5 times to reduce the impact of poor
+  hardware
+ */
+#define FATFS_NUM_RETRIES 5
+#define FATFS_RETRY(x) do { uint8_t ii; for (ii=0; ii<FATFS_NUM_RETRIES; ii++) {if ((x)==0) break; else if (ii==FATFS_NUM_RETRIES-1) return RES_ERROR;}} while(0)
 
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
@@ -96,9 +105,8 @@ DRESULT disk_read (
   case 0:
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
-    if (blkRead(&FATFS_HAL_DEVICE, sector, buff, count))
-      return RES_ERROR;
-    return RES_OK;
+    FATFS_RETRY(blkRead(&FATFS_HAL_DEVICE, sector, buff, count));
+	return RES_OK;
   }
   return RES_PARERR;
 }
@@ -120,8 +128,7 @@ DRESULT disk_write (
   case 0:
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
-    if (blkWrite(&FATFS_HAL_DEVICE, sector, buff, count))
-      return RES_ERROR;
+    FATFS_RETRY(blkWrite(&FATFS_HAL_DEVICE, sector, buff, count));
     return RES_OK;
   }
   return RES_PARERR;
@@ -177,6 +184,7 @@ DRESULT disk_ioctl (
   return RES_PARERR;
 }
 
+#ifndef _ARDUPILOT_
 DWORD get_fattime(void) {
 #if HAL_USE_RTC
   RTCDateTime timespec;
@@ -187,3 +195,4 @@ DWORD get_fattime(void) {
   return ((uint32_t)0 | (1 << 16)) | (1 << 21); /* wrong but valid time */
 #endif
 }
+#endif // _ARDUPILOT_
