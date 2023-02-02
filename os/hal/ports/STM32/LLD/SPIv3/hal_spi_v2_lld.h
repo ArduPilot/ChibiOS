@@ -547,7 +547,10 @@
   /* SPI CFG1 register initialization data.*/                               \
   uint32_t                  cfg1;                                           \
   /* SPI CFG2 register initialization data.*/                               \
-  uint32_t                  cfg2
+  uint32_t                  cfg2;                                           \
+  /* pointer to dummy data for send and receive. Must be DMA safe */        \
+  uint32_t                  *txsource;                                      \
+  uint32_t                  *rxsink
 
 /*===========================================================================*/
 /* External declarations.                                                    */
