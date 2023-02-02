@@ -250,6 +250,7 @@ caddr_t _sbrk_r(struct _reent *r, int incr) {
 
 /***************************************************************************/
 
+#ifndef _ARDUPILOT_
 __attribute__((used))
 void _exit(int status) {
 
@@ -258,9 +259,10 @@ void _exit(int status) {
   chSysHalt("exit");
   abort();
 }
+#endif
 
 /***************************************************************************/
-
+#ifndef _ARDUPILOT_
 __attribute__((used))
 int _kill(int pid, int sig) {
 
@@ -270,14 +272,17 @@ int _kill(int pid, int sig) {
   chSysHalt("kill");
   abort();
 }
+#endif
 
 /***************************************************************************/
 
+#ifndef _ARDUPILOT_
 __attribute__((used))
 int _getpid(void) {
 
   return 1;
 }
+#endif
 
 #ifdef __cplusplus
 extern "C" {
