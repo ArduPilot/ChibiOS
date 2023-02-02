@@ -384,6 +384,7 @@
 #error "invalid STM32_PLLMUL_VALUE value specified"
 #endif
 
+#if STM32_ACTIVATE_PLL == TRUE
 /**
  * @brief   PLL input clock frequency.
  */
@@ -413,6 +414,8 @@
 #if (STM32_PLLCLKOUT < STM32_PLLOUT_MIN) || (STM32_PLLCLKOUT > STM32_PLLOUT_MAX)
 #error "STM32_PLLCLKOUT outside acceptable range (STM32_PLLOUT_MIN...STM32_PLLOUT_MAX)"
 #endif
+
+#endif //STM32_ACTIVATE_PLL == TRUE
 
 /**
  * @brief   System clock source.
