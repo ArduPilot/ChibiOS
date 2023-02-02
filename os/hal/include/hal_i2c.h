@@ -49,6 +49,7 @@
                                                 reception.                  */
 #define I2C_TIMEOUT                0x20    /**< @brief Hardware timeout.    */
 #define I2C_SMB_ALERT              0x40    /**< @brief SMBus Alert.         */
+#define I2C_ISR_LIMIT              0x80    /**< @brief exceeded maximum ISR limit */
 /** @} */
 
 /*===========================================================================*/
@@ -140,6 +141,7 @@ extern "C" {
   void i2cObjectInit(I2CDriver *i2cp);
   msg_t i2cStart(I2CDriver *i2cp, const I2CConfig *config);
   void i2cStop(I2CDriver *i2cp);
+  void i2cSoftStop(I2CDriver *i2cp);
   i2cflags_t i2cGetErrors(I2CDriver *i2cp);
   msg_t i2cMasterTransmitTimeout(I2CDriver *i2cp,
                                  i2caddr_t addr,
