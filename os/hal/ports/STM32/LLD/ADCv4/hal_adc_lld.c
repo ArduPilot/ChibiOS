@@ -257,6 +257,7 @@ static void adc_lld_serve_dma_interrupt(ADCDriver *adcp, uint32_t flags) {
  * @param[in] adcp      pointer to the @p ADCDriver object
  * @param[in] flags     pre-shifted content of the ISR register
  */
+#if defined(STM32_ADC_BDMA_REQUIRED)
 static void adc_lld_serve_bdma_interrupt(ADCDriver *adcp, uint32_t flags) {
 
   /* DMA errors handling.*/
@@ -280,6 +281,7 @@ static void adc_lld_serve_bdma_interrupt(ADCDriver *adcp, uint32_t flags) {
     }
   }
 }
+#endif // STM32_ADC_BDMA_REQUIRED
 #endif /* STM32_ADC_USE_ADC3 == TRUE */
 
 /**
@@ -426,13 +428,11 @@ void adc_lld_init(void) {
 #if STM32_ADC_USE_ADC12 == TRUE
   rccEnableADC12(true);
   rccResetADC12();
-  ADC12_COMMON->CCR = STM32_ADC_ADC12_CLOCK_MODE | ADC_DMA_DAMDF | ADC12_CCR_DUAL;
   rccDisableADC12();
 #endif
 #if STM32_ADC_USE_ADC3 == TRUE
   rccEnableADC3(true);
   rccResetADC3();
-  ADC3_COMMON->CCR = STM32_ADC_ADC3_CLOCK_MODE;
   rccDisableADC3();
 #endif
 #endif
@@ -467,6 +467,7 @@ msg_t adc_lld_start(ADCDriver *adcp) {
 
       rccEnableADC12(true);
       rccResetADC12();
+      ADC12_COMMON->CCR = STM32_ADC_ADC12_CLOCK_MODE | ADC_DMA_DAMDF | ADC12_CCR_DUAL;
 
       dmaSetRequestSource(adcp->data.dma, STM32_DMAMUX1_ADC1);
 
@@ -499,6 +500,7 @@ msg_t adc_lld_start(ADCDriver *adcp) {
 
       rccEnableADC3(true);
       rccResetADC3();
+      ADC3_COMMON->CCR = STM32_ADC_ADC3_CLOCK_MODE;
 
       bdmaSetRequestSource(adcp->data.bdma, STM32_DMAMUX2_ADC3_REQ);
 
@@ -562,9 +564,6 @@ void adc_lld_stop(ADCDriver *adcp) {
       /* Releasing the associated DMA channel.*/
       dmaStreamFreeI(adcp->data.dma);
       adcp->data.dma = NULL;
-
-      /* Resetting CCR options except default ones.*/
-      adcp->adcc->CCR = STM32_ADC_ADC12_CLOCK_MODE | ADC_DMA_DAMDF | ADC12_CCR_DUAL;
       rccDisableADC12();
     }
 #endif
@@ -575,9 +574,6 @@ void adc_lld_stop(ADCDriver *adcp) {
       /* Releasing the associated BDMA channel.*/
       bdmaStreamFreeI(adcp->data.bdma);
       adcp->data.bdma = NULL;
-
-      /* Resetting CCR options except default ones.*/
-      adcp->adcc->CCR = STM32_ADC_ADC3_CLOCK_MODE;
       rccDisableADC3();
     }
 #endif
@@ -678,10 +674,10 @@ void adc_lld_start_conversion(ADCDriver *adcp) {
     adcp->adcs->ISR   = adcp->adcs->ISR;
     /* If a callback is set enable the overflow and analog watch dog interrupts. */
     if (grpp->error_cb != NULL) {
-    adcp->adcs->IER   = ADC_IER_OVRIE | ADC_IER_AWD1IE |
-                                        ADC_IER_AWD2IE |
-                                        ADC_IER_AWD3IE;
-
+      adcp->adcs->IER   = ADC_IER_OVRIE | ADC_IER_AWD1IE |
+                                          ADC_IER_AWD2IE |
+                                          ADC_IER_AWD3IE;
+    }
     /* Configuring the CCR register with the user-specified settings
       in the conversion group configuration structure, static settings are
       preserved.*/
@@ -724,13 +720,12 @@ void adc_lld_start_conversion(ADCDriver *adcp) {
     /* ADC configuration.*/
     adcp->adcm->CFGR  = cfgr;
     adcp->adcs->CFGR  = cfgr;
-  }
-}
+  } else
 #endif /* STM32_ADC_DUAL_MODE == TRUE && STM32_ADC_USE_ADC12 == TRUE */
 
 #if STM32_ADC_DUAL_MODE == FALSE || STM32_ADC_USE_ADC3 == TRUE
   /* Configuration for ADC3 and single mode ADC1 */
-
+  {
     adcp->adcm->CFGR2   = grpp->cfgr2;
     adcp->adcm->PCSEL   = grpp->pcsel;
     adcp->adcm->LTR1    = grpp->ltr1;
@@ -750,7 +745,12 @@ void adc_lld_start_conversion(ADCDriver *adcp) {
 
     /* ADC configuration.*/
     adcp->adcm->CFGR  = cfgr;
-#endif
+  }
+#else
+  {
+    // nothing to do
+  }
+#endif /* STM32_ADC_DUAL_MODE == FALSE || STM32_ADC_USE_ADC3 == TRUE */
 
   /* Starting conversion.*/
   adcp->adcm->CR   |= ADC_CR_ADSTART;
