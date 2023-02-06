@@ -298,7 +298,9 @@ static bool sdc_lld_wait_transaction_end(SDCDriver *sdcp, uint32_t n,
   }
 
   if ((sdcp->sdmmc->STA & SDMMC_STA_DATAEND) == 0) {
-	return HAL_FAILED;
+    sdcp->sdmmc->ICR = SDMMC_ICR_ALL_FLAGS;
+    sdcp->sdmmc->DCTRL = 0;
+    return HAL_FAILED;
   }
   
   sdcp->sdmmc->ICR = SDMMC_ICR_ALL_FLAGS;
