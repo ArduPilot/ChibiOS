@@ -41,10 +41,14 @@
     defined(STM32H7A3xx)  || defined(STM32H7B3xx)  ||                       \
     defined(STM32H7A3xxQ) || defined(STM32H7B3xxQ)
 #define STM32_HAS_M7                        TRUE
+#ifndef STM32_HAS_M4
 #define STM32_HAS_M4                        FALSE
+#endif
 #else
 #define STM32_HAS_M7                        TRUE
+#ifndef STM32_HAS_M4
 #define STM32_HAS_M4                        TRUE
+#endif
 #endif
 
 /*===========================================================================*/
