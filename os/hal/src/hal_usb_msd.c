@@ -393,6 +393,11 @@ void msdStop(USBMassStorageDriver *msdp) {
   chThdWait(msdp->worker);
 
   chThdTerminate(msdp->usb_scsi_transport_handler.txworker);
+  osalSysLock();
+  thread_t* tp = msdp->usb_scsi_transport_handler.txworker;
+  // resume thread so it can terminate
+  osalThreadResumeS(&tp, MSG_OK);
+  osalSysUnlock();
   chThdWait(msdp->usb_scsi_transport_handler.txworker);
 
   scsiStop(&msdp->scsi_target);
