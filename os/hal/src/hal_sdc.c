@@ -750,7 +750,7 @@ bool sdcConnect(SDCDriver *sdcp) {
     /* The card is a MMC, checking if it is a large device.*/
     if (_mmcsd_get_slice(sdcp->csd, MMCSD_CSD_MMC_CSD_STRUCTURE_SLICE) > 1U) {
       uint8_t *ext_csd = sdcp->buf;
-      osalThreadSleepMilliseconds(1);
+      osalThreadSleepMilliseconds(10);
       if (sdc_lld_read_special(sdcp, ext_csd, 512, MMCSD_CMD_SEND_EXT_CSD, 0)) {
         goto failed;
       }
