@@ -33,7 +33,7 @@
 /**
  * @brief   OTG_HS FIFO memory size in words.
  */
-#define STM32_OTG2_FIFO_MEM_SIZE        1024
+#define STM32_OTG2_FIFO_MEM_SIZE        4096
 
 /**
  * @brief   Host channel registers group.
