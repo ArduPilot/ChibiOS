@@ -150,7 +150,14 @@ void hal_lld_init(void) {
      have been initialized in the board initialization file (board.c).
      Note, GPIOs are not reset because initialized before this point in
      board files.*/
-  __rccResetAHB1(~0);
+  /*
+    resetting bit 0x80000000 of AHB1 can cause memory corruption in
+    SRAM1, causing BSS data to be initialised incorrectly. Only
+    observed with STM32H757, but may affect other H7
+    */
+  __rccResetAHB1(RCC_AHB1RSTR_USB2OTGHSRST | RCC_AHB1RSTR_USB1OTGHSRST |
+                 RCC_AHB1RSTR_ETH1MACRST | RCC_AHB1RSTR_ADC12RST |
+                 RCC_AHB1RSTR_DMA2RST | RCC_AHB1RSTR_DMA1RST);
   __rccResetAHB2(~0);
   __rccResetAHB3(~(RCC_AHB3RSTR_FMCRST |
 #if defined(STM32_QSPI_NO_RESET)
