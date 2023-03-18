@@ -140,7 +140,11 @@ void hal_lld_init(void) {
      have been initialized in the board initialization file (board.c).
      Note, GPIOs are not reset because initialized before this point in
      board files.*/
-  rccResetAHB1(~0);
+  /*
+    we avoid resetting the top bit of AHB1 as it can triger memory
+    corruption in SRAM1 on STM32H757
+   */
+  rccResetAHB1(0x7FFFFFFFU);
   rccResetAHB2(~0);
   rccResetAHB3(~(RCC_AHB3RSTR_FMCRST | RCC_AHB3RSTR_QSPIRST |
                  0x80000000U));     /* Was RCC_AHB3RSTR_CPURST in Rev-V.*/
