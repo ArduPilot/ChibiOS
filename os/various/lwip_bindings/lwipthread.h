@@ -266,6 +266,9 @@ extern "C" {
   void lwipDefaultLinkDownCB(void *p);
   void lwipInit(const lwipthread_opts_t *opts);
   void lwipReconfigure(const lwipreconf_opts_t *opts);
+  uint32_t lwipGetIp(void);
+  uint32_t lwipGetNetmask(void);
+  uint32_t lwipGetGateway(void);
 #ifdef __cplusplus
 }
 #endif
