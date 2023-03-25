@@ -238,7 +238,10 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread,
                             void *arg, int stacksize, int prio) {
   thread_t *tp;
 
-#if !CH_LWIP_USE_MEM_POOLS
+#if CH_CFG_USE_DYNAMIC == TRUE
+  tp = thread_create_alloc(THD_WORKING_AREA_SIZE(stacksize),
+                           name, prio, (tfunc_t)thread, arg);
+#elif !CH_LWIP_USE_MEM_POOLS
   tp = chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(stacksize),
                            name, prio, (tfunc_t)thread, arg);
 #else
