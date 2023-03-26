@@ -191,6 +191,11 @@ set(lwipsntp_SRCS
     ${LWIP_DIR}/src/apps/sntp/sntp.c
 )
 
+# Ping client
+set(lwipping_SRCS
+    ${LWIP_DIR}/src/apps/ping/ping.c
+)
+
 # MDNS responder
 set(lwipmdns_SRCS
     ${LWIP_DIR}/src/apps/mdns/mdns.c
@@ -236,6 +241,7 @@ set(lwipallapps_SRCS
     ${lwipiperf_SRCS}
     ${lwipsmtp_SRCS}
     ${lwipsntp_SRCS}
+    ${lwipping_SRCS}
     ${lwipmdns_SRCS}
     ${lwipnetbios_SRCS}
     ${lwiptftp_SRCS}
