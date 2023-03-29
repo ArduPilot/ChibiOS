@@ -83,7 +83,10 @@ void sys_init(void) {
 
 err_t sys_sem_new(sys_sem_t *sem, u8_t count) {
 
-#if !CH_LWIP_USE_MEM_POOLS
+#ifdef _ARDUPILOT_
+  // use malloc
+  *sem = (sys_sem_t)malloc(sizeof(semaphore_t));
+#elif !CH_LWIP_USE_MEM_POOLS
   *sem = chHeapAlloc(NULL, sizeof(semaphore_t));
 #else
   *sem = chPoolAlloc(&lwip_sys_arch_sem_pool);
@@ -102,7 +105,10 @@ err_t sys_sem_new(sys_sem_t *sem, u8_t count) {
 
 void sys_sem_free(sys_sem_t *sem) {
 
-#if !CH_LWIP_USE_MEM_POOLS
+#ifdef _ARDUPILOT_
+  // use malloc
+  free(*sem);
+#elif !CH_LWIP_USE_MEM_POOLS
   chHeapFree(*sem);
 #else
   chPoolFree(&lwip_sys_arch_sem_pool, *sem);
@@ -152,7 +158,10 @@ void sys_sem_set_invalid(sys_sem_t *sem) {
 
 err_t sys_mbox_new(sys_mbox_t *mbox, int size) {
 
-#if !CH_LWIP_USE_MEM_POOLS
+#ifdef _ARDUPILOT_
+  // use malloc
+  *mbox = (sys_mbox_t)malloc(sizeof(mailbox_t) + sizeof(msg_t) * size);
+#elif !CH_LWIP_USE_MEM_POOLS
   *mbox = chHeapAlloc(NULL, sizeof(mailbox_t) + sizeof(msg_t) * size);
 #else
   *mbox = chPoolAlloc(&lwip_sys_arch_mbox_pool);
@@ -182,7 +191,10 @@ void sys_mbox_free(sys_mbox_t *mbox) {
     SYS_STATS_INC(mbox.err);
     chMBReset(*mbox);
   }
-#if !CH_LWIP_USE_MEM_POOLS
+#ifdef _ARDUPILOT_
+  // use malloc
+  free(*mbox);
+#elif !CH_LWIP_USE_MEM_POOLS
   chHeapFree(*mbox);
 #else
   chPoolFree(&lwip_sys_arch_mbox_pool, *mbox);
@@ -242,7 +254,7 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread,
                             void *arg, int stacksize, int prio) {
   thread_t *tp;
 
-#if CH_CFG_USE_DYNAMIC == TRUE
+#ifdef _ARDUPILOT_
   tp = thread_create_alloc(THD_WORKING_AREA_SIZE(stacksize),
                            name, prio, (tfunc_t)thread, arg);
 #elif !CH_LWIP_USE_MEM_POOLS
