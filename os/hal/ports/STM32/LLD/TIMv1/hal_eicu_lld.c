@@ -266,6 +266,7 @@ static void start_channels(EICUDriver *eicup) {
 /*===========================================================================*/
 
 #if STM32_EICU_USE_TIM1
+#if !defined(STM32_TIM1_SUPPRESS_ISR)
 #if !defined(STM32_TIM1_UP_HANDLER)
 #error "STM32_TIM1_UP_HANDLER not defined"
 #endif
@@ -305,10 +306,11 @@ OSAL_IRQ_HANDLER(STM32_TIM1_CC_HANDLER) {
 
   OSAL_IRQ_EPILOGUE();
 }
+#endif /* !defined(STM32_TIM1_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM1 */
 
 #if STM32_EICU_USE_TIM2
-
+#if !defined(STM32_TIM2_SUPPRESS_ISR)
 #if !defined(STM32_TIM2_HANDLER)
 #error "STM32_TIM2_HANDLER not defined"
 #endif
@@ -328,9 +330,11 @@ OSAL_IRQ_HANDLER(STM32_TIM2_HANDLER) {
 
   OSAL_IRQ_EPILOGUE();
 }
+#endif /* !defined(STM32_TIM2_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM2 */
 
 #if STM32_EICU_USE_TIM3
+#if !defined(STM32_TIM3_SUPPRESS_ISR)
 #if !defined(STM32_TIM3_HANDLER)
 #error "STM32_TIM3_HANDLER not defined"
 #endif
@@ -350,9 +354,11 @@ OSAL_IRQ_HANDLER(STM32_TIM3_HANDLER) {
 
   OSAL_IRQ_EPILOGUE();
 }
+#endif /* !defined(STM32_TIM3_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM3 */
 
 #if STM32_EICU_USE_TIM4
+#if !defined(STM32_TIM4_SUPPRESS_ISR)
 #if !defined(STM32_TIM4_HANDLER)
 #error "STM32_TIM4_HANDLER not defined"
 #endif
@@ -372,9 +378,11 @@ OSAL_IRQ_HANDLER(STM32_TIM4_HANDLER) {
 
   OSAL_IRQ_EPILOGUE();
 }
+#endif /* !defined(STM32_TIM4_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM4 */
 
 #if STM32_EICU_USE_TIM5
+#if !defined(STM32_TIM5_SUPPRESS_ISR)
 #if !defined(STM32_TIM5_HANDLER)
 #error "STM32_TIM5_HANDLER not defined"
 #endif
@@ -394,9 +402,11 @@ OSAL_IRQ_HANDLER(STM32_TIM5_HANDLER) {
 
   OSAL_IRQ_EPILOGUE();
 }
+#endif /* !defined(STM32_TIM5_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM5 */
 
 #if STM32_EICU_USE_TIM8
+#if !defined(STM32_TIM8_SUPPRESS_ISR)
 #if !defined(STM32_TIM8_UP_HANDLER) && defined(STM32_TIM8_UP_TIM13_HANDLER)
 #define STM32_TIM8_UP_HANDLER STM32_TIM8_UP_TIM13_HANDLER
 #define STM32_TIM8_UP_NUMBER STM32_TIM8_UP_TIM13_NUMBER
@@ -440,116 +450,43 @@ OSAL_IRQ_HANDLER(STM32_TIM8_CC_HANDLER) {
 
   OSAL_IRQ_EPILOGUE();
 }
+#endif /* !defined(STM32_TIM8_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM8 */
 
-#if STM32_EICU_USE_TIM12
-#if !defined(STM32_TIM12_HANDLER)
-#error "STM32_TIM12_HANDLER not defined"
-#endif
-/**
- * @brief   TIM12 interrupt handler.
- * @note    It is assumed that the various sources are only activated if the
- *          associated callback pointer is not equal to @p NULL in order to not
- *          perform an extra check in a potentially critical interrupt handler.
- *
- * @isr
- */
-OSAL_IRQ_HANDLER(STM32_TIM12_HANDLER) {
+#if STM32_EICU_USE_TIM9 || defined(__DOXYGEN__)
+#if !defined(STM32_TIM9_SUPPRESS_ISR)
+#error "TIM9 ISR not defined by platform"
+#endif /* !defined(STM32_TIM9_SUPPRESS_ISR) */
+#endif /* STM32_EICU_USE_TIM9 */
 
-  OSAL_IRQ_PROLOGUE();
-
-  eicu_lld_serve_interrupt(&EICUD12);
-
-  OSAL_IRQ_EPILOGUE();
-}
-#endif /* STM32_EICU_USE_TIM12 */
-
-#if STM32_EICU_USE_TIM10
-#if !defined(STM32_TIM10_HANDLER)
-#error "STM32_TIM10_HANDLER not defined"
-#endif
-/**
- * @brief   TIM10 interrupt handler.
- * @note    It is assumed that the various sources are only activated if the
- *          associated callback pointer is not equal to @p NULL in order to not
- *          perform an extra check in a potentially critical interrupt handler.
- *
- * @isr
- */
-OSAL_IRQ_HANDLER(STM32_TIM10_HANDLER) {
-
-  OSAL_IRQ_PROLOGUE();
-
-  eicu_lld_serve_interrupt(&EICUD10);
-
-  OSAL_IRQ_EPILOGUE();
-}
+#if STM32_EICU_USE_TIM10 || defined(__DOXYGEN__)
+#if !defined(STM32_TIM10_SUPPRESS_ISR)
+#error "TIM10 ISR not defined by platform"
+#endif /* !defined(STM32_TIM10_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM10 */
 
-#if STM32_EICU_USE_TIM11
-#if !defined(STM32_TIM11_HANDLER)
-#error "STM32_TIM11_HANDLER not defined"
-#endif
-/**
- * @brief   TIM11 interrupt handler.
- * @note    It is assumed that the various sources are only activated if the
- *          associated callback pointer is not equal to @p NULL in order to not
- *          perform an extra check in a potentially critical interrupt handler.
- *
- * @isr
- */
-OSAL_IRQ_HANDLER(STM32_TIM11_HANDLER) {
-
-  OSAL_IRQ_PROLOGUE();
-
-  eicu_lld_serve_interrupt(&EICUD11);
-
-  OSAL_IRQ_EPILOGUE();
-}
+#if STM32_EICU_USE_TIM11 || defined(__DOXYGEN__)
+#if !defined(STM32_TIM11_SUPPRESS_ISR)
+#error "TIM11 ISR not defined by platform"
+#endif /* !defined(STM32_TIM11_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM11 */
 
-#if STM32_EICU_USE_TIM13
-#if !defined(STM32_TIM13_HANDLER)
-#error "STM32_TIM13_HANDLER not defined"
-#endif
-/**
- * @brief   TIM13 interrupt handler.
- * @note    It is assumed that the various sources are only activated if the
- *          associated callback pointer is not equal to @p NULL in order to not
- *          perform an extra check in a potentially critical interrupt handler.
- *
- * @isr
- */
-OSAL_IRQ_HANDLER(STM32_TIM13_HANDLER) {
+#if STM32_EICU_USE_TIM12 || defined(__DOXYGEN__)
+#if !defined(STM32_TIM12_SUPPRESS_ISR)
+#error "TIM12 ISR not defined by platform"
+#endif /* !defined(STM32_TIM12_SUPPRESS_ISR) */
+#endif /* STM32_EICU_USE_TIM12 */
 
-  OSAL_IRQ_PROLOGUE();
-
-  eicu_lld_serve_interrupt(&EICUD13);
-
-  OSAL_IRQ_EPILOGUE();
-}
+#if STM32_EICU_USE_TIM13 || defined(__DOXYGEN__)
+#if !defined(STM32_TIM13_SUPPRESS_ISR)
+#error "TIM13 ISR not defined by platform"
+#endif /* !defined(STM32_TIM13_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM13 */
 
-#if STM32_EICU_USE_TIM14
-#if !defined(STM32_TIM14_HANDLER)
-#error "STM32_TIM14_HANDLER not defined"
-#endif
-/**
- * @brief   TIM14 interrupt handler.
- * @note    It is assumed that the various sources are only activated if the
- *          associated callback pointer is not equal to @p NULL in order to not
- *          perform an extra check in a potentially critical interrupt handler.
- *
- * @isr
- */
-OSAL_IRQ_HANDLER(STM32_TIM14_HANDLER) {
-
-  OSAL_IRQ_PROLOGUE();
-
-  eicu_lld_serve_interrupt(&EICUD14);
-
-  OSAL_IRQ_EPILOGUE();
-}
+#if STM32_EICU_USE_TIM14 || defined(__DOXYGEN__)
+#if !defined(STM32_TIM14_SUPPRESS_ISR)
+#error "TIM14 ISR not defined by platform"
+#endif /* !defined(STM32_TIM14_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM14 */
 
 /*===========================================================================*/
@@ -658,8 +595,10 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD1 == eicup) {
       rccEnableTIM1(FALSE);
       rccResetTIM1();
+#if !defined(STM32_TIM1_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM1_UP_NUMBER, STM32_EICU_TIM1_IRQ_PRIORITY);
       nvicEnableVector(STM32_TIM1_CC_NUMBER, STM32_EICU_TIM1_IRQ_PRIORITY);
+#endif
       eicup->channels = 4;
 #if defined(STM32_TIM1CLK)
       eicup->clock = STM32_TIM1CLK;
@@ -672,7 +611,9 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD2 == eicup) {
       rccEnableTIM2(FALSE);
       rccResetTIM2();
+#if !defined(STM32_TIM2_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM2_NUMBER, STM32_EICU_TIM2_IRQ_PRIORITY);
+#endif
       eicup->channels = 4;
       eicup->clock = STM32_TIMCLK1;
     }
@@ -681,7 +622,9 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD3 == eicup) {
       rccEnableTIM3(FALSE);
       rccResetTIM3();
+#if !defined(STM32_TIM3_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM3_NUMBER, STM32_EICU_TIM3_IRQ_PRIORITY);
+#endif
       eicup->channels = 4;
       eicup->clock = STM32_TIMCLK1;
     }
@@ -690,7 +633,9 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD4 == eicup) {
       rccEnableTIM4(FALSE);
       rccResetTIM4();
+#if !defined(STM32_TIM4_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM4_NUMBER, STM32_EICU_TIM4_IRQ_PRIORITY);
+#endif
       eicup->channels = 4;
       eicup->clock = STM32_TIMCLK1;
     }
@@ -699,7 +644,9 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD5 == eicup) {
       rccEnableTIM5(FALSE);
       rccResetTIM5();
+#if !defined(STM32_TIM5_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM5_NUMBER, STM32_EICU_TIM5_IRQ_PRIORITY);
+#endif
       eicup->channels = 4;
       eicup->clock = STM32_TIMCLK1;
     }
@@ -708,8 +655,10 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD8 == eicup) {
       rccEnableTIM8(FALSE);
       rccResetTIM8();
+#if !defined(STM32_TIM8_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM8_UP_NUMBER, STM32_EICU_TIM8_IRQ_PRIORITY);
       nvicEnableVector(STM32_TIM8_CC_NUMBER, STM32_EICU_TIM8_IRQ_PRIORITY);
+#endif
       eicup->channels = 4;
 #if defined(STM32_TIM8CLK)
       eicup->clock = STM32_TIM8CLK;
@@ -730,7 +679,6 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD12 == eicup) {
       rccEnableTIM12(FALSE);
       rccResetTIM12();
-      nvicEnableVector(STM32_TIM12_NUMBER, STM32_EICU_TIM12_IRQ_PRIORITY);
       eicup->channels = 2;
       eicup->clock = STM32_TIMCLK1;
     }
@@ -739,7 +687,6 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD10 == eicup) {
       rccEnableTIM10(FALSE);
       rccResetTIM10();
-      nvicEnableVector(STM32_TIM10_NUMBER, STM32_EICU_TIM10_IRQ_PRIORITY);
       eicup->channels = 1;
       eicup->clock = STM32_TIMCLK2;
     }
@@ -748,7 +695,6 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD11 == eicup) {
       rccEnableTIM11(FALSE);
       rccResetTIM11();
-      nvicEnableVector(STM32_TIM11_NUMBER, STM32_EICU_TIM11_IRQ_PRIORITY);
       eicup->channels = 1;
       eicup->clock = STM32_TIMCLK2;
     }
@@ -757,7 +703,6 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD13 == eicup) {
       rccEnableTIM13(FALSE);
       rccResetTIM13();
-      nvicEnableVector(STM32_TIM13_NUMBER, STM32_EICU_TIM13_IRQ_PRIORITY);
       eicup->channels = 1;
       eicup->clock = STM32_TIMCLK1;
     }
@@ -766,7 +711,6 @@ void eicu_lld_start(EICUDriver *eicup) {
     if (&EICUD14 == eicup) {
       rccEnableTIM14(FALSE);
       rccResetTIM14();
-      nvicEnableVector(STM32_TIM14_NUMBER, STM32_EICU_TIM14_IRQ_PRIORITY);
       eicup->channels = 1;
       eicup->clock = STM32_TIMCLK1;
     }
@@ -850,39 +794,51 @@ void eicu_lld_stop(EICUDriver *eicup) {
 
 #if STM32_EICU_USE_TIM1
     if (&EICUD1 == eicup) {
+#if !defined(STM32_TIM1_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM1_UP_NUMBER);
+#endif
       nvicDisableVector(STM32_TIM1_CC_NUMBER);
       rccDisableTIM1();
     }
 #endif
 #if STM32_EICU_USE_TIM2
     if (&EICUD2 == eicup) {
+#if !defined(STM32_TIM2_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM2_NUMBER);
+#endif
       rccDisableTIM2();
     }
 #endif
 #if STM32_EICU_USE_TIM3
     if (&EICUD3 == eicup) {
+#if !defined(STM32_TIM3_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM3_NUMBER);
+#endif
       rccDisableTIM3();
     }
 #endif
 #if STM32_EICU_USE_TIM4
     if (&EICUD4 == eicup) {
+#if !defined(STM32_TIM4_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM4_NUMBER);
+#endif
       rccDisableTIM4();
     }
 #endif
 #if STM32_EICU_USE_TIM5
     if (&EICUD5 == eicup) {
+#if !defined(STM32_TIM5_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM5_NUMBER);
+#endif
       rccDisableTIM5();
     }
 #endif
 #if STM32_EICU_USE_TIM8
     if (&EICUD8 == eicup) {
+#if !defined(STM32_TIM8_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM8_UP_NUMBER);
       nvicDisableVector(STM32_TIM8_CC_NUMBER);
+#endif
       rccDisableTIM8();
     }
 #endif
@@ -893,32 +849,27 @@ void eicu_lld_stop(EICUDriver *eicup) {
 #endif
 #if STM32_EICU_USE_TIM12
     if (&EICUD12 == eicup) {
-      nvicDisableVector(STM32_TIM12_NUMBER);
       rccDisableTIM12();
     }
 #endif
   }
 #if STM32_EICU_USE_TIM10
     if (&EICUD10 == eicup) {
-      nvicDisableVector(STM32_TIM10_NUMBER);
       rccDisableTIM10();
     }
 #endif
 #if STM32_EICU_USE_TIM11
     if (&EICUD11 == eicup) {
-      nvicDisableVector(STM32_TIM11_NUMBER);
       rccDisableTIM11();
     }
 #endif
 #if STM32_EICU_USE_TIM13
     if (&EICUD13 == eicup) {
-      nvicDisableVector(STM32_TIM13_NUMBER);
       rccDisableTIM13();
     }
 #endif
 #if STM32_EICU_USE_TIM14
     if (&EICUD14 == eicup) {
-      nvicDisableVector(STM32_TIM14_NUMBER);
       rccDisableTIM14();
     }
 #endif
