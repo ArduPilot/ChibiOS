@@ -43,6 +43,9 @@
 #if !defined(STM32_ICU_USE_TIM20)
 #define STM32_ICU_USE_TIM20                 FALSE
 #endif
+#if !defined(STM32_EICU_USE_TIM20)
+#define STM32_EICU_USE_TIM20                FALSE
+#endif
 #if !defined(STM32_PWM_USE_TIM20)
 #define STM32_PWM_USE_TIM20                 FALSE
 #endif
@@ -118,7 +121,12 @@ OSAL_IRQ_HANDLER(STM32_TIM20_UP_HANDLER) {
 #endif
 #if HAL_USE_ICU
 #if STM32_ICU_USE_TIM20
-  pwm_lld_serve_interrupt(&ICUD20);
+  icu_lld_serve_interrupt(&ICUD20);
+#endif
+#endif
+#if HAL_USE_EICU
+#if STM32_EICU_USE_TIM20
+  eicu_lld_serve_interrupt(&EICUD20);
 #endif
 #endif
 #if HAL_USE_PWM
@@ -148,7 +156,10 @@ OSAL_IRQ_HANDLER(STM32_TIM20_CC_HANDLER) {
   /* Not used by GPT.*/
 #endif
 #if STM32_ICU_USE_TIM20
-  pwm_lld_serve_interrupt(&ICUD20);
+  icu_lld_serve_interrupt(&ICUD20);
+#endif
+#if STM32_EICU_USE_TIM20
+  eicu_lld_serve_interrupt(&EICUD20);
 #endif
 #if HAL_USE_PWM
 #if STM32_PWM_USE_TIM20
