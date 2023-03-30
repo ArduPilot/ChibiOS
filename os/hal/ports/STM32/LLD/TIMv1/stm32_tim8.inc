@@ -43,6 +43,9 @@
 #if !defined(STM32_ICU_USE_TIM8)
 #define STM32_ICU_USE_TIM8                  FALSE
 #endif
+#if !defined(STM32_EICU_USE_TIM8)
+#define STM32_EICU_USE_TIM8                 FALSE
+#endif
 #if !defined(STM32_PWM_USE_TIM8)
 #define STM32_PWM_USE_TIM8                  FALSE
 #endif
@@ -121,6 +124,11 @@ OSAL_IRQ_HANDLER(STM32_TIM8_UP_HANDLER) {
   icu_lld_serve_interrupt(&ICUD8);
 #endif
 #endif
+#if HAL_USE_EICU
+#if STM32_EICU_USE_TIM8
+  eicu_lld_serve_interrupt(&EICUD8);
+#endif
+#endif
 #if HAL_USE_PWM
 #if STM32_PWM_USE_TIM8
   pwm_lld_serve_interrupt(&PWMD8);
@@ -150,6 +158,11 @@ OSAL_IRQ_HANDLER(STM32_TIM8_CC_HANDLER) {
 #if HAL_USE_ICU
 #if STM32_ICU_USE_TIM8
   icu_lld_serve_interrupt(&ICUD8);
+#endif
+#endif
+#if HAL_USE_EICU
+#if STM32_EICU_USE_TIM8
+  eicu_lld_serve_interrupt(&EICUD8);
 #endif
 #endif
 #if HAL_USE_PWM
