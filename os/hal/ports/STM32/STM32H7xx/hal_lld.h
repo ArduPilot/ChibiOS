@@ -32,11 +32,6 @@
 /*===========================================================================*/
 
 /**
- * @brief   Requires use of SPIv2 driver model.
- */
-#define HAL_LLD_SELECT_SPI_V2           TRUE
-
-/**
  * @brief   Sub-family identifier
  */
 #if !defined(STM32H7XX) || defined(__DOXYGEN__)
