@@ -28,6 +28,10 @@
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
+#define RCC_AHB1RSTR_DONOTTOUCH_Pos             (31U)
+#define RCC_AHB1RSTR_DONOTTOUCH_Msk             (0x1UL << RCC_AHB1RSTR_DONOTTOUCH_Pos)
+#define RCC_AHB1RSTR_DONOTTOUCH                 RCC_AHB1RSTR_DONOTTOUCH_Msk
+
 /*===========================================================================*/
 /* Driver exported variables.                                                */
 /*===========================================================================*/
@@ -149,12 +153,11 @@ void hal_lld_init(void) {
   /* Reset of all peripherals. AHB3 is not reset entirely because FMC could
      have been initialized in the board initialization file (board.c).
      Note, GPIOs are not reset because initialized before this point in
-     board files.*/
-  /*
-    we avoid resetting the top bit of AHB1 as it can triger memory
-    corruption in SRAM1 on STM32H757
-   */
-  __rccResetAHB1(0x7FFFFFFFU);
+     board files.
+     Note that there is an undocumented bit in AHB1, presumably the cache
+     reset, which must not be touched because the cache is write-back and
+     latest writes could be lost.*/
+  __rccResetAHB1(~RCC_AHB1RSTR_DONOTTOUCH);
   __rccResetAHB2(~0);
   __rccResetAHB3(~(RCC_AHB3RSTR_FMCRST |
 #if defined(STM32_QSPI_NO_RESET)
