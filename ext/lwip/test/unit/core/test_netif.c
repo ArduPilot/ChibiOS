@@ -9,7 +9,7 @@
 #error "This tests needs LWIP_NETIF_EXT_STATUS_CALLBACK enabled"
 #endif
 
-struct netif net_test;
+static struct netif net_test;
 
 
 /* Setups/teardown functions */
@@ -215,13 +215,67 @@ START_TEST(test_netif_extcallbacks)
 }
 END_TEST
 
+START_TEST(test_netif_flag_set)
+{
+  ip4_addr_t addr;
+  ip4_addr_t netmask;
+  ip4_addr_t gw;
+  LWIP_UNUSED_ARG(_i);
+
+  IP4_ADDR(&addr, 0, 0, 0, 0);
+  IP4_ADDR(&netmask, 0, 0, 0, 0);
+  IP4_ADDR(&gw, 0, 0, 0, 0);
+
+  netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+
+  fail_if(netif_is_flag_set(&net_test, NETIF_FLAG_UP));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_BROADCAST));
+  fail_if(netif_is_flag_set(&net_test, NETIF_FLAG_LINK_UP));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_ETHARP));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_ETHERNET));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_IGMP));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_MLD6));
+
+  netif_remove(&net_test);
+}
+END_TEST
+
+START_TEST(test_netif_find)
+{
+  struct netif net0;
+  struct netif net1;
+  LWIP_UNUSED_ARG(_i);
+
+  /* No netifs available */
+  fail_unless(netif_find("ch0") == NULL);
+
+  /* Add netifs with known names */
+  fail_unless(netif_add_noaddr(&net0, NULL, testif_init, ethernet_input) == &net0);
+  net0.num = 0;
+  fail_unless(netif_add_noaddr(&net1, NULL, testif_init, ethernet_input) == &net1);
+  net1.num = 1;
+
+  fail_unless(netif_find("ch0") == &net0);
+  fail_unless(netif_find("CH0") == NULL);
+  fail_unless(netif_find("ch1") == &net1);
+  fail_unless(netif_find("ch3") == NULL);
+  /* atoi failure is not treated as zero */
+  fail_unless(netif_find("chX") == NULL);
+  fail_unless(netif_find("ab0") == NULL);
+
+  netif_remove(&net0);
+  netif_remove(&net1);
+}
+END_TEST
 
 /** Create the suite including all tests for this module */
 Suite *
 netif_suite(void)
 {
   testfunc tests[] = {
-    TESTFUNC(test_netif_extcallbacks)
+    TESTFUNC(test_netif_extcallbacks),
+    TESTFUNC(test_netif_flag_set),
+    TESTFUNC(test_netif_find)
   };
   return create_suite("NETIF", tests, sizeof(tests)/sizeof(testfunc), netif_setup, netif_teardown);
 }

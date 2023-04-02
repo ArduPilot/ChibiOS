@@ -102,5 +102,6 @@ var searchData=
   ['dhcp',['DHCP',['../group__lwip__opts__dhcp.html',1,'']]],
   ['dhcpv6',['DHCPv6',['../group__lwip__opts__dhcpv6.html',1,'']]],
   ['dns',['DNS',['../group__lwip__opts__dns.html',1,'']]],
+  ['debugging_20memory_20pool_20sizes',['Debugging memory pool sizes',['../mem_err.html',1,'']]],
   ['dhcpv4',['DHCPv4',['../group__netifapi__dhcp4.html',1,'']]]
 ];

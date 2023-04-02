@@ -29,7 +29,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">lwIP
-   &#160;<span id="projectnumber">2.1.2</span>
+   &#160;<span id="projectnumber">2.1.3</span>
    </div>
    <div id="projectbrief">Lightweight IP stack</div>
   </td>
@@ -136,8 +136,29 @@ $(document).ready(function(){initNavTree('globals.html','');});
 <li>ALTCP_MBEDTLS_DEBUG
 : <a class="el" href="altcp__tls__mbedtls__opts_8h.html#a7727456eeb0b3311213936413d238989">altcp_tls_mbedtls_opts.h</a>
 </li>
+<li>ALTCP_MBEDTLS_LIB_DEBUG
+: <a class="el" href="altcp__tls__mbedtls__opts_8h.html#a12262be84ab6a04e2aff7ca152328308">altcp_tls_mbedtls_opts.h</a>
+</li>
+<li>ALTCP_MBEDTLS_LIB_DEBUG_LEVEL_MIN
+: <a class="el" href="altcp__tls__mbedtls__opts_8h.html#ad8561bbfabb4ec81ad1c4d7304d16bb5">altcp_tls_mbedtls_opts.h</a>
+</li>
+<li>ALTCP_MBEDTLS_SESSION_CACHE_SIZE
+: <a class="el" href="altcp__tls__mbedtls__opts_8h.html#a1c8a3f37f8ede74835b03eedcdc41973">altcp_tls_mbedtls_opts.h</a>
+</li>
 <li>ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS
 : <a class="el" href="altcp__tls__mbedtls__opts_8h.html#a6acb28346f87b2310fc00ec1fccba2b6">altcp_tls_mbedtls_opts.h</a>
+</li>
+<li>ALTCP_MBEDTLS_SESSION_TICKET_CIPHER
+: <a class="el" href="altcp__tls__mbedtls__opts_8h.html#a4917dbc00f43f88eb703c8ba89bd37f6">altcp_tls_mbedtls_opts.h</a>
+</li>
+<li>ALTCP_MBEDTLS_SESSION_TICKET_TIMEOUT_SECONDS
+: <a class="el" href="altcp__tls__mbedtls__opts_8h.html#a66eff71890153166578b0b78d780ac50">altcp_tls_mbedtls_opts.h</a>
+</li>
+<li>ALTCP_MBEDTLS_USE_SESSION_CACHE
+: <a class="el" href="altcp__tls__mbedtls__opts_8h.html#abd6b53a101f046337a4d77c749dbab66">altcp_tls_mbedtls_opts.h</a>
+</li>
+<li>ALTCP_MBEDTLS_USE_SESSION_TICKETS
+: <a class="el" href="altcp__tls__mbedtls__opts_8h.html#ae3dbc4de0fc53bcda746c9dfd5618d3b">altcp_tls_mbedtls_opts.h</a>
 </li>
 <li>altcp_mss()
 : <a class="el" href="group__altcp.html#gae7cfc8bd8e45c517a706afd5857fda08">altcp.c</a>
@@ -191,16 +212,16 @@ $(document).ready(function(){initNavTree('globals.html','');});
 , <a class="el" href="group__altcp.html#gac086951cbfedaed0c36c5fb26b44ef83">altcp.h</a>
 </li>
 <li>altcp_sent()
-: <a class="el" href="group__altcp.html#gab2b228c77c827fb14bfc513171c79f47">altcp.c</a>
-, <a class="el" href="group__altcp.html#gab2b228c77c827fb14bfc513171c79f47">altcp.h</a>
+: <a class="el" href="group__altcp.html#gab2b228c77c827fb14bfc513171c79f47">altcp.h</a>
+, <a class="el" href="group__altcp.html#gab2b228c77c827fb14bfc513171c79f47">altcp.c</a>
 </li>
 <li>altcp_setprio()
 : <a class="el" href="group__altcp.html#ga5040b0a4646bca718d3611ba7fa558c5">altcp.c</a>
 , <a class="el" href="group__altcp.html#ga5040b0a4646bca718d3611ba7fa558c5">altcp.h</a>
 </li>
 <li>altcp_shutdown()
-: <a class="el" href="group__altcp.html#ga0c3172d0bfe452599e242ea2e4692319">altcp.c</a>
-, <a class="el" href="group__altcp.html#ga0c3172d0bfe452599e242ea2e4692319">altcp.h</a>
+: <a class="el" href="group__altcp.html#ga0c3172d0bfe452599e242ea2e4692319">altcp.h</a>
+, <a class="el" href="group__altcp.html#ga0c3172d0bfe452599e242ea2e4692319">altcp.c</a>
 </li>
 <li>altcp_sndbuf()
 : <a class="el" href="group__altcp.html#gab295cba0c1ded90fe044a8c37387a12c">altcp.c</a>
@@ -215,8 +236,11 @@ $(document).ready(function(){initNavTree('globals.html','');});
 , <a class="el" href="altcp__tcp_8h.html#a211215e43cb40bd204a20c34316b7caa">altcp_tcp.h</a>
 </li>
 <li>altcp_tls_alloc()
-: <a class="el" href="group__altcp__tls.html#ga09e6ca8f144ee94ef21d7e5760aa4391">altcp_tls.h</a>
-, <a class="el" href="group__altcp__tls.html#ga09e6ca8f144ee94ef21d7e5760aa4391">altcp_alloc.c</a>
+: <a class="el" href="group__altcp__tls.html#ga09e6ca8f144ee94ef21d7e5760aa4391">altcp_alloc.c</a>
+, <a class="el" href="group__altcp__tls.html#ga09e6ca8f144ee94ef21d7e5760aa4391">altcp_tls.h</a>
+</li>
+<li>altcp_tls_config_server_add_privkey_cert()
+: <a class="el" href="group__altcp__tls.html#gae6f52370b62b0f4ba8d373c5186c9e7e">altcp_tls.h</a>
 </li>
 <li>altcp_tls_context()
 : <a class="el" href="group__altcp__tls.html#gabc1741530d5089c3093889416430bc76">altcp_tls.h</a>
@@ -227,11 +251,17 @@ $(document).ready(function(){initNavTree('globals.html','');});
 <li>altcp_tls_create_config_client_2wayauth()
 : <a class="el" href="group__altcp__tls.html#ga7352a4600fee89e167541cf0776c01fb">altcp_tls.h</a>
 </li>
+<li>altcp_tls_create_config_server()
+: <a class="el" href="group__altcp__tls.html#ga78da2448f48b5bcb667af56d5648a570">altcp_tls.h</a>
+</li>
 <li>altcp_tls_create_config_server_privkey_cert()
 : <a class="el" href="group__altcp__tls.html#ga700dc0320e93cea337673e7d4295e161">altcp_tls.h</a>
 </li>
 <li>altcp_tls_free_config()
 : <a class="el" href="group__altcp__tls.html#ga8fb8a92fa3f84170050ddab2888b9145">altcp_tls.h</a>
+</li>
+<li>altcp_tls_free_entropy()
+: <a class="el" href="group__altcp__tls.html#ga75675ccec142d17fc0695b425f3ec1c2">altcp_tls.h</a>
 </li>
 <li>altcp_tls_new()
 : <a class="el" href="group__altcp__tls.html#ga028316a8257cf8dcace9cd063de79c0a">altcp_alloc.c</a>
@@ -293,16 +323,16 @@ $(document).ready(function(){initNavTree('globals.html','');});
 , <a class="el" href="group__autoip.html#ga2122c0b2518b371559fef5ec1d2aed90">autoip.c</a>
 </li>
 <li>autoip_start()
-: <a class="el" href="group__autoip.html#ga1461f5826ebefc050e0d63013818d1e8">autoip.c</a>
-, <a class="el" href="group__autoip.html#ga1461f5826ebefc050e0d63013818d1e8">autoip.h</a>
+: <a class="el" href="group__autoip.html#ga1461f5826ebefc050e0d63013818d1e8">autoip.h</a>
+, <a class="el" href="group__autoip.html#ga1461f5826ebefc050e0d63013818d1e8">autoip.c</a>
 </li>
 <li>autoip_stop()
 : <a class="el" href="group__autoip.html#ga58a4dce658dd1263e84eb982f62587d4">autoip.c</a>
 , <a class="el" href="group__autoip.html#ga58a4dce658dd1263e84eb982f62587d4">autoip.h</a>
 </li>
 <li>autoip_supplied_address()
-: <a class="el" href="autoip_8c.html#a1b4f0c53da17395d9de92a85708a1bb9">autoip.c</a>
-, <a class="el" href="autoip_8h.html#a1b4f0c53da17395d9de92a85708a1bb9">autoip.h</a>
+: <a class="el" href="autoip_8h.html#a1b4f0c53da17395d9de92a85708a1bb9">autoip.h</a>
+, <a class="el" href="autoip_8c.html#a1b4f0c53da17395d9de92a85708a1bb9">autoip.c</a>
 </li>
 <li>autoip_tmr()
 : <a class="el" href="autoip_8h.html#a746fc1d7db1bf1617afae166c9d92c2d">autoip.h</a>

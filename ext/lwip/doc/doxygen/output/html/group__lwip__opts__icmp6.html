@@ -29,7 +29,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">lwIP
-   &#160;<span id="projectnumber">2.1.2</span>
+   &#160;<span id="projectnumber">2.1.3</span>
    </div>
    <div id="projectbrief">Lightweight IP stack</div>
   </td>
@@ -92,7 +92,7 @@ $(document).ready(function(){initNavTree('group__lwip__opts__icmp6.html','');});
 Macros</h2></td></tr>
 <tr class="memitem:ga65ac8bcbad242cba3a2b557e1574b21f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lwip__opts__icmp6.html#ga65ac8bcbad242cba3a2b557e1574b21f">LWIP_ICMP6</a>&#160;&#160;&#160;<a class="el" href="group__lwip__opts__ipv6.html#ga872e3bb3fe2212156d66b18fccc9643f">LWIP_IPV6</a></td></tr>
 <tr class="separator:ga65ac8bcbad242cba3a2b557e1574b21f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa88c55e37e5d7b865b91a9399313bbbf"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lwip__opts__icmp6.html#gaa88c55e37e5d7b865b91a9399313bbbf">LWIP_ICMP6_DATASIZE</a>&#160;&#160;&#160;8</td></tr>
+<tr class="memitem:gaa88c55e37e5d7b865b91a9399313bbbf"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lwip__opts__icmp6.html#gaa88c55e37e5d7b865b91a9399313bbbf">LWIP_ICMP6_DATASIZE</a>&#160;&#160;&#160;0</td></tr>
 <tr class="separator:gaa88c55e37e5d7b865b91a9399313bbbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga82193577b4045e1ac1533c4341a2bd79"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lwip__opts__icmp6.html#ga82193577b4045e1ac1533c4341a2bd79">LWIP_ICMP6_HL</a>&#160;&#160;&#160;255</td></tr>
 <tr class="separator:ga82193577b4045e1ac1533c4341a2bd79"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -121,11 +121,11 @@ Macros</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define LWIP_ICMP6_DATASIZE&#160;&#160;&#160;8</td>
+          <td class="memname">#define LWIP_ICMP6_DATASIZE&#160;&#160;&#160;0</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>LWIP_ICMP6_DATASIZE: bytes from original packet to send back in ICMPv6 error messages. </p>
+<p>LWIP_ICMP6_DATASIZE: bytes from original packet to send back in ICMPv6 error messages (0 = default of IP6_MIN_MTU_LENGTH) ATTENTION: RFC4443 section 2.4 says IP6_MIN_MTU_LENGTH is a MUST, so override this only if you absolutely have to! </p>
 
 </div>
 </div>

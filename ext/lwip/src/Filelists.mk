@@ -175,9 +175,6 @@ SMTPFILES=$(LWIPDIR)/apps/smtp/smtp.c
 # SNTPFILES: SNTP client
 SNTPFILES=$(LWIPDIR)/apps/sntp/sntp.c
 
-# PINGFILES: Ping client
-PINGFILES=$(LWIPDIR)/apps/ping/ping.c
-
 # MDNSFILES: MDNS responder
 MDNSFILES=$(LWIPDIR)/apps/mdns/mdns.c
 
@@ -201,7 +198,6 @@ LWIPAPPFILES=$(SNMPFILES) \
 	$(LWIPERFFILES) \
 	$(SMTPFILES) \
 	$(SNTPFILES) \
-	$(PINGFILES) \
 	$(MDNSFILES) \
 	$(NETBIOSNSFILES) \
 	$(TFTPFILES) \

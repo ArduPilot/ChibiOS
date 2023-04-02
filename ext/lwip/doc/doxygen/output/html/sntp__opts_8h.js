@@ -4,6 +4,7 @@ var sntp__opts_8h =
     [ "SNTP_COMP_ROUNDTRIP", "group__sntp__opts.html#ga1e21781705d3549a305339fd7fca63e7", null ],
     [ "SNTP_DEBUG", "group__sntp__opts.html#ga25c6f9c14c17e218d110d826b09f8d91", null ],
     [ "SNTP_GET_SERVERS_FROM_DHCP", "group__sntp__opts.html#ga961a61eef942ab5378cff1e3742b3ade", null ],
+    [ "SNTP_GET_SERVERS_FROM_DHCPV6", "group__sntp__opts.html#ga0d5b4f1e382d08f0df9dbe0c9da64006", null ],
     [ "SNTP_GET_SYSTEM_TIME", "group__sntp__opts.html#gab0ea385479a5c5c8c173f165ded2fb63", null ],
     [ "SNTP_MAX_SERVERS", "group__sntp__opts.html#ga5d9dc0827f402849f5c18d44e311dbc2", null ],
     [ "SNTP_MONITOR_SERVER_REACHABILITY", "group__sntp__opts.html#ga5782f21ef24ebddd5ba2ce9a889094e3", null ],

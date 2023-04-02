@@ -10,7 +10,7 @@
 
 set(LWIP_VERSION_MAJOR    "2")
 set(LWIP_VERSION_MINOR    "1")
-set(LWIP_VERSION_REVISION "2")
+set(LWIP_VERSION_REVISION "3")
 # LWIP_VERSION_RC is set to LWIP_RC_RELEASE for official releases
 # LWIP_VERSION_RC is set to LWIP_RC_DEVELOPMENT for Git versions
 # Numbers 1..31 are reserved for release candidates
@@ -191,11 +191,6 @@ set(lwipsntp_SRCS
     ${LWIP_DIR}/src/apps/sntp/sntp.c
 )
 
-# Ping client
-set(lwipping_SRCS
-    ${LWIP_DIR}/src/apps/ping/ping.c
-)
-
 # MDNS responder
 set(lwipmdns_SRCS
     ${LWIP_DIR}/src/apps/mdns/mdns.c
@@ -241,7 +236,6 @@ set(lwipallapps_SRCS
     ${lwipiperf_SRCS}
     ${lwipsmtp_SRCS}
     ${lwipsntp_SRCS}
-    ${lwipping_SRCS}
     ${lwipmdns_SRCS}
     ${lwipnetbios_SRCS}
     ${lwiptftp_SRCS}

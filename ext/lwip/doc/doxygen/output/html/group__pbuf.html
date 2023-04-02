@@ -29,7 +29,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">lwIP
-   &#160;<span id="projectnumber">2.1.2</span>
+   &#160;<span id="projectnumber">2.1.3</span>
    </div>
    <div id="projectbrief">Lightweight IP stack</div>
   </td>
@@ -134,6 +134,8 @@ Functions</h2></td></tr>
 <tr class="separator:ga831c9a72bda1d3bd4c7b96f5a0e3b891"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaba88511dee3df4b631fde691f421320d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__infrastructure__errors.html#gaf02d9da80fd66b4f986d2c53d7231ddb">err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pbuf.html#gaba88511dee3df4b631fde691f421320d">pbuf_copy</a> (struct <a class="el" href="structpbuf.html">pbuf</a> *p_to, const struct <a class="el" href="structpbuf.html">pbuf</a> *p_from)</td></tr>
 <tr class="separator:gaba88511dee3df4b631fde691f421320d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadded8d23ed42840f2eb7fef7244dde95"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__infrastructure__errors.html#gaf02d9da80fd66b4f986d2c53d7231ddb">err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pbuf.html#gadded8d23ed42840f2eb7fef7244dde95">pbuf_copy_partial_pbuf</a> (struct <a class="el" href="structpbuf.html">pbuf</a> *p_to, const struct <a class="el" href="structpbuf.html">pbuf</a> *p_from, u16_t copy_len, u16_t offset)</td></tr>
+<tr class="separator:gadded8d23ed42840f2eb7fef7244dde95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac2f1f58fd36042e82af46f5015720899"><td class="memItemLeft" align="right" valign="top">u16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pbuf.html#gac2f1f58fd36042e82af46f5015720899">pbuf_copy_partial</a> (const struct <a class="el" href="structpbuf.html">pbuf</a> *buf, void *dataptr, u16_t len, u16_t offset)</td></tr>
 <tr class="separator:gac2f1f58fd36042e82af46f5015720899"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad0357ae0be17b2aacd0c301cdc86fc39"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pbuf.html#gad0357ae0be17b2aacd0c301cdc86fc39">pbuf_get_contiguous</a> (const struct <a class="el" href="structpbuf.html">pbuf</a> *p, void *buffer, size_t bufsize, u16_t len, u16_t offset)</td></tr>
@@ -656,6 +658,60 @@ Only one packet is copied, no packet queue!</dd></dl>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the number of bytes copied, or 0 on failure </dd></dl>
+
+</div>
+</div>
+<a id="gadded8d23ed42840f2eb7fef7244dde95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gadded8d23ed42840f2eb7fef7244dde95">&#9670;&nbsp;</a></span>pbuf_copy_partial_pbuf()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__infrastructure__errors.html#gaf02d9da80fd66b4f986d2c53d7231ddb">err_t</a> pbuf_copy_partial_pbuf </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structpbuf.html">pbuf</a> *&#160;</td>
+          <td class="paramname"><em>p_to</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const struct <a class="el" href="structpbuf.html">pbuf</a> *&#160;</td>
+          <td class="paramname"><em>p_from</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">u16_t&#160;</td>
+          <td class="paramname"><em>copy_len</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">u16_t&#160;</td>
+          <td class="paramname"><em>offset</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Copy part or all of one packet buffer into another, to a specified offset.</p>
+<dl class="section note"><dt>Note</dt><dd>Only data in one packet is copied, no packet queue! </dd>
+<dd>
+Argument order is shared with pbuf_copy, but different than pbuf_copy_partial.</dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">p_to</td><td>pbuf destination of the copy </td></tr>
+    <tr><td class="paramname">p_from</td><td>pbuf source of the copy </td></tr>
+    <tr><td class="paramname">copy_len</td><td>number of bytes to copy </td></tr>
+    <tr><td class="paramname">offset</td><td>offset in destination pbuf where to copy to</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>ERR_OK if copy_len bytes were copied ERR_ARG if one of the pbufs is NULL or p_from is shorter than copy_len or p_to is not big enough to hold copy_len at offset ERR_VAL if any of the pbufs are part of a queue </dd></dl>
 
 </div>
 </div>

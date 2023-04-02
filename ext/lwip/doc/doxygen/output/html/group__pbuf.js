@@ -23,6 +23,7 @@ var group__pbuf =
     [ "pbuf_coalesce", "group__pbuf.html#ga54ac7b116c6f53c704cbf74f35a8b35c", null ],
     [ "pbuf_copy", "group__pbuf.html#gaba88511dee3df4b631fde691f421320d", null ],
     [ "pbuf_copy_partial", "group__pbuf.html#gac2f1f58fd36042e82af46f5015720899", null ],
+    [ "pbuf_copy_partial_pbuf", "group__pbuf.html#gadded8d23ed42840f2eb7fef7244dde95", null ],
     [ "pbuf_free", "group__pbuf.html#gab0dd696fb4b6bc65e548944584f1738b", null ],
     [ "pbuf_get_at", "group__pbuf.html#ga6d803d9945bffb7ad97743f2fa503da6", null ],
     [ "pbuf_get_contiguous", "group__pbuf.html#gad0357ae0be17b2aacd0c301cdc86fc39", null ],

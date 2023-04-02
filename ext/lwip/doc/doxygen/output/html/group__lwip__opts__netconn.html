@@ -29,7 +29,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">lwIP
-   &#160;<span id="projectnumber">2.1.2</span>
+   &#160;<span id="projectnumber">2.1.3</span>
    </div>
    <div id="projectbrief">Lightweight IP stack</div>
   </td>
@@ -127,10 +127,7 @@ Macros</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>LWIP_NETCONN_FULLDUPLEX==1: Enable code that allows reading from one thread, writing from a 2nd thread and closing from a 3rd thread at the same time. ATTENTION: This is currently really alpha! Some requirements:</p><ul>
-<li>LWIP_NETCONN_SEM_PER_THREAD==1 is required to use one socket/netconn from multiple threads at once</li>
-<li><a class="el" href="group__sys__mbox.html#gac641a45812155d2234ef80dd6412882f">sys_mbox_free()</a> has to unblock receive tasks waiting on recvmbox/acceptmbox and prevent a task pending on this during/after deletion </li>
-</ul>
+<p>LWIP_NETCONN_FULLDUPLEX==1: Enable code that allows reading from one thread, writing from a 2nd thread and closing from a 3rd thread at the same time. LWIP_NETCONN_SEM_PER_THREAD==1 is required to use one socket/netconn from multiple threads at once! </p>
 
 </div>
 </div>
