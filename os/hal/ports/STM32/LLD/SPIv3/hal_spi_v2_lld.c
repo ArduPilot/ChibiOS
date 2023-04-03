@@ -72,6 +72,13 @@ SPIDriver SPID6;
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
+static void spi_lld_wait_complete(SPIDriver *spip) {
+
+  while ((spip->spi->CR1 & SPI_CR1_CSTART) != 0) {
+  }
+  spip->spi->IFCR = 0xFFFFFFFF;
+}
+
 static void spi_lld_configure(SPIDriver *spip) {
 
   /* SPI setup and enable.*/
@@ -112,6 +119,8 @@ static void spi_lld_suspend(SPIDriver *spip) {
  * @brief   Stopping the SPI transaction quick and dirty.
  */
 static void spi_lld_stop_abort(SPIDriver *spip) {
+
+  spi_lld_wait_complete(spip);
 
   /* Stopping DMAs and waiting for FIFOs to be empty.*/
 #if defined(STM32_SPI_DMA_REQUIRED) && defined(STM32_SPI_BDMA_REQUIRED)
@@ -1069,6 +1078,8 @@ void spi_lld_unselect(SPIDriver *spip) {
  */
 msg_t spi_lld_ignore(SPIDriver *spip, size_t n) {
 
+  spi_lld_wait_complete(spip);
+
   osalDbgAssert(n <= STM32_DMA_MAX_TRANSFER, "unsupported DMA transfer size");
 
 #if defined(STM32_SPI_DMA_REQUIRED) && defined(STM32_SPI_BDMA_REQUIRED)
@@ -1130,6 +1141,8 @@ msg_t spi_lld_ignore(SPIDriver *spip, size_t n) {
 msg_t spi_lld_exchange(SPIDriver *spip, size_t n,
                        const void *txbuf, void *rxbuf) {
 
+  spi_lld_wait_complete(spip);
+
   osalDbgAssert(n <= STM32_DMA_MAX_TRANSFER, "unsupported DMA transfer size");
 
 #if defined(STM32_SPI_DMA_REQUIRED) && defined(STM32_SPI_BDMA_REQUIRED)
@@ -1188,6 +1201,8 @@ msg_t spi_lld_exchange(SPIDriver *spip, size_t n,
  */
 msg_t spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf) {
 
+  spi_lld_wait_complete(spip);
+
   osalDbgAssert(n <= STM32_DMA_MAX_TRANSFER, "unsupported DMA transfer size");
 
 #if defined(STM32_SPI_DMA_REQUIRED) && defined(STM32_SPI_BDMA_REQUIRED)
@@ -1245,6 +1260,8 @@ msg_t spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf) {
  * @notapi
  */
 msg_t spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf) {
+
+  spi_lld_wait_complete(spip);
 
   osalDbgAssert(n <= STM32_DMA_MAX_TRANSFER, "unsupported DMA transfer size");
 
@@ -1343,6 +1360,8 @@ msg_t spi_lld_stop_transfer(SPIDriver *spip, size_t *sizep) {
 uint32_t spi_lld_polled_exchange(SPIDriver *spip, uint32_t frame) {
   uint32_t dsize = (spip->spi->CFG1 & SPI_CFG1_DSIZE_Msk) + 1U;
   uint32_t rxframe;
+
+  spi_lld_wait_complete(spip);
 
   spi_lld_resume(spip);
 
