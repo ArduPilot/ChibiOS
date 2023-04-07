@@ -31,7 +31,9 @@
 /*===========================================================================*/
 
 #if STM32_ADC_DUAL_MODE == TRUE
+#ifndef ADC12_CCR_DUAL
 #define ADC12_CCR_DUAL  ADC_CCR_DUAL_REG_SIMULT
+#endif
 #if STM32_ADC_SAMPLES_SIZE == 8
 /* Compact type dual mode, 2x8-bit.*/
 #define ADC12_DMA_SIZE  (STM32_DMA_CR_MSIZE_HWORD | STM32_DMA_CR_PSIZE_HWORD)
