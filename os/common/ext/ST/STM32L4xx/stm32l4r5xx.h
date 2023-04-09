@@ -17623,6 +17623,10 @@ typedef struct
 #define USART_CR1_RXFFIE_Msk          (0x1UL << USART_CR1_RXFFIE_Pos)          /*!< 0x80000000 */
 #define USART_CR1_RXFFIE              USART_CR1_RXFFIE_Msk                     /*!< RXFIFO Full interrupt enable */
 
+/* Legacy define */
+#define  USART_CR1_RXNEIE  USART_CR1_RXNEIE_RXFNEIE
+#define  USART_CR1_TXEIE   USART_CR1_TXEIE_TXFNFIE
+
 /******************  Bit definition for USART_CR2 register  *******************/
 #define USART_CR2_SLVEN_Pos           (0U)
 #define USART_CR2_SLVEN_Msk           (0x1UL << USART_CR2_SLVEN_Pos)           /*!< 0x00000001 */
