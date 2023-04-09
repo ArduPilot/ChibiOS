@@ -173,7 +173,7 @@ void hal_lld_init(void) {
                    RCC_AHB3RSTR_IOMNGRRST |
                    RCC_AHB3RSTR_MDMARST   |
 #endif
-                   0x80000000U));   /* Was RCC_AHB3RSTR_CPURST in Rev-V.*/
+                   0x80000000U));     /* Was RCC_AHB3RSTR_CPURST in Rev-V.*/
   __rccResetAHB4(~(RCC_APB4RSTR_SYSCFGRST | STM32_GPIO_EN_MASK));
   __rccResetAPB1L(~0);
   __rccResetAPB1H(~0);
