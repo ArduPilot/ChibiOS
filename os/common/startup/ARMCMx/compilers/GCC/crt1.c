@@ -23,9 +23,11 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 #include "cmparams.h"
+#include "cache.h"
 
 /*===========================================================================*/
 /* Module local definitions.                                                 */
@@ -258,8 +260,17 @@ void __init_ram_areas(void) {
       p++;
     }
     rap++;
+#if CORTEX_MODEL == 7
+    cacheBufferFlush(rap->init_area, CACHE_SIZE_ALIGN(uint8_t, rap->no_init_area - rap->init_area));
+#endif
   }
   while (rap < &ram_areas[CRT0_AREAS_NUMBER]);
+
+#if CORTEX_MODEL == 7
+  /* PM0253 - 4.8.7 Cache maintenance design hints and tips - required for self-modifying code */
+  SCB_CleanDCache();
+  SCB_InvalidateICache();
+#endif
 #endif
 }
 
