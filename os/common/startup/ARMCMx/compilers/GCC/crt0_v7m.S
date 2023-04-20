@@ -255,10 +255,6 @@ _crt0_entry:
                 msr     CONTROL, r0
                 isb
 
-#if CRT0_INIT_RAMFUNCS == TRUE
-                bl      __init_ramfunc_area
-#endif
-
 #if CRT0_INIT_CORE == TRUE
                 /* Core initialization.*/
                 bl      __cpu_init

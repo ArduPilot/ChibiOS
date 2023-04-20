@@ -268,28 +268,4 @@ void __init_ram_areas(void) {
 #endif
 #endif
 }
-
-#ifndef CRT1_RAMFUNC_ENABLE
-#define CRT1_RAMFUNC_ENABLE 0
-#endif
-
-/**
- * @brief   Performs the initialization of instruction RAM area.
- */
-#if CRT1_RAMFUNC_ENABLE
-extern uint32_t __instram_init_text__, __instram_init__, __instram_end__;
-#endif
-void __init_ramfunc_area(void) {
-#if CRT1_RAMFUNC_ENABLE
-  uint32_t *tp = &__instram_init_text__;
-  uint32_t *p = &__instram_init__;
-
-  /* Copying initialization data.*/
-  while (p < &__instram_end__) {
-    *p = *tp;
-    p++;
-    tp++;
-  }
-#endif
-}
 /** @} */
