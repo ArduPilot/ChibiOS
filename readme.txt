@@ -130,22 +130,37 @@
 - NEW: Automatic removal of duplicated inclusion paths on make command lines.
 - NEW: Reworked STM32 SDMMCv1 and SDMMCv2 drivers, better timeout and clock
        handling, improved speed for aligned buffers.
-- NEW: Added a "waend" field to the thread structure in RT for debug
-       convenience.
-- NEW: Added a para-virtualized HAL port for use in sandboxes.
-- NEW: Added a VIO subsystem to sandboxes supporting drivers
-       para-virtualization, PAL and SIO supported so far.
-- NEW: Added and RT port for use in virtualized sandboxes.
-- NEW: Added full virtualization support to sandboxes with a virtual IRQ
-       mechanism.
-- NEW: Added __CH_OWNEROF() macro to RT.
-- NEW: Added a Posix-favored shell named "msh" (Mini Shell). The shell is able
-       to run sub-apps inside the same sandbox. The shell can either be placed
-       statically in flash or loaded dynamically in RAM.
-- NEW: Added runnable "apps" capability to SBs, apps available so far: msh, ls.
-- NEW: Added ability to load ELF files to SBs.
-- NEW: Enhanced Posix API for SBs leveraging the VFS integration.
-- NEW: SBs and VFS integration. Each SB can see its own VFS instance.
+- FIX: Fixed missing cache management during Cortex-M RAM initializations
+       (bug #1261).
+- FIX: Fixed syntax errors in STM32H7xx/hal_lld_type2.h (bug #1259).
+- FIX: Fixed unwanted reset of cache on STM32H7xx (bug #1258).
+- FIX: Fixed invalid HSIDIV in STM32Ggxx clocks initialization (bug #1257).
+- FIX: Fixed incorrect RTC initialization on STM32G4/L4/L4+ (bug #1256).
+- FIX: Fixed syntax error in RP2040 GPIO driver (bug #1255).
+- FIX: Fixed undefined STM32_SDMMC_MAXCLK value for STM32H7 type 1 and 2
+       (bug #1254).
+- FIX: Fixed invalid checks on PLLP/R/Q dividers on STM32H7 (bug #1253).
+- FIX: Fixed remote wakeup failure in STM32 OTGv1 driver (bug #1252).
+- FIX: Fixed wrong use of hooks in RT/NIL (bug #1251).
+- FIX: Fixed SPI_MMC driver broken in 21.11.3 (bug #1249).
+
+*** 21.11.3 ***
+- NEW: STM32 DMA drivers now export an STM32_DMA_MAX_TRANSFER definition.
+- NEW: PAL events for RP2040 added.
+- NEW: Removed obsolete sandbox code from ARMv7-M port. Now ARMv7-M-ALT is
+       the official port for use with sandboxes.
+- NEW: Reworked HAL MAC driver, now with callback support.
+- NEW: Fixed setting of SYSCLK when derived from divided HSI16
+- NEW: Mass change: Source code convention changed from CRLF to just CR (Unix).
+- NEW: Fixed some corner cases in ADC5, added ADC reset on start().
+- NEW: Added a "BufferedSIODriver" class that implements the behavior of the
+       legacy Serial driver on top of a SIO implementation (buffering, events
+       and all).
+- NEW; Now hal.h includes cc_portab.h by default making it mandatory.
+- NEW: Moved HAL serial error flags into asynchronous channels interface
+       definitions.
+- NEW: Reworked HAL SIO driver.
+- NEW: Non-proprietary LLVM build support.
 - NEW: Added integration of LittleFS on top of our flash infrastructure.
 - NEW: Added a new MEM_IS_VALID_FUNCTION() macro to RT and NIL.
 - NEW: Changed SB configuration options names to be prefixed with SB_CFG_.
