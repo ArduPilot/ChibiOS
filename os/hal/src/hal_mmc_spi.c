@@ -35,6 +35,8 @@
 #include "spi_hook.h"
 #define spiStart spiStartHook
 #define spiStop spiStopHook
+#define spiAcquireBus spiAcquireBusHook
+#define spiReleaseBus spiReleaseBusHook
 #define spiSelect spiSelectHook
 #define spiUnselect spiUnselectHook
 #define spiIgnore spiIgnoreHook
