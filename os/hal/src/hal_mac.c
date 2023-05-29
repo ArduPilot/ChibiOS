@@ -61,9 +61,9 @@
  *
  * @init
  */
-void macInit(void) {
+bool macInit(void) {
 
-  mac_lld_init();
+  return mac_lld_init();
 }
 
 /**

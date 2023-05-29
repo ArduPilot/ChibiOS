@@ -427,7 +427,7 @@ struct hal_mac_receive_descriptor {
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void macInit(void);
+  bool macInit(void);
   void macObjectInit(MACDriver *macp);
   msg_t macStart(MACDriver *macp, const MACConfig *config);
   void macStop(MACDriver *macp);
