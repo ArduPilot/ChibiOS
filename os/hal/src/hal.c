@@ -98,9 +98,11 @@ void halInit(void) {
 #if (HAL_USE_EICU == TRUE) || defined(__DOXYGEN__)
   eicuInit();
 #endif
+#ifndef _ARDUPILOT_
 #if (HAL_USE_MAC == TRUE) || defined(__DOXYGEN__)
   macInit();
 #endif
+#endif // _ARDUPILOT_
 #if (HAL_USE_PWM == TRUE) || defined(__DOXYGEN__)
   pwmInit();
 #endif
