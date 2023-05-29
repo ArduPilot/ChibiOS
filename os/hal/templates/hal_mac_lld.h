@@ -97,7 +97,7 @@ extern MACDriver ETHD1;
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void mac_lld_init(void);
+  bool mac_lld_init(void);
   void mac_lld_start(MACDriver *macp);
   void mac_lld_stop(MACDriver *macp);
   msg_t mac_lld_get_transmit_descriptor(MACDriver *macp,

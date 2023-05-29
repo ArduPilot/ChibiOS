@@ -181,7 +181,7 @@ uint32_t mii_read(MACDriver *macp, uint32_t reg) {
  *
  * @param[in] macp      pointer to the @p MACDriver object
  */
-static void mii_find_phy(MACDriver *macp) {
+static bool mii_find_phy(MACDriver *macp) {
   uint32_t i;
 
 #if STM32_MAC_PHY_TIMEOUT > 0
@@ -194,15 +194,14 @@ static void mii_find_phy(MACDriver *macp) {
       ETH->MACMDIODR = (i << ETH_MACMDIODR_RA_Pos) | MACMDIODR_CR;
       if ((mii_read(macp, MII_PHYSID1) == (BOARD_PHY_ID >> 16U)) &&
           ((mii_read(macp, MII_PHYSID2) & 0xFFF0U) == (BOARD_PHY_ID & 0xFFF0U))) {
-        return;
+        return true;
       }
     }
 #if STM32_MAC_PHY_TIMEOUT > 0
     n--;
   } while (n > 0U);
 #endif
-  /* Wrong or defective board.*/
-  osalSysHalt("MAC failure");
+ return false;
 }
 #endif
 
@@ -271,7 +270,7 @@ OSAL_IRQ_HANDLER(STM32_ETH_HANDLER) {
  *
  * @notapi
  */
-void mac_lld_init(void) {
+bool mac_lld_init(void) {
   unsigned i;
 
   macObjectInit(&ETHD1);
@@ -325,7 +324,10 @@ void mac_lld_init(void) {
 #if defined(BOARD_PHY_ADDRESS)
   ETHD1.phyaddr = BOARD_PHY_ADDRESS << 11;
 #else
-  mii_find_phy(&ETHD1);
+  if (!mii_find_phy(&ETHD1)) {
+      rccDisableETH();
+      return false;
+  }
 #endif
 
 #if defined(BOARD_PHY_RESET)
@@ -348,6 +350,8 @@ void mac_lld_init(void) {
 
   /* MAC clocks stopped again.*/
   rccDisableETH();
+
+  return true;
 }
 
 /**

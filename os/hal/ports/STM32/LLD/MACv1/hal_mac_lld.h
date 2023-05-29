@@ -265,7 +265,7 @@ extern "C" {
 #endif
   void mii_write(MACDriver *macp, uint32_t reg, uint32_t value);
   uint32_t mii_read(MACDriver *macp, uint32_t reg);
-  void mac_lld_init(void);
+  bool mac_lld_init(void);
   void mac_lld_start(MACDriver *macp);
   void mac_lld_stop(MACDriver *macp);
   msg_t mac_lld_get_transmit_descriptor(MACDriver *macp,

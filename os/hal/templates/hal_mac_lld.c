@@ -66,12 +66,13 @@ MACDriver ETHD1;
  *
  * @notapi
  */
-void mac_lld_init(void) {
+bool mac_lld_init(void) {
 
 #if PLATFORM_MAC_USE_MAC1 == TRUE
   /* Driver initialization.*/
   macObjectInit(&MACD1);
 #endif
+  return true;
 }
 
 /**
