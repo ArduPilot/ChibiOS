@@ -13,13 +13,13 @@
 /* Allocate a memory block                                                */
 /*------------------------------------------------------------------------*/
 
+#ifndef _ARDUPILOT_
 void* ff_memalloc (	/* Returns pointer to the allocated memory block (null if not enough core) */
 	UINT msize		/* Number of bytes to allocate */
 )
 {
 	return malloc(msize);	/* Allocate a new memory block with POSIX API */
 }
-
 
 /*------------------------------------------------------------------------*/
 /* Free a memory block                                                    */
@@ -31,6 +31,7 @@ void ff_memfree (
 {
 	free(mblock);	/* Free the memory block with POSIX API */
 }
+#endif // _ARDUPILOT_
 
 #endif
 
