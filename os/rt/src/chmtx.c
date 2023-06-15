@@ -358,6 +358,13 @@ void chMtxUnlock(mutex_t *mp) {
   thread_t *currtp = chThdGetSelfX();
   mutex_t *lmp;
 
+  if (mp->owner != currtp) {
+      /*
+        this can only happen if we have force relased a mutex
+       */
+      return;
+  }
+
   chDbgCheck(mp != NULL);
 
   chSysLock();
@@ -444,6 +451,13 @@ void chMtxUnlock(mutex_t *mp) {
 void chMtxUnlockS(mutex_t *mp) {
   thread_t *currtp = chThdGetSelfX();
   mutex_t *lmp;
+
+  if (mp->owner != currtp) {
+      /*
+        this can only happen if we have force relased a mutex
+       */
+      return;
+  }
 
   chDbgCheckClassS();
   chDbgCheck(mp != NULL);
@@ -564,6 +578,86 @@ void chMtxUnlockAll(void) {
   chSysLock();
   chMtxUnlockAllS();
   chSysUnlock();
+}
+
+/**
+ * @brief  Force release a mutex
+ * @note   Use of this function violates locking principles and can result in data corruption.
+ *         The purpose of this function is to allow some level of recovery from a deadlock
+ *         caused by a lock ordering violation. Unlike other chMtxUnlockX calls this function
+ *         may be called from a thread that does not own the mutex. It is intended to be called from
+ *         a high priority supervisor thread that has detected an unrecoverable deadlock on systems
+ *         where watchdog recovery is not appropriate.
+ *         If recursive locks are enabled then the lock counter is zeroed, forcing complete release
+ */
+void chMtxForceReleaseS(mutex_t *mp)
+{
+  chDbgCheckClassS();
+  thread_t *currtp = mp->owner;
+  chDbgAssert(currtp->mtxlist != NULL, "owned mutexes list empty");
+  chDbgAssert(currtp->mtxlist->owner == currtp, "ownership failure");
+
+#if CH_CFG_USE_MUTEXES_RECURSIVE == TRUE
+  mp->cnt = 0;
+#endif
+
+  /*
+	we need to de-link the mutex from this threads mutex list
+  */
+  if (currtp->mtxlist == mp) {
+	// simple case, this mutex was most recently acquired by the thread
+	currtp->mtxlist = mp->next;
+  } else {
+	for (mutex_t *m = currtp->mtxlist; m; m = m->next) {
+	  if (m->next == mp) {
+		m->next = mp->next;
+	  }
+	}
+  }
+
+  /* If a thread is waiting on the mutex then the fun part begins.*/
+  if (chMtxQueueNotEmptyS(mp)) {
+	thread_t *tp;
+
+	/* Recalculates the optimal thread priority by scanning the owned
+	   mutexes list.*/
+	tprio_t newprio = currtp->realprio;
+	mutex_t *lmp = currtp->mtxlist;
+	while (lmp != NULL) {
+	  /* If the highest priority thread waiting in the mutexes list has a
+		 greater priority than the current thread base priority then the
+		 final priority will have at least that priority.*/
+	  if (chMtxQueueNotEmptyS(lmp) &&
+		  ((threadref(lmp->queue.next))->hdr.pqueue.prio > newprio)) {
+		newprio = (threadref(lmp->queue.next))->hdr.pqueue.prio;
+	  }
+	  lmp = lmp->next;
+	}
+
+	/* Assigns to the current thread the highest priority among all the
+	   waiting threads.*/
+	currtp->hdr.pqueue.prio = newprio;
+
+	/* Awakens the highest priority thread waiting for the unlocked mutex and
+	   assigns the mutex to it.*/
+#if CH_CFG_USE_MUTEXES_RECURSIVE == TRUE
+	mp->cnt = (cnt_t)1;
+#endif
+	tp = threadref(ch_queue_fifo_remove(&mp->queue));
+	mp->owner = tp;
+	mp->next = tp->mtxlist;
+	tp->mtxlist = mp;
+
+	/* Note, not using chSchWakeupS() because that function expects the
+	   current thread to have the higher or equal priority than the ones
+	   in the ready list. This is not necessarily true here because we
+	   just changed priority.*/
+	(void) chSchReadyI(tp);
+	chSchRescheduleS();
+  }
+  else {
+	mp->owner = NULL;
+  }
 }
 
 #endif /* CH_CFG_USE_MUTEXES == TRUE */
