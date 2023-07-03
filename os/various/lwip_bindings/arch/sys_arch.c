@@ -63,6 +63,10 @@
 #include "arch/sys_arch.h"
 #include "lwipopts.h"
 
+#ifdef _ARDUPILOT_
+#include "hrt.h"
+#endif
+
 #ifndef CH_LWIP_USE_MEM_POOLS 
 #define CH_LWIP_USE_MEM_POOLS FALSE
 #endif
@@ -271,25 +275,20 @@ u32_t sys_now(void) {return (u32_t)osalOsGetSystemTimeX();}
 
 #else
 u32_t sys_now(void) {
-  static struct {
-    systime_t   last_system_time;
-    u32_t       last_ms;
-    u32_t       last_unprocessed;
-  } persistent = {0, 0, 0};
-  u32_t delta;
-  systime_t now_time;
 
-  /* Calculating delta, in ticks, from the last acquired system time.*/
-  now_time = osalOsGetSystemTimeX();
-  delta = (u32_t)osalTimeDiffX(persistent.last_system_time, now_time) +
-          persistent.last_unprocessed;
-  persistent.last_system_time = now_time;
-
-  /* Storing this milliseconds time and eventual remainder.*/
-  persistent.last_ms          += delta / (OSAL_ST_FREQUENCY / 1000U);
-  persistent.last_unprocessed  = delta % (OSAL_ST_FREQUENCY / 1000U);
-
-  return persistent.last_ms;
+#ifdef _ARDUPILOT_
+  return hrt_millis32();
+#else
+#if OSAL_ST_FREQUENCY == 1000
+  return (u32_t)chVTGetSystemTimeX();
+#elif (OSAL_ST_FREQUENCY / 1000) >= 1 && (OSAL_ST_FREQUENCY % 1000) == 0
+  return ((u32_t)chVTGetSystemTimeX() - 1) / (OSAL_ST_FREQUENCY / 1000) + 1;
+#elif (1000 / OSAL_ST_FREQUENCY) >= 1 && (1000 % OSAL_ST_FREQUENCY) == 0
+  return ((u32_t)chVTGetSystemTimeX() - 1) * (1000 / OSAL_ST_FREQUENCY) + 1;
+#else
+  return (u32_t)(((u64_t)(chVTGetSystemTimeX() - 1) * 1000) / OSAL_ST_FREQUENCY) + 1;
+#endif
+#endif // _ARDUPILOT_
 }
 #endif
 
