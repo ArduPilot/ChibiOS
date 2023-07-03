@@ -374,7 +374,6 @@ static THD_FUNCTION(lwip_thread, p) {
   result = netifapi_netif_add(&thisif, &ip, &netmask, &gateway, NULL, ethernetif_init, tcpip_input);
   if (result != ERR_OK)
   {
-    chThdSleepMilliseconds(1000);     // Give some time to print any other diagnostics.
     osalSysHalt("netif_add error");   // Not sure what else we can do if an error occurs here.
   };
 
