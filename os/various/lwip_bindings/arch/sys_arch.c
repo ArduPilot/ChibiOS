@@ -63,6 +63,10 @@
 #include "arch/sys_arch.h"
 #include "lwipopts.h"
 
+#ifdef _ARDUPILOT_
+#include "hrt.h"
+#endif
+
 #ifndef CH_LWIP_USE_MEM_POOLS 
 #define CH_LWIP_USE_MEM_POOLS FALSE
 #endif
@@ -271,6 +275,10 @@ u32_t sys_now(void) {return (u32_t)osalOsGetSystemTimeX();}
 
 #else
 u32_t sys_now(void) {
+
+#ifdef _ARDUPILOT_
+  return hrt_millis32();
+#else
   static struct {
     systime_t   last_system_time;
     u32_t       last_ms;
@@ -290,6 +298,7 @@ u32_t sys_now(void) {
   persistent.last_unprocessed  = delta % (OSAL_ST_FREQUENCY / 1000U);
 
   return persistent.last_ms;
+#endif // _ARDUPILOT_
 }
 #endif
 
