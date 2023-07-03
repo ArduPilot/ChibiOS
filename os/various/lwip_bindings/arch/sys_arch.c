@@ -63,6 +63,10 @@
 #include "arch/sys_arch.h"
 #include "lwipopts.h"
 
+#ifdef _ARDUPILOT_
+#include "hrt.h"
+#endif
+
 #ifndef CH_LWIP_USE_MEM_POOLS 
 #define CH_LWIP_USE_MEM_POOLS FALSE
 #endif
@@ -264,6 +268,9 @@ void sys_arch_unprotect(sys_prot_t pval) {
 
 u32_t sys_now(void) {
 
+#ifdef _ARDUPILOT_
+  return hrt_millis32();
+#else
 #if OSAL_ST_FREQUENCY == 1000
   return (u32_t)chVTGetSystemTimeX();
 #elif (OSAL_ST_FREQUENCY / 1000) >= 1 && (OSAL_ST_FREQUENCY % 1000) == 0
@@ -273,4 +280,5 @@ u32_t sys_now(void) {
 #else
   return (u32_t)(((u64_t)(chVTGetSystemTimeX() - 1) * 1000) / OSAL_ST_FREQUENCY) + 1;
 #endif
+#endif // _ARDUPILOT_
 }
