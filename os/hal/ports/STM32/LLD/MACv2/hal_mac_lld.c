@@ -124,6 +124,12 @@ MACDriver ETHD1;
 static const uint8_t default_mac_address[] = {0xAA, 0x55, 0x13,
                                               0x37, 0x01, 0x10};
 
+#if defined(STM32_ETH_BUFFERS_EXTERN)
+extern stm32_eth_rx_descriptor_t *__eth_rd;
+extern stm32_eth_tx_descriptor_t *__eth_td;
+extern uint32_t *__eth_rb[STM32_MAC_RECEIVE_BUFFERS];
+extern uint32_t *__eth_tb[STM32_MAC_TRANSMIT_BUFFERS];
+#else
 static stm32_eth_rx_descriptor_t __eth_rd[STM32_MAC_RECEIVE_BUFFERS]
                         __attribute__((aligned(4), __section__(".eth")));
 static stm32_eth_tx_descriptor_t __eth_td[STM32_MAC_TRANSMIT_BUFFERS]
@@ -133,7 +139,7 @@ static uint32_t __eth_rb[STM32_MAC_RECEIVE_BUFFERS][BUFFER_SIZE]
                         __attribute__((aligned(4), __section__(".eth")));
 static uint32_t __eth_tb[STM32_MAC_TRANSMIT_BUFFERS][BUFFER_SIZE]
                         __attribute__((aligned(4), __section__(".eth")));
-
+#endif
 /*===========================================================================*/
 /* Driver local functions.                                                   */
 /*===========================================================================*/
@@ -272,6 +278,10 @@ OSAL_IRQ_HANDLER(STM32_ETH_HANDLER) {
  */
 bool mac_lld_init(void) {
   unsigned i;
+
+  if (__eth_rb == NULL || __eth_tb == NULL || __eth_rd == NULL || __eth_td == NULL) {
+    return false;
+  }
 
   macObjectInit(&ETHD1);
   ETHD1.link_up = false;
