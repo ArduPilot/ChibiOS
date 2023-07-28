@@ -527,8 +527,8 @@ void lwipReconfigure(const lwipreconf_opts_t *opts)
   chSemWait(&params.completion);
 }
 
-uint32_t lwipGetIp(void) { return ip.addr; }
-uint32_t lwipGetNetmask(void) { return netmask.addr; }
-uint32_t lwipGetGateway(void) { return gateway.addr; }
+uint32_t lwipGetIp(void) { return thisif.ip_addr.addr; }
+uint32_t lwipGetNetmask(void) { return thisif.netmask.addr; }
+uint32_t lwipGetGateway(void) { return thisif.gw.addr; }
 
 /** @} */
