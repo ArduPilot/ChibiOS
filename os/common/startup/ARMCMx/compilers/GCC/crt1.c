@@ -231,30 +231,17 @@ void __init_ram_areas(void) {
     rap++;
   }
   while (rap < &ram_areas[CRT1_AREAS_NUMBER]);
+#if CORTEX_MODEL == 7
+#if CRT1_AREAS_NUMBER > 1
+  /* PM0253 - 4.8.7 Cache maintenance design hints and tips - required
+     for self-modifying code.*/
+  SCB_CleanDCache();
+  SCB_InvalidateICache();
+#endif
+#endif
 #endif
 }
 
-#ifndef CRT1_RAMFUNC_ENABLE
-#define CRT1_RAMFUNC_ENABLE 0
-#endif
-
-/**
- * @brief   Performs the initialization of instruction RAM area.
- */
-#if CRT1_RAMFUNC_ENABLE
-extern uint32_t __instram_init_text__, __instram_init__, __instram_end__;
-#endif
 void __init_ramfunc_area(void) {
-#if CRT1_RAMFUNC_ENABLE
-  uint32_t *tp = &__instram_init_text__;
-  uint32_t *p = &__instram_init__;
-
-  /* Copying initialization data.*/
-  while (p < &__instram_end__) {
-    *p = *tp;
-    p++;
-    tp++;
-  }
-#endif
 }
 /** @} */
