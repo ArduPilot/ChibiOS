@@ -651,10 +651,12 @@ void mac_lld_release_receive_descriptor(MACReceiveDescriptor *rdp) {
  * @notapi
  */
 bool mac_lld_poll_link_status(MACDriver *macp) {
-  uint32_t maccr, bmsr, bmcr;
+  uint32_t maccr;
 
   maccr = ETH->MACCR;
-
+ /* Fixed link connection defined in board.h.*/
+#if !defined(BOARD_PHY_FIXED_LINK)
+  uint32_t bmsr, bmcr;
   /* PHY CR and SR registers read.*/
   (void)mii_read(macp, MII_BMSR);
   bmsr = mii_read(macp, MII_BMSR);
@@ -701,6 +703,14 @@ bool mac_lld_poll_link_status(MACDriver *macp) {
     else
       maccr &= ~ETH_MACCR_DM;
   }
+/* Fixed link type defined in board.h.*/
+#elif defined(LINK_100_FULLDUPLEX)
+  maccr |= ETH_MACCR_FES;
+  maccr |= ETH_MACCR_DM;
+#elif defined(LINK_10_FULLDUPLEX)
+  maccr &= ~ETH_MACCR_FES;
+  maccr |= ETH_MACCR_DM;
+#endif 
 
   /* Changes the mode in the MAC.*/
   ETH->MACCR = maccr;
