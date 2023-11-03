@@ -655,7 +655,7 @@ bool mac_lld_poll_link_status(MACDriver *macp) {
 
   maccr = ETH->MACCR;
  /* Fixed link connection defined in board.h.*/
-#if !defined(BOARD_PHY_FIXED_LINK)
+#if (!STM32_MAC_PHY_FIXED_LINK)
   uint32_t bmsr, bmcr;
   /* PHY CR and SR registers read.*/
   (void)mii_read(macp, MII_BMSR);
@@ -704,10 +704,10 @@ bool mac_lld_poll_link_status(MACDriver *macp) {
       maccr &= ~ETH_MACCR_DM;
   }
 /* Fixed link type defined in board.h.*/
-#elif defined(LINK_100_FULLDUPLEX)
+#elif STM32_MAC_PHY_FIXED_LINK_TYPE == LINK_100_FULLDUPLEX
   maccr |= ETH_MACCR_FES;
   maccr |= ETH_MACCR_DM;
-#elif defined(LINK_10_FULLDUPLEX)
+#elif STM32_MAC_PHY_FIXED_LINK_TYPE == LINK_10_FULLDUPLEX
   maccr &= ~ETH_MACCR_FES;
   maccr |= ETH_MACCR_DM;
 #endif 
