@@ -106,6 +106,12 @@ static void low_level_init(struct netif *netif) {
   /* don't set NETIF_FLAG_ETHARP if this device is not an Ethernet one */
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
 
+#if LWIP_IGMP
+  // also enable multicast
+  netif->flags |= NETIF_FLAG_IGMP;
+#endif
+
+
   /* Do whatever else is needed to initialize interface. */
 }
 
