@@ -129,6 +129,14 @@
 #define STM32_TDES3_FL              0x00007FFF
 /** @} */
 
+/**
+ * @name    Fixed link types
+ * @{
+ */
+#define LINK_100_FULLDUPLEX         0x00
+#define LINK_10_FULLDUPLEX          0x01
+/** @} */
+
 /*===========================================================================*/
 /* Driver pre-compile time settings.                                         */
 /*===========================================================================*/
@@ -199,6 +207,20 @@
  */
 #if !defined(STM32_MAC_IP_CHECKSUM_OFFLOAD) || defined(__DOXYGEN__)
 #define STM32_MAC_IP_CHECKSUM_OFFLOAD       0
+#endif
+
+/**
+ * @brief   Fixed link connection
+ */
+#if !defined(STM32_MAC_PHY_FIXED_LINK) || defined(__DOXYGEN__)
+#define STM32_MAC_PHY_FIXED_LINK FALSE
+#endif
+
+/**
+ * @brief   Fixed link connection type
+ */
+#if !defined(STM32_MAC_PHY_FIXED_LINK_TYPE) || defined(__DOXYGEN__)
+#define STM32_MAC_PHY_FIXED_LINK_TYPE LINK_100_FULLDUPLEX
 #endif
 /** @} */
 
