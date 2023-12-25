@@ -1,3 +1,0 @@
-[submodule "ext/lwip"]
-	path = ext/lwip
-	url = https://github.com/ArduPilot/lwip.git
