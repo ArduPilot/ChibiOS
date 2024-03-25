@@ -508,6 +508,11 @@ typedef struct {
    *          pulse period capture event.
    */
   eicucallback_t          capture_cb;
+
+  /**
+   * @brief User pointer for callback
+  */
+  void                    *user;
 } EICUChannelConfig;
 
 /** 
