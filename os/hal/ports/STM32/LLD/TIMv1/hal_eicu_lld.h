@@ -149,6 +149,16 @@
 #define STM32_EICU_USE_TIM14                 FALSE
 #endif
 
+
+/**
+ * @brief   EICUD15 driver enable switch.
+ * @details If set to @p TRUE the support for EICUD15 is included.
+ * @note    The default is @p TRUE.
+ */
+#if !defined(STM32_EICU_USE_TIM15) || defined(__DOXYGEN__)
+#define STM32_EICU_USE_TIM15                 FALSE
+#endif
+
 /**
  * @brief   EICUD1 interrupt priority level setting.
  */
@@ -232,6 +242,15 @@
 #if !defined(STM32_EICU_TIM14_IRQ_PRIORITY) || defined(__DOXYGEN__)
 #define STM32_EICU_TIM14_IRQ_PRIORITY         7
 #endif
+
+/**
+ * @brief   EICUD15 interrupt priority level setting.
+ */
+#if !defined(STM32_EICU_TIM15_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define STM32_EICU_TIM15_IRQ_PRIORITY         7
+#endif
+
+
 /** @} */
 
 /*===========================================================================*/
@@ -286,12 +305,17 @@
 #error "TIM14 not present in the selected device"
 #endif
 
+#if STM32_EICU_USE_TIM15 && !STM32_HAS_TIM15
+#error "TIM15 not present in the selected device"
+#endif
+
 #if !STM32_EICU_USE_TIM1  && !STM32_EICU_USE_TIM2  &&                         \
     !STM32_EICU_USE_TIM3  && !STM32_EICU_USE_TIM4  &&                         \
     !STM32_EICU_USE_TIM5  && !STM32_EICU_USE_TIM8  &&                         \
     !STM32_EICU_USE_TIM9  && !STM32_EICU_USE_TIM12 &&                         \
     !STM32_EICU_USE_TIM10 && !STM32_EICU_USE_TIM11 &&                         \
-    !STM32_EICU_USE_TIM13 && !STM32_EICU_USE_TIM14
+    !STM32_EICU_USE_TIM13 && !STM32_EICU_USE_TIM14 &&                         \
+    !STM32_EICU_USE_TIM15
 #error "EICU driver activated but no TIM peripheral assigned"
 #endif
 
@@ -392,6 +416,14 @@
 #endif
 #endif
 
+#if STM32_EICU_USE_TIM15
+#if defined(STM32_TIM15_IS_USED)
+#error "EICUD15 requires TIM15 but the timer is already used"
+#else
+#define STM32_TIM15_IS_USED
+#endif
+#endif
+
 #if STM32_EICU_USE_TIM1 &&                                                    \
     !OSAL_IRQ_IS_VALID_PRIORITY(STM32_EICU_TIM1_IRQ_PRIORITY)
 #error "Invalid IRQ priority assigned to TIM1"
@@ -450,6 +482,11 @@
 #if STM32_EICU_USE_TIM14 &&                                                   \
     !OSAL_IRQ_IS_VALID_PRIORITY(STM32_EICU_TIM14_IRQ_PRIORITY)
 #error "Invalid IRQ priority assigned to TIM14"
+#endif
+
+#if STM32_EICU_USE_TIM15 &&                                                   \
+    !OSAL_IRQ_IS_VALID_PRIORITY(STM32_EICU_TIM15_IRQ_PRIORITY)
+#error "Invalid IRQ priority assigned to TIM15"
 #endif
 
 /*===========================================================================*/
@@ -648,6 +685,10 @@ extern EICUDriver EICUD13;
 
 #if STM32_EICU_USE_TIM14 && !defined(__DOXYGEN__)
 extern EICUDriver EICUD14;
+#endif
+
+#if STM32_EICU_USE_TIM15 && !defined(__DOXYGEN__)
+extern EICUDriver EICUD15;
 #endif
 
 #ifdef __cplusplus
