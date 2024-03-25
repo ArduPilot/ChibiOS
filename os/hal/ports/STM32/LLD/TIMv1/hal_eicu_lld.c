@@ -158,6 +158,14 @@ EICUDriver EICUD14;
 #endif
 
 /**
+ * @brief   EICUD15 driver identifier.
+ * @note    The driver EICUD15 allocates the timer TIM14 when enabled.
+ */
+#if STM32_EICU_USE_TIM15 && !defined(__DOXYGEN__)
+EICUDriver EICUD15;
+#endif
+
+/**
  * @brief   Shared IRQ handler.
  *
  * @param[in] eicup     Pointer to the @p EICUDriver object
@@ -489,6 +497,12 @@ OSAL_IRQ_HANDLER(STM32_TIM8_CC_HANDLER) {
 #endif /* !defined(STM32_TIM14_SUPPRESS_ISR) */
 #endif /* STM32_EICU_USE_TIM14 */
 
+#if STM32_EICU_USE_TIM15 || defined(__DOXYGEN__)
+#if !defined(STM32_TIM15_SUPPRESS_ISR)
+#error "TIM15 ISR not defined by platform"
+#endif /* !defined(STM32_TIM15_SUPPRESS_ISR) */
+#endif /* STM32_EICU_USE_TIM15 */
+
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
@@ -569,6 +583,12 @@ void eicu_lld_init(void) {
   /* Driver initialization.*/
   eicuObjectInit(&EICUD14);
   EICUD14.tim = STM32_TIM14;
+#endif
+
+#if STM32_EICU_USE_TIM15
+  /* Driver initialization.*/
+  eicuObjectInit(&EICUD15);
+  EICUD15.tim = STM32_TIM15;
 #endif
 }
 
@@ -713,6 +733,14 @@ void eicu_lld_start(EICUDriver *eicup) {
       rccResetTIM14();
       eicup->channels = 1;
       eicup->clock = STM32_TIMCLK1;
+    }
+#endif
+#if STM32_EICU_USE_TIM15
+    if (&EICUD15 == eicup) {
+      rccEnableTIM15(FALSE);
+      rccResetTIM15();
+      eicup->channels = 2;
+      eicup->clock = STM32_TIMCLK2;
     }
 #endif
   }
@@ -871,6 +899,11 @@ void eicu_lld_stop(EICUDriver *eicup) {
 #if STM32_EICU_USE_TIM14
     if (&EICUD14 == eicup) {
       rccDisableTIM14();
+    }
+#endif
+#if STM32_EICU_USE_TIM15
+    if (&EICUD15 == eicup) {
+      rccDisableTIM15();
     }
 #endif
 }
