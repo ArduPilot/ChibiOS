@@ -82,12 +82,13 @@ typedef struct EICUDriver EICUDriver;
 /**
  * @brief EICU notification callback type.
  *
+ * @param[in] user      pointer to the user data
  * @param[in] eicup     Pointer to a EICUDriver object
  * @param[in] channel   EICU channel that fired the interrupt
  * @param[in] width     Pulse width
  * @param[in] period    Pulse period
  */
-typedef void (*eicucallback_t)(EICUDriver *eicup, eicuchannel_t channel);
+typedef void (*eicucallback_t)(void* user, EICUDriver *eicup, eicuchannel_t channel);
 
 #include "hal_eicu_lld.h"
 

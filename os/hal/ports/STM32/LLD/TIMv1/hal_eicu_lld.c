@@ -175,19 +175,19 @@ void eicu_lld_serve_interrupt(EICUDriver *eicup) {
 
   if ((sr & STM32_TIM_SR_CC1IF) != 0 && eicup->channel[EICU_CHANNEL_1].config != NULL) {
       if (eicup->channel[EICU_CHANNEL_1].config->capture_cb != NULL)
-          eicup->channel[EICU_CHANNEL_1].config->capture_cb(eicup, EICU_CHANNEL_1);
+          eicup->channel[EICU_CHANNEL_1].config->capture_cb(eicup->channel[EICU_CHANNEL_1].config->user, eicup, EICU_CHANNEL_1);
   }
   if ((sr & STM32_TIM_SR_CC2IF) != 0 && eicup->channel[EICU_CHANNEL_2].config != NULL) {
     if (eicup->channel[EICU_CHANNEL_2].config->capture_cb != NULL)
-        eicup->channel[EICU_CHANNEL_2].config->capture_cb(eicup, EICU_CHANNEL_2);
+        eicup->channel[EICU_CHANNEL_2].config->capture_cb(eicup->channel[EICU_CHANNEL_2].config->user, eicup, EICU_CHANNEL_2);
   }
   if ((sr & STM32_TIM_SR_CC3IF) != 0 && eicup->channel[EICU_CHANNEL_3].config != NULL) {
     if (eicup->channel[EICU_CHANNEL_3].config->capture_cb != NULL)
-        eicup->channel[EICU_CHANNEL_3].config->capture_cb(eicup, EICU_CHANNEL_3);
+        eicup->channel[EICU_CHANNEL_3].config->capture_cb(eicup->channel[EICU_CHANNEL_3].config->user, eicup, EICU_CHANNEL_3);
   }
   if ((sr & STM32_TIM_SR_CC4IF) != 0 && eicup->channel[EICU_CHANNEL_4].config != NULL) {
     if (eicup->channel[EICU_CHANNEL_4].config->capture_cb != NULL)
-        eicup->channel[EICU_CHANNEL_4].config->capture_cb(eicup, EICU_CHANNEL_4);
+        eicup->channel[EICU_CHANNEL_4].config->capture_cb(eicup->channel[EICU_CHANNEL_4].config->user, eicup, EICU_CHANNEL_4);
   }
 }
 
