@@ -503,9 +503,9 @@ bool _sdc_wait_for_transfer_state(SDCDriver *sdcp) {
   uint32_t resp[1];
 
   while (true) {
-    if (sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_SEND_STATUS,
-                                   sdcp->rca, resp) ||
-        MMCSD_R1_ERROR(resp[0])) {
+    /* Not checking CRC here according to JEDEC Standard No. 84-B51 6.6.2
+       so that this function can be used after High-speed mode selection */
+    if (sdc_lld_send_cmd_short(sdcp, MMCSD_CMD_SEND_STATUS, sdcp->rca, resp) || MMCSD_R1_ERROR(resp[0])) {
       return HAL_FAILED;
     }
 
@@ -722,6 +722,10 @@ bool sdcConnect(SDCDriver *sdcp) {
     goto failed;
   }
   sdc_lld_set_data_clk(sdcp, clk);
+
+  if (HAL_SUCCESS != _sdc_wait_for_transfer_state(sdcp)) {
+    goto failed;
+  }
 
   /* Block length fixed at 512 bytes.*/
   if (sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_SET_BLOCKLEN,
