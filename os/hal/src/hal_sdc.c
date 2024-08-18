@@ -499,13 +499,18 @@ static bool mmc_set_bus_width(SDCDriver *sdcp) {
  *
  * @notapi
  */
-bool _sdc_wait_for_transfer_state(SDCDriver *sdcp) {
+bool _sdc_wait_transfer_state_internal(SDCDriver *sdcp, bool crc_check) {
   uint32_t resp[1];
+  bool cmd_fail;
 
   while (true) {
-    if (sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_SEND_STATUS,
-                                   sdcp->rca, resp) ||
-        MMCSD_R1_ERROR(resp[0])) {
+    if (crc_check) {
+      cmd_fail = sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_SEND_STATUS, sdcp->rca, resp);
+    } else {
+      cmd_fail = sdc_lld_send_cmd_short(sdcp, MMCSD_CMD_SEND_STATUS, sdcp->rca, resp);
+    }
+
+    if (cmd_fail || MMCSD_R1_ERROR(resp[0])) {
       return HAL_FAILED;
     }
 
@@ -525,6 +530,14 @@ bool _sdc_wait_for_transfer_state(SDCDriver *sdcp) {
       return HAL_FAILED;
     }
   }
+}
+
+bool _sdc_wait_for_transfer_state(SDCDriver *sdcp) {
+  return _sdc_wait_transfer_state_internal(sdcp, true);
+}
+
+bool _sdc_wait_for_transfer_state_nocrc(SDCDriver *sdcp) {
+  return _sdc_wait_transfer_state_internal(sdcp, false);
 }
 
 /*===========================================================================*/
@@ -722,6 +735,11 @@ bool sdcConnect(SDCDriver *sdcp) {
     goto failed;
   }
   sdc_lld_set_data_clk(sdcp, clk);
+
+  /* Not checking CRC here according to JEDEC Standard No. 84-B51 6.6.2 */
+  if (HAL_SUCCESS != _sdc_wait_for_transfer_state_nocrc(sdcp)) {
+    goto failed;
+  }
 
   /* Block length fixed at 512 bytes.*/
   if (sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_SET_BLOCKLEN,
