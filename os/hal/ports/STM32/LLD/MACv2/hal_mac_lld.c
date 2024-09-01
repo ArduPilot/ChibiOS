@@ -332,7 +332,7 @@ bool mac_lld_init(void) {
 
   /* PHY address setup.*/
 #if defined(BOARD_PHY_ADDRESS)
-  ETHD1.phyaddr = BOARD_PHY_ADDRESS << 11;
+  ETHD1.phyaddr = BOARD_PHY_ADDRESS << ETH_MACMDIOAR_PA_Pos;
 #else
   if (!mii_find_phy(&ETHD1)) {
       rccDisableETH();
