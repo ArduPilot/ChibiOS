@@ -1209,31 +1209,35 @@ size_t uart_lld_stop_receive(UARTDriver *uartp) {
  * @param[in] uartp     pointer to the @p UARTDriver object
  */
 void uart_lld_serve_interrupt(UARTDriver *uartp) {
-  uint32_t isr;
-  USART_TypeDef *u = uartp->usart;
-  uint32_t cr1 = u->CR1;
+  if (uartp->config->irq_cb == NULL) {
+    uint32_t isr;
+    USART_TypeDef *u = uartp->usart;
+    uint32_t cr1 = u->CR1;
 
-  /* Reading and clearing status.*/
-  isr = u->ISR;
-  u->ICR = isr;
+    /* Reading and clearing status.*/
+    isr = u->ISR;
+    u->ICR = isr;
 
-  if (isr & (USART_ISR_LBDF | USART_ISR_ORE | USART_ISR_NE |
-             USART_ISR_FE   | USART_ISR_PE)) {
-    _uart_rx_error_isr_code(uartp, translate_errors(isr));
-  }
+    if (isr & (USART_ISR_LBDF | USART_ISR_ORE | USART_ISR_NE |
+              USART_ISR_FE   | USART_ISR_PE)) {
+      _uart_rx_error_isr_code(uartp, translate_errors(isr));
+    }
 
-  if ((isr & USART_ISR_TC) && (cr1 & USART_CR1_TCIE)) {
-    /* TC interrupt disabled.*/
-    u->CR1 = cr1 & ~USART_CR1_TCIE;
+    if ((isr & USART_ISR_TC) && (cr1 & USART_CR1_TCIE)) {
+      /* TC interrupt disabled.*/
+      u->CR1 = cr1 & ~USART_CR1_TCIE;
 
-    /* End of transmission, a callback is generated.*/
-    _uart_tx2_isr_code(uartp);
-  }
+      /* End of transmission, a callback is generated.*/
+      _uart_tx2_isr_code(uartp);
+    }
 
-  /* Timeout interrupt sources are only checked if enabled in CR1.*/
-  if (((cr1 & USART_CR1_IDLEIE) && (isr & USART_ISR_IDLE)) ||
-      ((cr1 & USART_CR1_RTOIE) && (isr & USART_ISR_RTOF))) {
-    _uart_timeout_isr_code(uartp);
+    /* Timeout interrupt sources are only checked if enabled in CR1.*/
+    if (((cr1 & USART_CR1_IDLEIE) && (isr & USART_ISR_IDLE)) ||
+        ((cr1 & USART_CR1_RTOIE) && (isr & USART_ISR_RTOF))) {
+      _uart_timeout_isr_code(uartp);
+    }
+  } else {
+    uartp->config->irq_cb(uartp);
   }
 }
 
