@@ -889,6 +889,10 @@ typedef struct hal_uart_config {
   uartecb_t                 rxerr_cb;
   /* End of the mandatory fields.*/
   /**
+   * @brief UART IRQ Global Handler
+   */
+  uartcb_t                  irq_cb;
+  /**
    * @brief   Receiver timeout callback.
    * @details Handles both idle and timeout interrupts depending on configured
    *          flags in CR registers and supported hardware features.
