@@ -279,9 +279,23 @@ OSAL_IRQ_HANDLER(STM32_ETH_HANDLER) {
 bool mac_lld_init(void) {
   unsigned i;
 
-  if (__eth_rb == NULL || __eth_tb == NULL || __eth_rd == NULL || __eth_td == NULL) {
+#if defined(STM32_ETH_BUFFERS_EXTERN)
+  if (__eth_rd == NULL || __eth_td == NULL) {
     return false;
   }
+
+  for (i = 0; i < STM32_MAC_RECEIVE_BUFFERS; i++) {
+    if (__eth_rb[i] == NULL) {
+      return false;
+    }
+  }
+
+  for (i = 0; i < STM32_MAC_TRANSMIT_BUFFERS; i++) {
+    if (__eth_tb[i] == NULL) {
+      return false;
+    }
+  }
+#endif
 
   macObjectInit(&ETHD1);
   ETHD1.link_up = false;
