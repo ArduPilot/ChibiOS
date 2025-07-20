@@ -134,6 +134,13 @@
 #endif
 
 /**
+ * @brief   RAM Functions initialization switch.
+ */
+#if !defined(CRT0_INIT_RAMFUNCS) || defined(__DOXYGEN__)
+#define CRT0_INIT_RAMFUNCS                  TRUE
+#endif
+
+/**
  * @brief   RAM areas initialization switch.
  */
 #if !defined(CRT0_INIT_RAM_AREAS) || defined(__DOXYGEN__)
