@@ -261,6 +261,29 @@ _crt0_entry:
                 isb
 
 #if CRT0_INIT_CORE == TRUE
+                /* PX4 Bootloader Compatibility Fix:
+                   Disable caches before calling __cpu_init to prevent stack corruption.
+
+                   Problem: The PX4 bootloader (potentially used on some boards)
+                   leaves instruction and data caches in an inconsistent state when
+                   jumping to the application. The default __cpu_init() calls
+                   SCB_EnableDCache(), which performs invalidate-by-set/way operations.
+                   Since the stack is already in use (and potentially cached), this
+                   invalidation corrupts cached stack data, causing a crash on return.
+
+                   Solution: Disable both caches here (before any stack usage in
+                   __cpu_init) so the subsequent enable/invalidate operations work
+                   on a clean slate without corrupting the stack.
+
+                   Note: This file is crt0_v7m.S - Cortex-M7 specific, so we always
+                   execute the cache disable code here. */
+                ldr     r1, =0xE000ED14         /* SCB_CCR address */
+                ldr     r0, [r1]
+                bic     r0, #0x30000            /* Clear DC (bit 16) and IC (bit 17) */
+                str     r0, [r1]
+                dsb
+                isb
+
                 /* Core initialization.*/
                 bl      __cpu_init
 #endif

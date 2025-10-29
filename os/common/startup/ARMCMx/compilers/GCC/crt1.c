@@ -133,9 +133,15 @@ static const ram_init_area_t ram_areas[CRT0_AREAS_NUMBER] = {
  * @details This hook is invoked immediately after the stack initialization
  *          and before the DATA and BSS segments initialization.
  * @note    This function is a weak symbol.
+ * @note    For Cortex-M7, this is a naked function to prevent stack corruption
+ *          when caches are enabled. The crt0 code disables caches before calling
+ *          this function to work around PX4 bootloader compatibility issues.
  */
 #if !defined(__DOXYGEN__)
 __attribute__((weak))
+#if CORTEX_MODEL == 7
+__attribute__((naked))
+#endif
 #endif
 /*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
 void __cpu_init(void) {
@@ -143,6 +149,7 @@ void __cpu_init(void) {
 #if CORTEX_MODEL == 7
   SCB_EnableICache();
   SCB_EnableDCache();
+  __asm volatile ("bx lr" ::: "memory");
 #endif
 }
 
