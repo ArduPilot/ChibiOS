@@ -286,21 +286,20 @@ static bool sdc_lld_wait_transaction_end(SDCDriver *sdcp, uint32_t n,
     osalThreadSuspendS(&sdcp->thread);
   }
 
-  /* Stopping operations, waiting for transfer completion at DMA level, then
-     the stream is disabled and cleared.*/
+  /* Mask has now been set to zero by interrupt handler. */
+  osalSysUnlock();
+
+  /* Waiting for transfer completion at DMA level, then the stream is disabled
+     and cleared.*/
   dmaWaitCompletion(sdcp->dma);
-  sdcp->sdio->MASK  = 0U;
   sdcp->sdio->DCTRL = 0U;
 
   if ((sdcp->sdio->STA & SDIO_STA_DATAEND) == 0U) {
-    osalSysUnlock();
     return HAL_FAILED;
   }
 
   /* Clearing status.*/
   sdcp->sdio->ICR = SDIO_ICR_ALL_FLAGS;
-
-  osalSysUnlock();
 
   /* Finalize transaction.*/
   if (n > 1U)
