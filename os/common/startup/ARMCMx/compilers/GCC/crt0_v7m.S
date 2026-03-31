@@ -208,6 +208,10 @@
                 .thumb_func
                 .global _crt0_entry
 _crt0_entry:
+#if CRT0_ENTRY_HOOK == TRUE
+                ldr     R0, =__entry_hook
+                blx     R0
+#endif
                 /* Interrupts are globally masked initially.*/
                 cpsid   i
 
@@ -352,11 +356,6 @@ bloop:
 #if CRT0_INIT_RAM_AREAS == TRUE
                 /* RAM areas initialization.*/
                 bl      __init_ram_areas
-#endif
-
-#if CRT0_ENTRY_HOOK == TRUE
-                ldr     R0, =__entry_hook
-                blx     R0
 #endif
 
                 /* Late initialization..*/
