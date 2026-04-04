@@ -184,6 +184,7 @@ struct hal_spi_config {
 #endif
   /* End of the mandatory fields.*/
   spi_lld_config_fields
+  ;
 };
 
 /**
