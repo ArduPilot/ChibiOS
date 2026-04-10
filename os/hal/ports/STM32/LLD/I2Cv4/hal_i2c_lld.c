@@ -841,6 +841,11 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   /* Resetting error flags for this transfer.*/
   i2cp->errors = I2C_NO_ERROR;
 
+#ifdef STM32_I2C_ISR_LIMIT
+  i2cp->isr_limit = rxbytes * STM32_I2C_ISR_LIMIT;
+  i2cp->isr_count = 0;
+#endif /* STM32_I2C_ISR_LIMIT */
+
   /* Releases the lock from high level driver.*/
   osalSysUnlock();
 
@@ -940,6 +945,11 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   /* Resetting error flags for this transfer.*/
   i2cp->errors = I2C_NO_ERROR;
+
+#ifdef STM32_I2C_ISR_LIMIT
+  i2cp->isr_limit = (txbytes + rxbytes) * STM32_I2C_ISR_LIMIT;
+  i2cp->isr_count = 0;
+#endif /* STM32_I2C_ISR_LIMIT */
 
   /* Releases the lock from high level driver.*/
   osalSysUnlock();
@@ -1133,6 +1143,31 @@ msg_t i2c_lld_slave_transmit_timeout(I2CDriver *i2cp,
 
 #endif /* I2C_ENABLE_SLAVE_MODE == TRUE */
 
+/**
+ * @brief   Check if the ISR count limit has been exceeded.
+ * @details Prevents interrupt storms in case the peripheral is behaving
+ *          badly enough to cause unexpected interrupts and normal
+ *          interrupt acknowledgement does not work.
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ * @return              true if the limit was exceeded and the ISR should
+ *                      return without further processing.
+ *
+ * @notapi
+ */
+static bool i2c_lld_check_isr_limit(I2CDriver *i2cp) {
+    (void)i2cp;
+#ifdef STM32_I2C_ISR_LIMIT
+    if (i2cp->isr_count++ > i2cp->isr_limit) {
+        i2cp->errors |= I2C_ISR_LIMIT;
+        i2c_lld_abort_operation(i2cp);
+        _i2c_wakeup_error_isr(i2cp);
+        return true;
+    }
+#endif /* STM32_I2C_ISR_LIMIT */
+    return false;
+}
+
 #if (STM32_I2C_SINGLE_IRQ == TRUE) || defined(__DOXYGEN__)
 /**
  * @brief   I2C events interrupt handler.
@@ -1140,6 +1175,10 @@ msg_t i2c_lld_slave_transmit_timeout(I2CDriver *i2cp,
  * @notapi
  */
 void i2c_lld_serve_global_interrupt(I2CDriver *i2cp) {
+  if (i2c_lld_check_isr_limit(i2cp)) {
+    return;
+  }
+
   uint32_t isr = i2cp->i2c->ISR;
 
   /* Clearing all IRQ bits.*/
@@ -1160,6 +1199,10 @@ void i2c_lld_serve_global_interrupt(I2CDriver *i2cp) {
  * @notapi
  */
 void i2c_lld_serve_ev_interrupt(I2CDriver *i2cp) {
+  if (i2c_lld_check_isr_limit(i2cp)) {
+    return;
+  }
+
   uint32_t isr = i2cp->i2c->ISR;
 
   /* Clearing events IRQ bits.*/
@@ -1174,6 +1217,10 @@ void i2c_lld_serve_ev_interrupt(I2CDriver *i2cp) {
  * @notapi
  */
 void i2c_lld_serve_er_interrupt(I2CDriver *i2cp) {
+  if (i2c_lld_check_isr_limit(i2cp)) {
+    return;
+  }
+
   uint32_t isr = i2cp->i2c->ISR;
 
   /* Clearing error IRQ bits.*/
