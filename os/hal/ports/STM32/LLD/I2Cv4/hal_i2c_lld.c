@@ -736,6 +736,24 @@ msg_t i2c_lld_start(I2CDriver *i2cp) {
 }
 
 /**
+ * @brief   Disable DMA, but leave the peripheral enabled.
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+void i2c_lld_soft_stop(I2CDriver *i2cp) {
+
+  /* If not in stopped state then release the DMA channel.*/
+  if (i2cp->state != I2C_STOP) {
+#if STM32_I2C_USE_DMA == TRUE
+    i2c_dma_release(i2cp);
+    i2cp->dma = NULL;
+#endif
+  }
+}
+
+/**
  * @brief   Deactivates the I2C peripheral.
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object
