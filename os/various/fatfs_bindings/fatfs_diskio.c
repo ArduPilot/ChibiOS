@@ -30,6 +30,26 @@ extern SDCDriver FATFS_HAL_DEVICE;
 extern RTCDriver RTCD1;
 #endif
 
+/*
+  Optional transparent full-disk AES-256-XTS encryption of the SD card,
+  implemented in ArduPilot's AP_DiskCrypto library. Turned on with
+  "define AP_FATFS_CRYPTO_ENABLED 1" in a board hwdef, which reaches here via
+  ffconf.h -> hwdef.h. It is intentionally excluded from the bootloader, which
+  must access the card without linking the encryption library.
+ */
+#if defined(AP_FATFS_CRYPTO_ENABLED) && AP_FATFS_CRYPTO_ENABLED && !defined(HAL_BOOTLOADER_BUILD)
+#include <stdbool.h>
+#define FATFS_CRYPTO_ACTIVE 1
+/* SD/MMC sectors are always 512 bytes (FF_MIN_SS == FF_MAX_SS) */
+#define FATFS_CRYPTO_SECTOR_SIZE 512U
+/* sectors encrypted per blkWrite chunk; bounds the static write scratch buffer */
+#define FATFS_CRYPTO_WRITE_CHUNK 8U
+bool ap_diskcrypto_encrypt(const uint8_t *in, uint8_t *out, uint32_t lba, uint32_t nsectors);
+bool ap_diskcrypto_decrypt(uint8_t *buf, uint32_t lba, uint32_t nsectors);
+#else
+#define FATFS_CRYPTO_ACTIVE 0
+#endif
+
 /*-----------------------------------------------------------------------*/
 /* Correspondence between physical drive number and physical drive.      */
 
@@ -106,6 +126,11 @@ DRESULT disk_read (
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
     FATFS_RETRY(blkRead(&FATFS_HAL_DEVICE, sector, buff, count));
+#if FATFS_CRYPTO_ACTIVE
+    /* decrypt the sectors in place after they are read from the card */
+    if (!ap_diskcrypto_decrypt(buff, sector, count))
+      return RES_ERROR;
+#endif
 	return RES_OK;
   }
   return RES_PARERR;
@@ -128,7 +153,29 @@ DRESULT disk_write (
   case 0:
     if (blkGetDriverState(&FATFS_HAL_DEVICE) != BLK_READY)
       return RES_NOTRDY;
+#if FATFS_CRYPTO_ACTIVE
+    {
+      /*
+        Encrypt into a bounded scratch buffer before writing. The caller's
+        buffer is const and may be reused by FatFS, so it cannot be encrypted
+        in place. Large writes are processed in FATFS_CRYPTO_WRITE_CHUNK
+        sector chunks to keep the scratch buffer small.
+       */
+      static uint8_t crypto_buf[FATFS_CRYPTO_WRITE_CHUNK * FATFS_CRYPTO_SECTOR_SIZE];
+      UINT done = 0;
+      while (done < count) {
+        UINT n = count - done;
+        if (n > FATFS_CRYPTO_WRITE_CHUNK)
+          n = FATFS_CRYPTO_WRITE_CHUNK;
+        if (!ap_diskcrypto_encrypt(buff + (done * FATFS_CRYPTO_SECTOR_SIZE), crypto_buf, sector + done, n))
+          return RES_ERROR;
+        FATFS_RETRY(blkWrite(&FATFS_HAL_DEVICE, sector + done, crypto_buf, n));
+        done += n;
+      }
+    }
+#else
     FATFS_RETRY(blkWrite(&FATFS_HAL_DEVICE, sector, buff, count));
+#endif
     return RES_OK;
   }
   return RES_PARERR;
