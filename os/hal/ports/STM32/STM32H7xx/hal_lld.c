@@ -177,7 +177,10 @@ void hal_lld_init(void) {
   __rccResetAPB1H(~0);
   __rccResetAPB2(~0);
   __rccResetAPB3(~0);
-  __rccResetAPB4(~0);
+  /* SYSCFG is not reset because SYSCFG_PWRCR holds the ODEN bit set by
+     stm32_clock_init(). Resetting it here drops the core out of overdrive
+     while the PLL keeps running above STM32_SYSCLK_MAX_NOBOOST.*/
+  __rccResetAPB4(~RCC_APB4RSTR_SYSCFGRST);
 #endif /* STM32_NO_INIT == FALSE */
 
   /* DMA subsystems initialization.*/
