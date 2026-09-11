@@ -429,6 +429,14 @@ typedef struct hal_serial_config {
     * @pointer to ctx
     */
   void*                     ctx;
+  /**
+   * @brief   Receive data is moved by an external path.
+   * @details When true the driver does not enable RXNEIE and its interrupt
+   *          handler reads the data register only to clear an error flag,
+   *          never to take data, so bytes cannot be diverted into the
+   *          (unused) input queue.
+   */
+  bool                      external_rx_buffer;
 } SerialConfig;
 
 /**

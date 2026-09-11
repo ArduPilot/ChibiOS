@@ -96,7 +96,8 @@ static const SerialConfig default_config =
   USART_CR2_STOP1_BITS,
   0,
   NULL,
-  NULL
+  NULL,
+  false
 };
 
 /*===========================================================================*/
@@ -132,8 +133,8 @@ static void usart_init(SerialDriver *sdp, const SerialConfig *config) {
   u->CR2 = config->cr2 | USART_CR2_LBDIE;
   u->CR3 = config->cr3 | USART_CR3_EIE;
   u->CR1 = config->cr1 | USART_CR1_UE | USART_CR1_PEIE |
-                         USART_CR1_RXNEIE | USART_CR1_TE |
-                         USART_CR1_RE;
+                         (config->external_rx_buffer ? 0U : USART_CR1_RXNEIE) |
+                         USART_CR1_TE | USART_CR1_RE;
   u->SR = 0;
   (void)u->SR;  /* SR reset step 1.*/
   (void)u->DR;  /* SR reset step 2.*/
@@ -752,6 +753,16 @@ void sd_lld_serve_interrupt(SerialDriver *sdp) {
     /* Error condition detection.*/
     if (sr & (USART_SR_ORE | USART_SR_NE | USART_SR_FE  | USART_SR_PE))
       set_error(sdp, sr);
+    if (sdp->config->external_rx_buffer) {
+      /* Receive path is external: DR is read only to clear an error flag,
+         never to take data. A pending byte with no error is left for the
+         external path.*/
+      if ((sr & (USART_SR_ORE | USART_SR_NE | USART_SR_FE | USART_SR_PE)) == 0U)
+        break;
+      (void)u->DR;
+      sr = u->SR;
+      continue;
+    }
     b = (uint8_t)u->DR & sdp->rxmask;
     if (sr & USART_SR_RXNE)
       sdIncomingDataI(sdp, b);

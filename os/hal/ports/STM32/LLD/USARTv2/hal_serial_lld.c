@@ -145,7 +145,8 @@ static const SerialConfig default_config =
   USART_CR2_STOP1_BITS,
   0,
   NULL,
-  NULL
+  NULL,
+  false
 };
 
 #if STM32_SERIAL_USE_USART1 || defined(__DOXYGEN__)
@@ -269,8 +270,8 @@ static void usart_init(SerialDriver *sdp,
   u->CR2 = config->cr2 | USART_CR2_LBDIE;
   u->CR3 = config->cr3 | USART_CR3_EIE;
   u->CR1 = config->cr1 | USART_CR1_UE | USART_CR1_PEIE |
-                         USART_CR1_RXNEIE | USART_CR1_TE |
-                         USART_CR1_RE;
+                         (config->external_rx_buffer ? 0U : USART_CR1_RXNEIE) |
+                         USART_CR1_TE | USART_CR1_RE;
   u->ICR = 0xFFFFFFFFU;
 
   /* Deciding mask to be applied on the data register on receive, this is
@@ -870,12 +871,17 @@ void sd_lld_serve_interrupt(SerialDriver *sdp) {
         an extra interrupt to serve.
      2) FIFO mode is enabled on devices that support it, we need to empty
         the FIFO.*/
-  while (isr & USART_ISR_RXNE) {
-    osalSysLockFromISR();
-    sdIncomingDataI(sdp, (uint8_t)u->RDR & sdp->rxmask);
-    osalSysUnlockFromISR();
+  /* Skipped entirely when the receive path is external: an IDLE or TX
+     interrupt that finds a byte the external path has not taken yet must not
+     divert it into the input queue.*/
+  if (!sdp->config->external_rx_buffer) {
+    while (isr & USART_ISR_RXNE) {
+      osalSysLockFromISR();
+      sdIncomingDataI(sdp, (uint8_t)u->RDR & sdp->rxmask);
+      osalSysUnlockFromISR();
 
-    isr = u->ISR;
+      isr = u->ISR;
+    }
   }
 
   /* Caching CR1.*/
