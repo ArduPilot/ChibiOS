@@ -140,7 +140,9 @@ const os_instance_config_t ch_core1_cfg = {
  */
 void chSysWaitSystemState(system_state_t state) {
 
-  while (ch_system.state != state) {
+  /* The state is written by another core, reading it through a volatile
+     pointer stops the compiler sampling it only once before the loop.*/
+  while (*(volatile system_state_t *)&ch_system.state != state) {
   }
 }
 
