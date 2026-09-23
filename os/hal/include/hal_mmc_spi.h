@@ -43,6 +43,26 @@
  */
 #define MMC_BUFFER_SIZE                 16U
 
+/**
+ * @brief   Idle bytes clocked after the data response token.
+ * @details The card holds DO low while it is busy programming. Clocking extra
+ *          bytes in the same transfer catches it going idle again and saves a
+ *          separate polling transfer per block.
+ * @note    Size this generously. A byte is well under a microsecond on the
+ *          wire and the bus is nearly idle anyway, while every poll avoided in
+ *          @p mmc_wait_idle() is a thread suspend and resume. At 8 bytes the
+ *          card was still busy on about 80% of blocks.
+ */
+#define MMC_WRITE_BUSY_BYTES            256U
+
+/**
+ * @brief   Size of the optional single-exchange write frame.
+ * @details Data prologue, block, dummy CRC, the data response slot and the
+ *          busy window, all clocked in one full duplex transfer.
+ */
+#define MMC_WRITE_FRAME_SIZE            (2U + MMCSD_BLOCK_SIZE + 2U + 1U +   \
+                                         MMC_WRITE_BUSY_BYTES)
+
 /*===========================================================================*/
 /* Driver pre-compile time settings.                                         */
 /*===========================================================================*/
@@ -145,6 +165,14 @@ typedef struct {
    * @brief   Pointer to an un-cacheable buffer of size @p MMC_BUFFER_SIZE.
    */
   uint8_t                               *buffer;
+  /**
+   * @brief   Optional staging buffer for single-exchange block writes.
+   * @details When non-NULL it must be at least @p MMC_WRITE_FRAME_SIZE bytes,
+   *          writable, since it is used in place, and meet the same DMA and
+   *          cache constraints as @p buffer. NULL selects the portable
+   *          multi-transaction write path.
+   */
+  uint8_t                               *wbuffer;
 } mmc_spi_driver_t;
 
 /**

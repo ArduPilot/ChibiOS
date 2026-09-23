@@ -42,6 +42,7 @@
 #define spiIgnore spiIgnoreHook
 #define spiSend spiSendHook
 #define spiReceive spiReceiveHook
+#define spiExchange spiExchangeHook
 #endif
 
 #define MMC_READ_WAIT_USEC       250
@@ -567,6 +568,7 @@ void mmcObjectInit(MMCDriver *mmcp, uint8_t *buffer) {
   mmcp->config          = NULL;
   mmcp->block_addresses = false;
   mmcp->buffer          = buffer;
+  mmcp->wbuffer         = NULL;
 }
 
 /**
@@ -993,10 +995,40 @@ bool mmcSequentialWrite(MMCDriver *mmcp, const uint8_t *buffer) {
     return HAL_FAILED;
   }
 
-  (void) spiSend(mmcp->config->spip, sizeof(start), start);    /* Data prologue.   */
-  (void) spiSend(mmcp->config->spip, MMCSD_BLOCK_SIZE, buffer);/* Data.            */
-  (void) spiIgnore(mmcp->config->spip, 2);                     /* CRC ignored.     */
-  (void) spiReceive(mmcp->config->spip, 1, mmcp->buffer);
+  if (mmcp->wbuffer != NULL) {
+    /* Whole frame in one full duplex exchange. The four transfers below are
+       each a thread suspend and resume on ports where SPI completes by
+       interrupt, which costs far more than the bytes are worth: a 1 byte poll
+       is under a microsecond of wire time wrapped in a reschedule. Staging
+       costs one 512 byte copy per block, which is nothing beside that.*/
+    uint8_t *f = mmcp->wbuffer;
+    unsigned i;
+
+    f[0] = start[0];
+    f[1] = start[1];
+    memcpy(&f[2], buffer, MMCSD_BLOCK_SIZE);
+    /* Dummy CRC, the data response slot and the busy window. The card drives
+       the bus during these, so the content only has to leave MOSI idle.*/
+    for (i = 2U + MMCSD_BLOCK_SIZE; i < MMC_WRITE_FRAME_SIZE; i++) {
+      f[i] = 0xFFU;
+    }
+
+    /* In place: the transmit side of each byte is consumed before the received
+       byte replaces it.*/
+    (void) spiExchange(mmcp->config->spip, MMC_WRITE_FRAME_SIZE, f, f);
+
+    mmcp->buffer[0] = f[2U + MMCSD_BLOCK_SIZE + 2U];
+    /* The poll below still runs: the window can end before the card has
+       finished programming. When it has finished, the poll returns on its
+       first read.*/
+  }
+  else {
+    (void) spiSend(mmcp->config->spip, sizeof(start), start);    /* Data prologue.   */
+    (void) spiSend(mmcp->config->spip, MMCSD_BLOCK_SIZE, buffer);/* Data.            */
+    (void) spiIgnore(mmcp->config->spip, 2);                     /* CRC ignored.     */
+    (void) spiReceive(mmcp->config->spip, 1, mmcp->buffer);
+  }
+
   if ((mmcp->buffer[0] & 0x1FU) == 0x05U) {
     return mmc_wait_idle(mmcp);
   }
