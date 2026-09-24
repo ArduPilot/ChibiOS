@@ -112,7 +112,7 @@ __STATIC_INLINE void uart_init(SIODriver *siop) {
   uint32_t div, idiv, fdiv;
   halfreq_t clock;
 
-  clock = halClockGetPointX(clk_peri);
+  clock = halClockGetPointX(RP_CLK_PERI);
 
   osalDbgAssert(clock > 0U, "no clock");
 
@@ -125,14 +125,17 @@ __STATIC_INLINE void uart_init(SIODriver *siop) {
   siop->uart->UARTIBRD = idiv;
   siop->uart->UARTFBRD = fdiv;
 
+  uint32_t cr = siop->config->UARTCR & ~UART_CR_CFG_FORBIDDEN;
+
   /* Registers settings, the LCR_H write also latches dividers values.*/
   siop->uart->UARTLCR_H = siop->config->UARTLCR_H & ~UART_LCRH_CFG_FORBIDDEN;
-  siop->uart->UARTCR    = siop->config->UARTCR    & ~UART_CR_CFG_FORBIDDEN;
+  siop->uart->UARTCR    = cr;
 
   /* Setting up the operation.*/
   siop->uart->UARTICR   = siop->uart->UARTRIS;
-  siop->uart->UARTCR    = siop->config->UARTCR |
-                          UART_UARTCR_RXE | UART_UARTCR_TXE | UART_UARTCR_UARTEN;
+  siop->uart->UARTIFLS  = siop->config->UARTIFLS;
+  siop->uart->UARTDMACR = siop->config->UARTDMACR;
+  siop->uart->UARTCR    = cr | UART_UARTCR_RXE | UART_UARTCR_TXE | UART_UARTCR_UARTEN;
 }
 
 /*===========================================================================*/
@@ -154,12 +157,12 @@ void sio_lld_init(void) {
 #if RP_SIO_USE_UART0 == TRUE
   sioObjectInit(&SIOD0);
   SIOD0.uart = UART0;
-  hal_lld_peripheral_reset(RESETS_ALLREG_UART0);
+  rp_peripheral_reset(RESETS_ALLREG_UART0);
 #endif
 #if RP_SIO_USE_UART1 == TRUE
   sioObjectInit(&SIOD1);
   SIOD1.uart = UART1;
-  hal_lld_peripheral_reset(RESETS_ALLREG_UART1);
+  rp_peripheral_reset(RESETS_ALLREG_UART1);
 #endif
 }
 
@@ -186,13 +189,13 @@ msg_t sio_lld_start(SIODriver *siop) {
     }
 #if RP_SIO_USE_UART0 == TRUE
     else if (&SIOD0 == siop) {
-      hal_lld_peripheral_unreset(RESETS_ALLREG_UART0);
+      rp_peripheral_unreset(RESETS_ALLREG_UART0);
       nvicEnableVector(RP_UART0_IRQ_NUMBER, RP_IRQ_UART0_PRIORITY);
     }
 #endif
 #if RP_SIO_USE_UART1 == TRUE
     else if (&SIOD1 == siop) {
-      hal_lld_peripheral_unreset(RESETS_ALLREG_UART1);
+      rp_peripheral_unreset(RESETS_ALLREG_UART1);
       nvicEnableVector(RP_UART1_IRQ_NUMBER, RP_IRQ_UART1_PRIORITY);
     }
 #endif
@@ -225,13 +228,13 @@ void sio_lld_stop(SIODriver *siop) {
 #if RP_SIO_USE_UART0 == TRUE
     else if (&SIOD0 == siop) {
       nvicDisableVector(RP_UART0_IRQ_NUMBER);
-      hal_lld_peripheral_reset(RESETS_ALLREG_UART0);
+      rp_peripheral_reset(RESETS_ALLREG_UART0);
     }
 #endif
 #if RP_SIO_USE_UART1 == TRUE
     else if (&SIOD1 == siop) {
       nvicDisableVector(RP_UART1_IRQ_NUMBER);
-      hal_lld_peripheral_reset(RESETS_ALLREG_UART1);
+      rp_peripheral_reset(RESETS_ALLREG_UART1);
     }
 #endif
     else {
@@ -540,6 +543,9 @@ void sio_lld_serve_interrupt(SIODriver *siop) {
 
     /* Idle RX event.*/
     if ((mis & UART_UARTMIS_RTMIS) != 0U) {
+
+      /* Explicitly clear RTRIS to prevent race on reentry */
+      u->UARTICR = UART_UARTICR_RTIC;
 
       /* Called once then the interrupt source is disabled.*/
        imsc &= ~UART_UARTIMSC_RTIM;

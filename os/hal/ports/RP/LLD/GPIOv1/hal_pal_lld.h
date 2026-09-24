@@ -53,15 +53,15 @@
 #define PAL_RP_IOCTRL_INOVER_DRVLOW         (2U << 16)
 #define PAL_RP_IOCTRL_INOVER_DRVHIGH        (3U << 16)
 
-#define PAL_RP_IOCTRL_OEOVER_DRVPERI        (0U << 12)
-#define PAL_RP_IOCTRL_OEOVER_DRVINVPERI     (1U << 12)
-#define PAL_RP_IOCTRL_OEOVER_DISABLE        (2U << 12)
-#define PAL_RP_IOCTRL_OEOVER_ENABLE         (3U << 12)
+#define PAL_RP_IOCTRL_OEOVER_DRVPERI        (0U << RP_GPIO_IOCTRL_OEOVER_Pos)
+#define PAL_RP_IOCTRL_OEOVER_DRVINVPERI     (1U << RP_GPIO_IOCTRL_OEOVER_Pos)
+#define PAL_RP_IOCTRL_OEOVER_DISABLE        (2U << RP_GPIO_IOCTRL_OEOVER_Pos)
+#define PAL_RP_IOCTRL_OEOVER_ENABLE         (3U << RP_GPIO_IOCTRL_OEOVER_Pos)
 
-#define PAL_RP_IOCTRL_OUTOVER_DRVPERI       (0U << 8)
-#define PAL_RP_IOCTRL_OUTOVER_DRVINVPERI    (1U << 8)
-#define PAL_RP_IOCTRL_OUTOVER_DRVLOW        (2U << 8)
-#define PAL_RP_IOCTRL_OUTOVER_DRVHIGH       (3U << 8)
+#define PAL_RP_IOCTRL_OUTOVER_DRVPERI       (0U << RP_GPIO_IOCTRL_OUTOVER_Pos)
+#define PAL_RP_IOCTRL_OUTOVER_DRVINVPERI    (1U << RP_GPIO_IOCTRL_OUTOVER_Pos)
+#define PAL_RP_IOCTRL_OUTOVER_DRVLOW        (2U << RP_GPIO_IOCTRL_OUTOVER_Pos)
+#define PAL_RP_IOCTRL_OUTOVER_DRVHIGH       (3U << RP_GPIO_IOCTRL_OUTOVER_Pos)
 
 #define PAL_RP_IOCTRL_FUNCSEL(n)            ((n) << 0)
 #define PAL_RP_IOCTRL_FUNCSEL_SPI           PAL_RP_IOCTRL_FUNCSEL(1U)
@@ -71,7 +71,6 @@
 #define PAL_RP_IOCTRL_FUNCSEL_SIO           PAL_RP_IOCTRL_FUNCSEL(5U)
 #define PAL_RP_IOCTRL_FUNCSEL_PIO0          PAL_RP_IOCTRL_FUNCSEL(6U)
 #define PAL_RP_IOCTRL_FUNCSEL_PIO1          PAL_RP_IOCTRL_FUNCSEL(7U)
-#define PAL_RP_IOCTRL_FUNCSEL_USB           PAL_RP_IOCTRL_FUNCSEL(9U)
 #define PAL_RP_IOCTRL_FUNCSEL_NULL          PAL_RP_IOCTRL_FUNCSEL(31U)
 
 #define PAL_RP_GPIO_OE                      (1U << (23 + 0))
@@ -94,6 +93,8 @@
 #define PAL_RP_PAD_SLEWFAST                 (1U << (24 + 0))
 /** @} */
 
+#include "rp_pal_lld.h"
+
 /**
  * @name    RP-specific I/O event flags
  * @{
@@ -101,6 +102,11 @@
 #define RP_PAL_EVENT_MODE_LEVEL_LOW         4U
 #define RP_PAL_EVENT_MODE_LEVEL_HIGH        8U
 /** @} */
+
+#if !defined(RP_PAL_EVENT_CORE_AFFINITY)
+  /** @brief Core that handles all the PAL event interrupts. */
+  #define RP_PAL_EVENT_CORE_AFFINITY        0
+#endif
 
 /**
  * @name    Alternate functions
@@ -117,8 +123,6 @@
 #define PAL_MODE_ALTERNATE_SIO              (PAL_MODE_ALTERNATE(5U))
 #define PAL_MODE_ALTERNATE_PIO0             (PAL_MODE_ALTERNATE(6U))
 #define PAL_MODE_ALTERNATE_PIO1             (PAL_MODE_ALTERNATE(7U))
-#define PAL_MODE_ALTERNATE_CLK              (PAL_MODE_ALTERNATE(8U))
-#define PAL_MODE_ALTERNATE_USB              (PAL_MODE_ALTERNATE(9U))
 /** @} */
 
 /**
@@ -158,6 +162,9 @@
 
 /**
  * @brief   Input pad with weak pull down resistor.
+ * @note    On RP2350 revisions affected by erratum RP2350-E9, the internal
+ *          pull-down may not behave as expected with the input buffer
+ *          enabled. This driver does not apply a workaround automatically.
  */
 #define PAL_MODE_INPUT_PULLDOWN         (PAL_RP_IOCTRL_FUNCSEL_SIO      |   \
                                          PAL_RP_PAD_IE                  |   \
@@ -198,35 +205,6 @@
 /** @} */
 
 /**
- * @name    Line handling macros
- * @{
- */
-/**
- * @brief   Forms a line identifier.
- * @details A port/pad pair are encoded into an @p ioline_t type. The encoding
- *          of this type is platform-dependent.
- * @note    In this driver the pad number is encoded in the lower 4 bits of
- *          the GPIO address which are guaranteed to be zero.
- */
-#define PAL_LINE(port, pad)             ((pad), (port))
-
-/**
- * @brief   Decodes a port identifier from a line identifier.
- */
-#define PAL_PORT(line)                  0U
-
-/**
- * @brief   Decodes a pad identifier from a line identifier.
- */
-#define PAL_PAD(line)                   (line)
-
-/**
- * @brief   Value identifying an invalid line.
- */
-#define PAL_NOLINE                      0U
-/** @} */
-
-/**
  * @brief   Type of digital I/O port sized unsigned integer.
  */
 typedef uint32_t ioportmask_t;
@@ -259,16 +237,70 @@ typedef uint32_t ioportid_t;
  */
 typedef uint32_t iopadid_t;
 
+#define RP_PAL_IOPORTS_COUNT            ((RP_GPIO_NUM_LINES + 31U) / 32U)
+
+#if RP_GPIO_NUM_LINES >= 32U
+  #define RP_PAL_PORT0_VALID_MASK       0xFFFFFFFFU
+#else
+  #define RP_PAL_PORT0_VALID_MASK       ((1U << RP_GPIO_NUM_LINES) - 1U)
+#endif
+
+#if RP_GPIO_NUM_LINES > 32U
+  #define RP_PAL_PORT1_VALID_MASK       ((1U << (RP_GPIO_NUM_LINES - 32U)) - 1U)
+  #define RP_PAL_VALID_MASK(port)                                               \
+    ((uint32_t)(port) == 0U ? RP_PAL_PORT0_VALID_MASK : RP_PAL_PORT1_VALID_MASK)
+#else
+  #define RP_PAL_VALID_MASK(port)       RP_PAL_PORT0_VALID_MASK
+#endif
+
+/**
+ * @name    Line handling macros
+ * @{
+ */
+/**
+ * @brief   Forms a line identifier.
+ * @details A port/pad pair are encoded into an @p ioline_t type. The encoding
+ *          of this type is platform-dependent.
+ * @note    In this driver a line is the absolute GPIO number obtained by
+ *          adding the port base to the port-relative pad number.
+ */
+#define PAL_LINE(port, pad)                                                 \
+  ((ioline_t)(((uint32_t)(port) << 5U) | (uint32_t)(pad)))
+
+/**
+ * @brief   Decodes a port identifier from a line identifier.
+ */
+#define PAL_PORT(line)                                                      \
+  ((ioportid_t)((uint32_t)(line) >> 5U))
+
+/**
+ * @brief   Decodes a pad identifier from a line identifier.
+ */
+#define PAL_PAD(line)                                                       \
+  ((iopadid_t)((uint32_t)(line) & 31U))
+
+/**
+ * @brief   Value identifying an invalid line.
+ */
+#define PAL_NOLINE                      0xFFFFFFFFU
+/** @} */
+
 /*===========================================================================*/
 /* I/O Ports Identifiers.                                                    */
-/* The low level driver wraps the definitions already present in the STM32   */
-/* firmware library.                                                         */
+/* The low level driver exposes RP GPIO banks as PAL ports.                  */
 /*===========================================================================*/
 
 /**
- * @brief   User port identifier.
+ * @brief   RP GPIO low port identifier.
  */
 #define IOPORT1                         0U
+
+#if RP_GPIO_NUM_LINES > 32U || defined(__DOXYGEN__)
+/**
+ * @brief   RP GPIO high port identifier.
+ */
+#define IOPORT2                         1U
+#endif
 
 /*===========================================================================*/
 /* Implementation, some of the following macros could be implemented as      */
@@ -280,7 +312,7 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_init()                  __pal_lld_init()
+#define pal_lld_init()                  _pal_lld_init()
 
 /**
  * @brief   Reads the physical I/O port states.
@@ -290,7 +322,8 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_readport(port)          (SIO->GPIO_IN)
+#define pal_lld_readport(port)                                              \
+  ((ioportmask_t)RP_PAL_SIO_REG(GPIO_IN, (port)))
 
 /**
  * @brief   Reads the output latch.
@@ -302,7 +335,8 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_readlatch(port)         (SIO->GPIO_OUT)
+#define pal_lld_readlatch(port)                                             \
+  ((ioportmask_t)RP_PAL_SIO_REG(GPIO_OUT, (port)))
 
 /**
  * @brief   Writes a bits mask on a I/O port.
@@ -312,10 +346,14 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
+/* @note    On RP2350, IOPORT2 maps to SIO GPIO_HI_OUT which is shared with
+ *          QSPI/USB outputs in bits 31:16. This is a raw full-register write;
+ *          use palSetPort()/palClearPort()/palTogglePort() when non-PAL high
+ *          bits must be preserved.
+ */
 #define pal_lld_writeport(port, bits)                                       \
   do {                                                                      \
-    (void)port;                                                             \
-    SIO->GPIO_OUT = (bits);                                                 \
+    RP_PAL_SIO_REG(GPIO_OUT, (port)) = (uint32_t)(bits);                    \
   } while (false)
 
 /**
@@ -331,8 +369,9 @@ typedef uint32_t iopadid_t;
  */
 #define pal_lld_setport(port, bits)                                         \
   do {                                                                      \
-    (void)port;                                                             \
-    SIO->GPIO_OUT_SET = (bits);                                             \
+    osalDbgAssert(((uint32_t)(bits) & ~(uint32_t)RP_PAL_VALID_MASK(port))   \
+                  == 0U, "invalid port bits");                              \
+    RP_PAL_SIO_REG(GPIO_OUT_SET, (port)) = (uint32_t)(bits);               \
   } while (false)
 
 /**
@@ -348,8 +387,9 @@ typedef uint32_t iopadid_t;
  */
 #define pal_lld_clearport(port, bits)                                       \
   do {                                                                      \
-    (void)port;                                                             \
-    SIO->GPIO_OUT_CLR = (bits);                                             \
+    osalDbgAssert(((uint32_t)(bits) & ~(uint32_t)RP_PAL_VALID_MASK(port))   \
+                  == 0U, "invalid port bits");                              \
+    RP_PAL_SIO_REG(GPIO_OUT_CLR, (port)) = (uint32_t)(bits);               \
   } while (false)
 
 /**
@@ -365,60 +405,34 @@ typedef uint32_t iopadid_t;
  */
 #define pal_lld_toggleport(port, bits)                                      \
   do {                                                                      \
-    (void)port;                                                             \
-    SIO->GPIO_OUT_XOR = (bits);                                             \
+    osalDbgAssert(((uint32_t)(bits) & ~(uint32_t)RP_PAL_VALID_MASK(port))   \
+                  == 0U, "invalid port bits");                              \
+    RP_PAL_SIO_REG(GPIO_OUT_XOR, (port)) = (uint32_t)(bits);               \
   } while (false)
 
 /**
- * @brief   Pad mode setup.
- * @details This function programs a pad with the specified mode.
- * @note    The operation is not guaranteed to be atomic on all the
- *          architectures, for atomicity and/or portability reasons you may
- *          need to enclose port I/O operations between @p osalSysLock() and
- *          @p osalSysUnlock().
- * @note    Programming an unknown or unsupported mode is silently ignored.
- * @note    The function can be called from any context.
+ * @brief   Pads group mode setup.
  *
  * @param[in] port      port identifier
- * @param[in] pad       pad number within the port
- * @param[in] mode      pad mode
+ * @param[in] mask      group mask
+ * @param[in] offset    group bit offset within the port
+ * @param[in] mode      group mode
  *
  * @notapi
  */
-#define pal_lld_setpadmode(port, pad, mode)                                 \
-  __pal_lld_pad_set_mode(port, pad, mode)
-
-__STATIC_INLINE void __pal_lld_pad_set_mode(ioportid_t port,
-                                            iopadid_t pad,
-                                            iomode_t mode) {
-  uint32_t ctrlbits, padbits, oebits;
-
-  (void)port;
-
-  ctrlbits = (mode & 0x007FFFFFU) >> 0U;
-  oebits   = (mode & 0x00800000U) >> 23U;
-  padbits  = (mode & 0xFF000000U) >> 24U;
-
-  /* Setting up GPIO direction first.*/
-  if (oebits != 0U) {
-    SIO->GPIO_OE_SET = 1U << pad;
-  }
-  else {
-    SIO->GPIO_OE_CLR = 1U << pad;
-  }
-
-  /* Then IO and PAD settings.*/
-  IO_BANK0->GPIO[pad].CTRL = ctrlbits;
-  PADS_BANK0->GPIO[pad] = padbits;
-}
-
+#define pal_lld_setgroupmode(port, mask, offset, mode)                     \
+  _pal_lld_setgroupmode(port, (mask) << (offset), mode)
 
 #if (PAL_USE_WAIT == TRUE) || (PAL_USE_CALLBACKS == TRUE)
 
-#if !defined(RP_PAL_EVENT_CORE_AFFINITY)
-  /** @brief Core that handles all the PAL event interrupts. */
-  #define RP_PAL_EVENT_CORE_AFFINITY        0
-#endif
+#define pal_lld_enablepadevent(port, pad, mode)                             \
+  _pal_lld_enablelineevent(PAL_LINE(port, pad), mode)
+
+#define pal_lld_disablepadevent(port, pad)                                  \
+  _pal_lld_disablelineevent(PAL_LINE(port, pad))
+
+#define pal_lld_ispadeventenabled(port, pad)                                \
+  _pal_lld_ispadeventenabled(port, pad)
 
 #if !defined(RP_IO_IRQ_BANK0_PRIORITY)
   /** @brief IRQ priority of the external pad events. */
@@ -426,7 +440,7 @@ __STATIC_INLINE void __pal_lld_pad_set_mode(ioportid_t port,
 #endif
 
 #if !defined(__DOXYGEN__)
-extern palevent_t _pal_events[30];
+extern palevent_t _pal_events[RP_GPIO_NUM_LINES];
 #endif
 
 /**
@@ -448,30 +462,7 @@ extern palevent_t _pal_events[30];
  * @notapi
  */
 #define pal_lld_get_pad_event(port, pad)                                    \
-  &_pal_events[pad]; (void)(port)
-
-/**
- * @brief   Line event enable.
- * @note    Programming an unknown or unsupported mode is silently ignored.
- *
- * @param[in] line      line number
- * @param[in] mode      line event mode
- *
- * @notapi
- */
-#define pal_lld_enablelineevent(line, mode)                             \
-  _pal_lld_enablelineevent(line, mode)
-
-/**
- * @brief   Line event disable.
- * @details This function disables previously programmed event callbacks.
- *
- * @param[in] line      line identifier
- *
- * @notapi
- */
-#define pal_lld_disablelineevent(line)                                  \
-  _pal_lld_disablelineevent(line)
+  &_pal_events[PAL_LINE(port, pad)]
 
 /**
  * @brief Force a trigger event on the line.
@@ -480,7 +471,7 @@ extern palevent_t _pal_events[30];
  * 
  * @notapi
  */
-#define pal_lld_forcelineevent(line)                                    \
+#define pal_lld_forcelineevent(line)                                        \
   _pal_lld_forcelineevent(line)
 
 /**
@@ -490,7 +481,7 @@ extern palevent_t _pal_events[30];
  * 
  * @notapi
  */
-#define pal_lld_unforcelineevent(line)                                    \
+#define pal_lld_unforcelineevent(line)                                      \
   _pal_lld_unforcelineevent(line)
 
 #endif /* (PAL_USE_WAIT == TRUE) || (PAL_USE_CALLBACKS == TRUE) */
@@ -498,17 +489,17 @@ extern palevent_t _pal_events[30];
 #ifdef __cplusplus
 extern "C" {
 #endif
+  void _pal_lld_setgroupmode(ioportid_t port,
+                             ioportmask_t mask,
+                             iomode_t mode);
+  void _pal_lld_init(void);
+#if (PAL_USE_WAIT == TRUE) || (PAL_USE_CALLBACKS == TRUE)
+  bool _pal_lld_ispadeventenabled(ioportid_t port, iopadid_t pad);
   void _pal_lld_enablelineevent(ioline_t line, ioeventmode_t mode);
   void _pal_lld_disablelineevent(ioline_t line);
-#ifdef __cplusplus
-}
+  void _pal_lld_forcelineevent(ioline_t line);
+  void _pal_lld_unforcelineevent(ioline_t line);
 #endif
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-  void __pal_lld_init(void);
 #ifdef __cplusplus
 }
 #endif

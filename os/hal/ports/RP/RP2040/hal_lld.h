@@ -29,9 +29,7 @@
  * Registry definitions.
  */
 #include "rp_registry.h"
-
-/* From Pico-SDK */
-#include "hardware/clocks.h"
+#include "rp_clocks.h"
 
 /*===========================================================================*/
 /* Driver constants.                                                         */
@@ -54,6 +52,14 @@
  * @{
  */
 #define RP_ROSCCLK              6500000     /**< 6.5MHz internal clock.     */
+/** @} */
+
+/**
+ * @name    GPIO IOCTRL register field positions
+ * @{
+ */
+#define RP_GPIO_IOCTRL_OEOVER_Pos           12
+#define RP_GPIO_IOCTRL_OUTOVER_Pos          8
 /** @} */
 
 /**
@@ -103,6 +109,7 @@
 #if !defined(RP_CORE1_STACK_END) || defined(__DOXYGEN__)
 #define RP_CORE1_STACK_END                  __c1_main_stack_end__
 #endif
+/** @} */
 
 /*===========================================================================*/
 /* Derived constants and error checks.                                       */
@@ -122,20 +129,76 @@
 #error "RP_XOSCCLK not defined in board.h"
 #endif
 
+#if (RP_XOSCCLK < 1000000) || (RP_XOSCCLK > 15000000)
+#error "RP_XOSCCLK out of valid range (1-15 MHz)"
+#endif
+
+/*
+ * PLL_SYS configuration checks.
+ */
+#if (RP_PLL_SYS_REFDIV < 1) || (RP_PLL_SYS_REFDIV > 63)
+#error "RP_PLL_SYS_REFDIV out of valid range (1-63)"
+#endif
+
+#if (RP_PLL_SYS_VCO_FREQ < RP_PLL_VCO_MIN_FREQ) ||                          \
+    (RP_PLL_SYS_VCO_FREQ > RP_PLL_VCO_MAX_FREQ)
+#error "RP_PLL_SYS_VCO_FREQ out of valid range (750-1600 MHz)"
+#endif
+
+#if (RP_PLL_SYS_POSTDIV1 < 1) || (RP_PLL_SYS_POSTDIV1 > 7)
+#error "RP_PLL_SYS_POSTDIV1 out of valid range (1-7)"
+#endif
+
+#if (RP_PLL_SYS_POSTDIV2 < 1) || (RP_PLL_SYS_POSTDIV2 > 7)
+#error "RP_PLL_SYS_POSTDIV2 out of valid range (1-7)"
+#endif
+
+#if RP_PLL_SYS_POSTDIV1 < RP_PLL_SYS_POSTDIV2
+#error "RP_PLL_SYS_POSTDIV1 must be >= RP_PLL_SYS_POSTDIV2"
+#endif
+
+/*
+ * PLL_USB configuration checks.
+ */
+#if (RP_PLL_USB_REFDIV < 1) || (RP_PLL_USB_REFDIV > 63)
+#error "RP_PLL_USB_REFDIV out of valid range (1-63)"
+#endif
+
+#if (RP_PLL_USB_VCO_FREQ < RP_PLL_VCO_MIN_FREQ) ||                          \
+    (RP_PLL_USB_VCO_FREQ > RP_PLL_VCO_MAX_FREQ)
+#error "RP_PLL_USB_VCO_FREQ out of valid range (750-1600 MHz)"
+#endif
+
+#if (RP_PLL_USB_POSTDIV1 < 1) || (RP_PLL_USB_POSTDIV1 > 7)
+#error "RP_PLL_USB_POSTDIV1 out of valid range (1-7)"
+#endif
+
+#if (RP_PLL_USB_POSTDIV2 < 1) || (RP_PLL_USB_POSTDIV2 > 7)
+#error "RP_PLL_USB_POSTDIV2 out of valid range (1-7)"
+#endif
+
+#if RP_PLL_USB_POSTDIV1 < RP_PLL_USB_POSTDIV2
+#error "RP_PLL_USB_POSTDIV1 must be >= RP_PLL_USB_POSTDIV2"
+#endif
+
+#if RP_PLL_USB_CLK != 48000000
+#error "RP_PLL_USB_CLK must be 48 MHz for USB to work"
+#endif
+
 /**
  * @name    Various clock points.
  * @{
  */
-#define RP_GPOUT0_CLK           hal_lld_get_clock_point(clk_gpout0)
-#define RP_GPOUT1_CLK           hal_lld_get_clock_point(clk_gpout1)
-#define RP_GPOUT2_CLK           hal_lld_get_clock_point(clk_gpout2)
-#define RP_GPOUT3_CLK           hal_lld_get_clock_point(clk_gpout3)
-#define RP_REF_CLK              hal_lld_get_clock_point(clk_ref)
-#define RP_CORE_CLK             hal_lld_get_clock_point(clk_sys)
-#define RP_PERI_CLK             hal_lld_get_clock_point(clk_peri)
-#define RP_USB_CLK              hal_lld_get_clock_point(clk_usb)
-#define RP_ADC_CLK              hal_lld_get_clock_point(clk_adc)
-#define RP_RTC_CLK              hal_lld_get_clock_point(clk_rtc)
+#define RP_GPOUT0_CLK           hal_lld_get_clock_point(RP_CLK_GPOUT0)
+#define RP_GPOUT1_CLK           hal_lld_get_clock_point(RP_CLK_GPOUT1)
+#define RP_GPOUT2_CLK           hal_lld_get_clock_point(RP_CLK_GPOUT2)
+#define RP_GPOUT3_CLK           hal_lld_get_clock_point(RP_CLK_GPOUT3)
+#define RP_REF_CLK              hal_lld_get_clock_point(RP_CLK_REF)
+#define RP_CORE_CLK             hal_lld_get_clock_point(RP_CLK_SYS)
+#define RP_PERI_CLK             hal_lld_get_clock_point(RP_CLK_PERI)
+#define RP_USB_CLK              hal_lld_get_clock_point(RP_CLK_USB)
+#define RP_ADC_CLK              hal_lld_get_clock_point(RP_CLK_ADC)
+#define RP_RTC_CLK              hal_lld_get_clock_point(RP_CLK_RTC)
 /** @} */
 
 /*===========================================================================*/
@@ -155,6 +218,32 @@ typedef struct {
 /* Driver macros.                                                            */
 /*===========================================================================*/
 
+/**
+ * @name    Safety module counter support
+ * @note    Uses TIMER0 peripheral which counts at 1 us resolution.
+ *          During early clock init, accuracy depends on ROSC variance.
+ *          After clock init completes, timing is precise.
+ * @{
+ */
+
+/**
+ * @brief   Counter type for safety timeouts.
+ */
+typedef uint32_t halcnt_t;
+
+/**
+ * @brief   Returns the counter frequency in Hz.
+ * @note    Always returns 1 MHz (1 us ticks).
+ */
+#define HAL_LLD_GET_CNT_FREQUENCY()     1000000U
+
+/**
+ * @brief   Returns the current counter value.
+ */
+#define HAL_LLD_GET_CNT_VALUE()         ((halcnt_t)TIMER0->TIMERAWL)
+
+/** @} */
+
 /*===========================================================================*/
 /* External declarations.                                                    */
 /*===========================================================================*/
@@ -165,6 +254,8 @@ typedef struct {
 #include "rp_isr.h"
 #include "rp_fifo.h"
 #include "rp_dma.h"
+#include "rp_pio.h"
+#include "rp_bootrom.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -178,16 +269,16 @@ extern "C" {
 /* Driver inline functions.                                                  */
 /*===========================================================================*/
 
-__STATIC_INLINE void hal_lld_peripheral_reset(uint32_t mask) {
+__STATIC_INLINE void rp_peripheral_reset(uint32_t mask) {
 
-  RESETS->RESET |=  mask;
+  RESETS->SET.RESET = mask;
 }
 
-__STATIC_INLINE void hal_lld_peripheral_unreset(uint32_t mask) {
+__STATIC_INLINE void rp_peripheral_unreset(uint32_t mask) {
 
-  RESETS->RESET &= ~mask;
-  while ((RESETS->RESET_DONE & mask) == 0U) {
-    /* Waiting for reset.*/
+  RESETS->CLR.RESET = mask;
+  while ((RESETS->RESET_DONE & mask) != mask) {
+    /* Waiting for peripheral to come out of reset */
   }
 }
 
@@ -220,9 +311,9 @@ __STATIC_INLINE bool hal_lld_clock_switch_mode(const halclkcfg_t *ccp) {
  */
 __STATIC_INLINE halfreq_t hal_lld_get_clock_point(halclkpt_t clkpt) {
 
-  osalDbgAssert(clkpt < CLK_COUNT, "invalid clock point");
+  osalDbgAssert(clkpt < RP_CLK_COUNT, "invalid clock point");
 
-  return clock_get_hz(clkpt);
+  return rp_clock_get_hz(clkpt);
 }
 #endif /* defined(HAL_LLD_USE_CLOCK_MANAGEMENT) */
 

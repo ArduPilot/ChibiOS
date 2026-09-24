@@ -30,11 +30,6 @@
 /*===========================================================================*/
 
 /**
- * @brief   Total number of DMA channels.
- */
-#define RP_DMA_CHANNELS                 12U
-
-/**
  * @brief   Checks if a DMA channels id is within the valid range.
  *
  * @param[in] id        DMA channels id
@@ -43,7 +38,7 @@
  * @retval true         correct DMA channel.
  */
 #define RP_DMA_IS_VALID_CHANNEL(chn)    (((chn) >= 0U) &&                   \
-                                         ((id) <= (RP_DMA_CHANNELS + 1U)))
+                                         ((chn) <= RP_DMA_NUM_CHANNELS))
 
 /**
  * @brief   Checks if a DMA priority is within the valid range.
@@ -58,7 +53,7 @@
 /**
  * @brief   Any channel selector.
  */
-#define RP_DMA_CHANNEL_ID_ANY           RP_DMA_CHANNELS
+#define RP_DMA_CHANNEL_ID_ANY           RP_DMA_NUM_CHANNELS
 
 /**
  * @brief   Returns a pointer to a @p rp_dma_channel_t structure.
@@ -94,7 +89,7 @@ typedef void (*rp_dmaisr_t)(void *p, uint32_t ct);
  */
 typedef struct {
   DMA_TypeDef           *dma;           /**< @brief Associated DMA.         */
-  DMA_Channel_Typedef   *channel;       /**< @brief Associated DMA channel. */
+  DMA_Channel_TypeDef   *channel;       /**< @brief Associated DMA channel. */
   uint32_t              chnidx;         /**< @brief Index to self in array. */
   uint32_t              chnmask;        /**< @brief Channel bit mask.       */
 } rp_dma_channel_t;
@@ -108,7 +103,7 @@ typedef struct {
 /*===========================================================================*/
 
 #if !defined(__DOXYGEN__)
-extern const rp_dma_channel_t __rp_dma_channels[RP_DMA_CHANNELS];
+extern rp_dma_channel_t __rp_dma_channels[RP_DMA_NUM_CHANNELS];
 #endif
 
 #ifdef __cplusplus
@@ -150,6 +145,8 @@ __STATIC_INLINE bool dmaChannelIsBusyX(const rp_dma_channel_t *dmachp) {
 
 /**
  * @brief   Get and clears channel interrupts state.
+ * @note    Also clears INTR via INTS0/ISTS1 (W1C) to prevent stale
+ *          interrupts left by @p dmaChannelAbortX().
  *
  * @param[in] dmachp    pointer to a rp_dma_channel_t structure
  * @return              The content of @p CTRL_TRIG register before clearing
@@ -160,10 +157,16 @@ __STATIC_INLINE bool dmaChannelIsBusyX(const rp_dma_channel_t *dmachp) {
 __STATIC_INLINE uint32_t dmaChannelGetAndClearInterrupts(const rp_dma_channel_t *dmachp) {
   uint32_t ctrl_trig;
 
+  if (dmachp == NULL || dmachp->dma != DMA) {
+    return 0U;
+  }
   ctrl_trig = dmachp->channel->CTRL_TRIG;
   dmachp->channel->CTRL_TRIG = ctrl_trig |
                                DMA_CTRL_TRIG_READ_ERROR |
                                DMA_CTRL_TRIG_WRITE_ERROR;
+
+  dmachp->dma->INTS0 = dmachp->chnmask;
+  dmachp->dma->INTS1 = dmachp->chnmask;
 
   return ctrl_trig;
 }
@@ -177,6 +180,9 @@ __STATIC_INLINE uint32_t dmaChannelGetAndClearInterrupts(const rp_dma_channel_t 
  */
 __STATIC_INLINE void dmaChannelEnableInterruptX(const rp_dma_channel_t *dmachp) {
 
+  if (dmachp == NULL || dmachp->dma != DMA) {
+    return;
+  }
   if (SIO->CPUID == 0U) {
     dmachp->dma->SET.INTE0 = dmachp->chnmask;
   }
@@ -195,6 +201,9 @@ __STATIC_INLINE void dmaChannelEnableInterruptX(const rp_dma_channel_t *dmachp) 
  */
 __STATIC_INLINE void dmaChannelDisableInterruptX(const rp_dma_channel_t *dmachp) {
 
+  if (dmachp == NULL || dmachp->dma != DMA) {
+    return;
+  }
   dmachp->dma->CLR.INTE0 = dmachp->chnmask;
   dmachp->dma->CLR.INTE1 = dmachp->chnmask;
 }
@@ -268,6 +277,8 @@ __STATIC_INLINE void dmaChannelSetModeX(const rp_dma_channel_t *dmachp,
 
 /**
  * @brief   Aborts the current transfer on a DMA channel.
+ * @note    EN and CHAIN_TO are cleared before asserting CHAN_ABORT to
+ *          prevent post-abort re-triggering (RP2350-E5).
  *
  * @param[in] dmachp    pointer to a rp_dma_channel_t structure
  *
@@ -275,6 +286,17 @@ __STATIC_INLINE void dmaChannelSetModeX(const rp_dma_channel_t *dmachp,
  */
 __STATIC_INLINE void dmaChannelAbortX(const rp_dma_channel_t *dmachp) {
 
+  if (dmachp == NULL || dmachp->dma != DMA) {
+    return;
+  }
+  /* Clear EN and set CHAIN_TO to self (no chaining) per RP2350-E5.
+     W1C error flags are masked to zero to preserve them. */
+  dmachp->channel->CTRL_TRIG = (dmachp->channel->CTRL_TRIG &
+                                ~(DMA_CTRL_TRIG_EN |
+                                  DMA_CTRL_TRIG_CHAIN_TO_Msk |
+                                  DMA_CTRL_TRIG_READ_ERROR |
+                                  DMA_CTRL_TRIG_WRITE_ERROR)) |
+                               DMA_CTRL_TRIG_CHAIN_TO(dmachp->chnidx);
   dmachp->dma->SET.CHAN_ABORT = dmachp->chnmask;
   while ((dmachp->dma->CHAN_ABORT & dmachp->chnmask) != 0U) {
   }

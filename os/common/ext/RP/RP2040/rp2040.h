@@ -22,7 +22,7 @@
  * @ingroup CMSIS_DEVICE
  * @{
  */
-    
+
 #ifndef RP2040_H
 #define RP2040_H
 
@@ -40,7 +40,7 @@
 typedef enum {
   NonMaskableInt_IRQn                   = -14,
   HardFault_IRQn                        = -13,
-  SVC_IRQn                              = -5,
+  SVCall_IRQn                           = -5,
   PendSV_IRQn                           = -2,
   SysTick_IRQn                          = -1,
   Vector_0n                             = 0,
@@ -77,6 +77,8 @@ typedef enum {
   Vector_31n                            = 31
 } IRQn_Type;
 
+#define SVC_IRQn                          SVCall_IRQn
+
 #include "core_cm0plus.h"
 #include "system_rp2040.h"
 
@@ -101,22 +103,22 @@ typedef struct {
   __IO uint32_t         AL3_WRITE_ADDR;
   __IO uint32_t         AL3_TRANSFER_COUNT;
   __IO uint32_t         AL3_READ_ADDR_TRIG;
-} DMA_Channel_Typedef;
+} DMA_Channel_TypeDef;
 
 typedef struct {
   __I  uint32_t         CTDREQ;
   __I  uint32_t         TCR;
   __I  uint32_t         resvd8[14];
-} DMA_Debug_Typedef;
+} DMA_Debug_TypeDef;
 
 typedef struct {
-  DMA_Channel_Typedef   CH[12];
+  DMA_Channel_TypeDef   CH[12];
   __I  uint32_t         resvd300[64];
   __IO uint32_t         INTR;
   __IO uint32_t         INTE0;
   __IO uint32_t         INTF0;
   __IO uint32_t         INTS0;
-  __I  uint32_t         resvd410;
+  __IO uint32_t         INTR1;
   __IO uint32_t         INTE1;
   __IO uint32_t         INTF1;
   __IO uint32_t         INTS1;
@@ -129,16 +131,16 @@ typedef struct {
   __IO uint32_t         CHAN_ABORT;
   __I  uint32_t         N_CHANNELS;
   __I  uint32_t         resvd44C[237];
-  DMA_Debug_Typedef     CH_DBG[12];
+  DMA_Debug_TypeDef     CH_DBG[12];
   __I  uint32_t         resvdB00[320];
   struct {
-    DMA_Channel_Typedef CH[12];
+    DMA_Channel_TypeDef CH[12];
     __I  uint32_t       resvd300[64];
     __IO uint32_t       INTR;
     __IO uint32_t       INTE0;
     __IO uint32_t       INTF0;
     __IO uint32_t       INTS0;
-    __I  uint32_t       resvd410;
+    __IO uint32_t       INTR1;
     __IO uint32_t       INTE1;
     __IO uint32_t       INTF1;
     __IO uint32_t       INTS1;
@@ -151,17 +153,17 @@ typedef struct {
     __IO uint32_t       CHAN_ABORT;
     __I  uint32_t       N_CHANNELS;
     __I  uint32_t       resvd44C[237];
-    DMA_Debug_Typedef   CH_DBG[12];
+    DMA_Debug_TypeDef   CH_DBG[12];
     __I  uint32_t       resvdB00[320];
   } XOR;
   struct {
-    DMA_Channel_Typedef CH[12];
+    DMA_Channel_TypeDef CH[12];
     __I  uint32_t       resvd300[64];
     __IO uint32_t       INTR;
     __IO uint32_t       INTE0;
     __IO uint32_t       INTF0;
     __IO uint32_t       INTS0;
-    __I  uint32_t       resvd410;
+    __IO uint32_t       INTR1;
     __IO uint32_t       INTE1;
     __IO uint32_t       INTF1;
     __IO uint32_t       INTS1;
@@ -174,17 +176,17 @@ typedef struct {
     __IO uint32_t       CHAN_ABORT;
     __I  uint32_t       N_CHANNELS;
     __I  uint32_t       resvd44C[237];
-    DMA_Debug_Typedef   CH_DBG[12];
+    DMA_Debug_TypeDef   CH_DBG[12];
     __I  uint32_t       resvdB00[320];
   } SET;
   struct {
-    DMA_Channel_Typedef CH[12];
+    DMA_Channel_TypeDef CH[12];
     __I  uint32_t       resvd300[64];
     __IO uint32_t       INTR;
     __IO uint32_t       INTE0;
     __IO uint32_t       INTF0;
     __IO uint32_t       INTS0;
-    __I  uint32_t       resvd410;
+    __IO uint32_t       INTR1;
     __IO uint32_t       INTE1;
     __IO uint32_t       INTF1;
     __IO uint32_t       INTS1;
@@ -197,7 +199,7 @@ typedef struct {
     __IO uint32_t       CHAN_ABORT;
     __I  uint32_t       N_CHANNELS;
     __I  uint32_t       resvd44C[237];
-    DMA_Debug_Typedef   CH_DBG[12];
+    DMA_Debug_TypeDef   CH_DBG[12];
     __I  uint32_t       resvdB00[320];
   } CLR;
 } DMA_TypeDef;
@@ -242,6 +244,67 @@ typedef struct {
 } PADS_TypeDef;
 
 typedef struct {
+  __IO uint32_t         VOLTAGE_SELECT;
+  __IO uint32_t         GPIO_QSPI_SCLK;
+  __IO uint32_t         GPIO_QSPI_SD0;
+  __IO uint32_t         GPIO_QSPI_SD1;
+  __IO uint32_t         GPIO_QSPI_SD2;
+  __IO uint32_t         GPIO_QSPI_SD3;
+  __IO uint32_t         GPIO_QSPI_SS;
+} PADS_QSPI_TypeDef;
+
+/**
+ * @brief   XIP SSI (Synchronous Serial Interface) register block.
+ * @note    DWC SSI controller used for XIP flash access on RP2040.
+ *          See RP2040 Datasheet 4.10.13 SSI List of Registers.
+ */
+typedef struct {
+  __IO uint32_t         CTRLR0;             /* 0x00 */
+  __IO uint32_t         CTRLR1;             /* 0x04 */
+  __IO uint32_t         SSIENR;             /* 0x08 */
+  __IO uint32_t         MWCR;               /* 0x0C */
+  __IO uint32_t         SER;                /* 0x10 */
+  __IO uint32_t         BAUDR;              /* 0x14 */
+  __IO uint32_t         TXFTLR;             /* 0x18 */
+  __IO uint32_t         RXFTLR;             /* 0x1C */
+  __I  uint32_t         TXFLR;              /* 0x20 */
+  __I  uint32_t         RXFLR;              /* 0x24 */
+  __I  uint32_t         SR;                 /* 0x28 */
+  __IO uint32_t         IMR;                /* 0x2C */
+  __I  uint32_t         ISR;                /* 0x30 */
+  __I  uint32_t         RISR;               /* 0x34 */
+  __I  uint32_t         TXOICR;             /* 0x38 */
+  __I  uint32_t         RXOICR;             /* 0x3C */
+  __I  uint32_t         RXUICR;             /* 0x40 */
+  __I  uint32_t         MSTICR;             /* 0x44 */
+  __I  uint32_t         ICR;                /* 0x48 */
+  __IO uint32_t         DMACR;              /* 0x4C */
+  __IO uint32_t         DMATDLR;            /* 0x50 */
+  __IO uint32_t         DMARDLR;            /* 0x54 */
+  __I  uint32_t         IDR;                /* 0x58 */
+  __I  uint32_t         SSI_VERSION_ID;     /* 0x5C */
+  __IO uint32_t         DR[36];             /* 0x60-0xEC */
+  __IO uint32_t         RX_SAMPLE_DLY;      /* 0xF0 */
+  __IO uint32_t         SPI_CTRLR0;         /* 0xF4 */
+  __IO uint32_t         TXD_DRIVE_EDGE;     /* 0xF8 */
+} SSI_TypeDef;
+
+/**
+ * @brief   XIP control register block.
+ * @note    See RP2040 Datasheet 2.6.3.1 XIP Cache Control.
+ */
+typedef struct {
+  __IO uint32_t         CTRL;               /* 0x00 */
+  __IO uint32_t         FLUSH;              /* 0x04 */
+  __I  uint32_t         STAT;               /* 0x08 */
+  __IO uint32_t         CTR_HIT;            /* 0x0C */
+  __IO uint32_t         CTR_ACC;            /* 0x10 */
+  __IO uint32_t         STREAM_ADDR;        /* 0x14 */
+  __IO uint32_t         STREAM_CTR;         /* 0x18 */
+  __I  uint32_t         STREAM_FIFO;        /* 0x1C */
+} XIP_CTRL_TypeDef;
+
+typedef struct {
   __IO uint32_t         FRCE_ON;
   __IO uint32_t         FRCE_OFF;
   __IO uint32_t         WDSEL;
@@ -274,6 +337,25 @@ typedef struct {
   __IO uint32_t         RESET;
   __IO uint32_t         WDSEL;
   __I  uint32_t         RESET_DONE;
+  __I  uint32_t         resvdC[1021];
+  struct {
+    __IO uint32_t       RESET;
+    __IO uint32_t       WDSEL;
+    __I  uint32_t       RESET_DONE;
+    __I  uint32_t       resvdC[1021];
+  } XOR;
+  struct {
+    __IO uint32_t       RESET;
+    __IO uint32_t       WDSEL;
+    __I  uint32_t       RESET_DONE;
+    __I  uint32_t       resvdC[1021];
+  } SET;
+  struct {
+    __IO uint32_t       RESET;
+    __IO uint32_t       WDSEL;
+    __I  uint32_t       RESET_DONE;
+    __I  uint32_t       resvdC[1021];
+  } CLR;
 } RESETS_TypeDef;
 
 typedef struct {
@@ -906,9 +988,18 @@ typedef struct {
   } CH[8];
   __IO uint32_t         EN;
   __IO uint32_t         INTR;
-  __IO uint32_t         INTE;
-  __IO uint32_t         INTF;
-  __I  uint32_t         INTS;
+  union {
+    __IO uint32_t       INTE;
+    __IO uint32_t       IRQ0_INTE;
+  };
+  union {
+    __IO uint32_t       INTF;
+    __IO uint32_t       IRQ0_INTF;
+  };
+  union {
+    __I  uint32_t       INTS;
+    __I  uint32_t       IRQ0_INTS;
+  };
   __I  uint32_t         resvdpwm[979];
   struct {
     struct {
@@ -920,9 +1011,18 @@ typedef struct {
     } CH[8];
     __IO uint32_t       EN;
     __IO uint32_t       INTR;
-    __IO uint32_t       INTE;
-    __IO uint32_t       INTF;
-    __I  uint32_t       INTS;
+    union {
+      __IO uint32_t     INTE;
+      __IO uint32_t     IRQ0_INTE;
+    };
+    union {
+      __IO uint32_t     INTF;
+      __IO uint32_t     IRQ0_INTF;
+    };
+    union {
+      __I  uint32_t     INTS;
+      __I  uint32_t     IRQ0_INTS;
+    };
     __I  uint32_t       resvdpwm[979];
   } XOR;
   struct {
@@ -935,9 +1035,18 @@ typedef struct {
     } CH[8];
     __IO uint32_t       EN;
     __IO uint32_t       INTR;
-    __IO uint32_t       INTE;
-    __IO uint32_t       INTF;
-    __I  uint32_t       INTS;
+    union {
+      __IO uint32_t     INTE;
+      __IO uint32_t     IRQ0_INTE;
+    };
+    union {
+      __IO uint32_t     INTF;
+      __IO uint32_t     IRQ0_INTF;
+    };
+    union {
+      __I  uint32_t     INTS;
+      __I  uint32_t     IRQ0_INTS;
+    };
     __I  uint32_t       resvdpwm[979];
   } SET;
   struct {
@@ -950,9 +1059,18 @@ typedef struct {
     } CH[8];
     __IO uint32_t       EN;
     __IO uint32_t       INTR;
-    __IO uint32_t       INTE;
-    __IO uint32_t       INTF;
-    __I  uint32_t       INTS;
+    union {
+      __IO uint32_t     INTE;
+      __IO uint32_t     IRQ0_INTE;
+    };
+    union {
+      __IO uint32_t     INTF;
+      __IO uint32_t     IRQ0_INTF;
+    };
+    union {
+      __I  uint32_t     INTS;
+      __I  uint32_t     IRQ0_INTS;
+    };
     __I  uint32_t       resvdpwm[979];
   } CLR;
 } PWM_TypeDef;
@@ -1103,6 +1221,15 @@ typedef struct {
   } CLR;
 } WATCHDOG_TypeDef;
 
+/**
+ * @brief   RP2040 VREG_AND_CHIP_RESET peripheral.
+ */
+typedef struct {
+  __IO uint32_t         VREG;
+  __IO uint32_t         BOD;
+  __IO uint32_t         CHIP_RESET;
+} VREG_AND_CHIP_RESET_TypeDef;
+
 typedef struct {
   __IO uint32_t         CTRL;
   __I  uint32_t         FSTAT;
@@ -1111,12 +1238,12 @@ typedef struct {
   __O  uint32_t         TXF[4];            /* NUM_PIO_STATE_MACHINES */
   __I  uint32_t         RXF[4];            /* NUM_PIO_STATE_MACHINES */
   __IO uint32_t         IRQ;
-  __O  uint32_t         IRQFORCE;
-  __IO uint32_t         INPUTSYNCBYPASS;
-  __IO uint32_t         DBGPADOUT;
-  __IO uint32_t         DBGPADOE;
-  __IO uint32_t         DBGCFGINFO;
-  __O  uint32_t         INSTRMEM[32];
+  __O  uint32_t         IRQ_FORCE;
+  __IO uint32_t         INPUT_SYNC_BYPASS;
+  __IO uint32_t         DBG_PADOUT;
+  __IO uint32_t         DBG_PADOE;
+  __IO uint32_t         DBG_CFGINFO;
+  __O  uint32_t         INSTR_MEM[32];
   struct {
     __IO uint32_t       CLKDIV;
     __IO uint32_t       EXECCTRL;
@@ -1126,12 +1253,12 @@ typedef struct {
     __IO uint32_t       PINCTRL;
   } SM[4];                                /* NUM_PIO_STATE_MACHINES */
   __IO uint32_t         INTR;
-  __IO uint32_t         INTE0;
-  __IO uint32_t         INTF0;
-  __I  uint32_t         INTS0;
-  __IO uint32_t         INTE1;
-  __IO uint32_t         INTF1;
-  __I  uint32_t         INTS1;
+  __IO uint32_t         IRQ0_INTE;
+  __IO uint32_t         IRQ0_INTF;
+  __I  uint32_t         IRQ0_INTS;
+  __IO uint32_t         IRQ1_INTE;
+  __IO uint32_t         IRQ1_INTF;
+  __I  uint32_t         IRQ1_INTS;
   __I  uint32_t         resvd144[943];
   struct {
   __IO uint32_t         CTRL;
@@ -1141,12 +1268,12 @@ typedef struct {
   __O  uint32_t         TXF[4];            /* NUM_PIO_STATE_MACHINES */
   __I  uint32_t         RXF[4];            /* NUM_PIO_STATE_MACHINES */
   __IO uint32_t         IRQ;
-  __O  uint32_t         IRQFORCE;
-  __IO uint32_t         INPUTSYNCBYPASS;
-  __IO uint32_t         DBGPADOUT;
-  __IO uint32_t         DBGPADOE;
-  __IO uint32_t         DBGCFGINFO;
-  __O  uint32_t         INSTRMEM[32];
+  __O  uint32_t         IRQ_FORCE;
+  __IO uint32_t         INPUT_SYNC_BYPASS;
+  __IO uint32_t         DBG_PADOUT;
+  __IO uint32_t         DBG_PADOE;
+  __IO uint32_t         DBG_CFGINFO;
+  __O  uint32_t         INSTR_MEM[32];
   struct {
     __IO uint32_t       CLKDIV;
     __IO uint32_t       EXECCTRL;
@@ -1156,12 +1283,12 @@ typedef struct {
     __IO uint32_t       PINCTRL;
   } SM[4];                                /* NUM_PIO_STATE_MACHINES */
   __IO uint32_t         INTR;
-  __IO uint32_t         INTE0;
-  __IO uint32_t         INTF0;
-  __I  uint32_t         INTS0;
-  __IO uint32_t         INTE1;
-  __IO uint32_t         INTF1;
-  __I  uint32_t         INTS1;
+  __IO uint32_t         IRQ0_INTE;
+  __IO uint32_t         IRQ0_INTF;
+  __I  uint32_t         IRQ0_INTS;
+  __IO uint32_t         IRQ1_INTE;
+  __IO uint32_t         IRQ1_INTF;
+  __I  uint32_t         IRQ1_INTS;
   __I  uint32_t         resvd144[943];
   } XOR;
   struct {
@@ -1172,12 +1299,12 @@ typedef struct {
   __O  uint32_t         TXF[4];            /* NUM_PIO_STATE_MACHINES */
   __I  uint32_t         RXF[4];            /* NUM_PIO_STATE_MACHINES */
   __IO uint32_t         IRQ;
-  __O  uint32_t         IRQFORCE;
-  __IO uint32_t         INPUTSYNCBYPASS;
-  __IO uint32_t         DBGPADOUT;
-  __IO uint32_t         DBGPADOE;
-  __IO uint32_t         DBGCFGINFO;
-  __O  uint32_t         INSTRMEM[32];
+  __O  uint32_t         IRQ_FORCE;
+  __IO uint32_t         INPUT_SYNC_BYPASS;
+  __IO uint32_t         DBG_PADOUT;
+  __IO uint32_t         DBG_PADOE;
+  __IO uint32_t         DBG_CFGINFO;
+  __O  uint32_t         INSTR_MEM[32];
   struct {
     __IO uint32_t       CLKDIV;
     __IO uint32_t       EXECCTRL;
@@ -1187,12 +1314,12 @@ typedef struct {
     __IO uint32_t       PINCTRL;
   } SM[4];                                /* NUM_PIO_STATE_MACHINES */
   __IO uint32_t         INTR;
-  __IO uint32_t         INTE0;
-  __IO uint32_t         INTF0;
-  __I  uint32_t         INTS0;
-  __IO uint32_t         INTE1;
-  __IO uint32_t         INTF1;
-  __I  uint32_t         INTS1;
+  __IO uint32_t         IRQ0_INTE;
+  __IO uint32_t         IRQ0_INTF;
+  __I  uint32_t         IRQ0_INTS;
+  __IO uint32_t         IRQ1_INTE;
+  __IO uint32_t         IRQ1_INTF;
+  __I  uint32_t         IRQ1_INTS;
   __I  uint32_t         resvd144[943];
   } SET;
   struct {
@@ -1203,12 +1330,12 @@ typedef struct {
   __O  uint32_t         TXF[4];            /* NUM_PIO_STATE_MACHINES */
   __I  uint32_t         RXF[4];            /* NUM_PIO_STATE_MACHINES */
   __IO uint32_t         IRQ;
-  __O  uint32_t         IRQFORCE;
-  __IO uint32_t         INPUTSYNCBYPASS;
-  __IO uint32_t         DBGPADOUT;
-  __IO uint32_t         DBGPADOE;
-  __IO uint32_t         DBGCFGINFO;
-  __O  uint32_t         INSTRMEM[32];
+  __O  uint32_t         IRQ_FORCE;
+  __IO uint32_t         INPUT_SYNC_BYPASS;
+  __IO uint32_t         DBG_PADOUT;
+  __IO uint32_t         DBG_PADOE;
+  __IO uint32_t         DBG_CFGINFO;
+  __O  uint32_t         INSTR_MEM[32];
   struct {
     __IO uint32_t       CLKDIV;
     __IO uint32_t       EXECCTRL;
@@ -1218,15 +1345,168 @@ typedef struct {
     __IO uint32_t       PINCTRL;
   } SM[4];                                /* NUM_PIO_STATE_MACHINES */
   __IO uint32_t         INTR;
-  __IO uint32_t         INTE0;
-  __IO uint32_t         INTF0;
-  __I  uint32_t         INTS0;
-  __IO uint32_t         INTE1;
-  __IO uint32_t         INTF1;
-  __I  uint32_t         INTS1;
+  __IO uint32_t         IRQ0_INTE;
+  __IO uint32_t         IRQ0_INTF;
+  __I  uint32_t         IRQ0_INTS;
+  __IO uint32_t         IRQ1_INTE;
+  __IO uint32_t         IRQ1_INTF;
+  __I  uint32_t         IRQ1_INTS;
   __I  uint32_t         resvd144[943];
   } CLR;
 } PIO_TypeDef;
+
+typedef struct {
+  __IO uint32_t         CTRL;
+  __I  uint32_t         STATUS;
+  __IO uint32_t         DORMANT;
+  __IO uint32_t         STARTUP;
+  __I  uint32_t         resvd10[3];
+  __IO uint32_t         COUNT;
+  __I  uint32_t         resvd20[1016];
+  struct {
+    __IO uint32_t       CTRL;
+    __I  uint32_t       STATUS;
+    __IO uint32_t       DORMANT;
+    __IO uint32_t       STARTUP;
+    __I  uint32_t       resvd10[3];
+    __IO uint32_t       COUNT;
+    __I  uint32_t       resvd20[1016];
+  } XOR;
+  struct {
+    __IO uint32_t       CTRL;
+    __I  uint32_t       STATUS;
+    __IO uint32_t       DORMANT;
+    __IO uint32_t       STARTUP;
+    __I  uint32_t       resvd10[3];
+    __IO uint32_t       COUNT;
+    __I  uint32_t       resvd20[1016];
+  } SET;
+  struct {
+    __IO uint32_t       CTRL;
+    __I  uint32_t       STATUS;
+    __IO uint32_t       DORMANT;
+    __IO uint32_t       STARTUP;
+    __I  uint32_t       resvd10[3];
+    __IO uint32_t       COUNT;
+    __I  uint32_t       resvd20[1016];
+  } CLR;
+} XOSC_TypeDef;
+
+typedef struct {
+  __IO uint32_t         CS;
+  __IO uint32_t         PWR;
+  __IO uint32_t         FBDIV_INT;
+  __IO uint32_t         PRIM;
+  __I  uint32_t         resvd10[1020];
+  struct {
+    __IO uint32_t       CS;
+    __IO uint32_t       PWR;
+    __IO uint32_t       FBDIV_INT;
+    __IO uint32_t       PRIM;
+    __I  uint32_t       resvd10[1020];
+  } XOR;
+  struct {
+    __IO uint32_t       CS;
+    __IO uint32_t       PWR;
+    __IO uint32_t       FBDIV_INT;
+    __IO uint32_t       PRIM;
+    __I  uint32_t       resvd10[1020];
+  } SET;
+  struct {
+    __IO uint32_t       CS;
+    __IO uint32_t       PWR;
+    __IO uint32_t       FBDIV_INT;
+    __IO uint32_t       PRIM;
+    __I  uint32_t       resvd10[1020];
+  } CLR;
+} PLL_TypeDef;
+
+typedef struct {
+  __IO uint32_t         CTRL;
+  __IO uint32_t         DIV;
+  __I  uint32_t         SELECTED;
+} CLOCKS_CLK_TypeDef;
+
+typedef struct {
+  __IO uint32_t         CTRL;
+  __I  uint32_t         STATUS;
+} CLOCKS_RESUS_TypeDef;
+
+typedef struct {
+  __IO uint32_t         REF_KHZ;
+  __IO uint32_t         MIN_KHZ;
+  __IO uint32_t         MAX_KHZ;
+  __IO uint32_t         DELAY;
+  __IO uint32_t         INTERVAL;
+  __IO uint32_t         SRC;
+  __I  uint32_t         STATUS;
+  __I  uint32_t         RESULT;
+} CLOCKS_FC0_TypeDef;
+
+typedef struct {
+  CLOCKS_CLK_TypeDef    CLK[10];
+  CLOCKS_RESUS_TypeDef  RESUS;
+  CLOCKS_FC0_TypeDef    FC0;
+  __IO uint32_t         WAKE_EN0;
+  __IO uint32_t         WAKE_EN1;
+  __IO uint32_t         SLEEP_EN0;
+  __IO uint32_t         SLEEP_EN1;
+  __I  uint32_t         ENABLED0;
+  __I  uint32_t         ENABLED1;
+  __I  uint32_t         INTR;
+  __IO uint32_t         INTE;
+  __IO uint32_t         INTF;
+  __I  uint32_t         INTS;
+  __I  uint32_t         resvdC8[974];
+  struct {
+    CLOCKS_CLK_TypeDef  CLK[10];
+    CLOCKS_RESUS_TypeDef RESUS;
+    CLOCKS_FC0_TypeDef  FC0;
+    __IO uint32_t       WAKE_EN0;
+    __IO uint32_t       WAKE_EN1;
+    __IO uint32_t       SLEEP_EN0;
+    __IO uint32_t       SLEEP_EN1;
+    __I  uint32_t       ENABLED0;
+    __I  uint32_t       ENABLED1;
+    __I  uint32_t       INTR;
+    __IO uint32_t       INTE;
+    __IO uint32_t       INTF;
+    __I  uint32_t       INTS;
+    __I  uint32_t       resvdC8[974];
+  } XOR;
+  struct {
+    CLOCKS_CLK_TypeDef  CLK[10];
+    CLOCKS_RESUS_TypeDef RESUS;
+    CLOCKS_FC0_TypeDef  FC0;
+    __IO uint32_t       WAKE_EN0;
+    __IO uint32_t       WAKE_EN1;
+    __IO uint32_t       SLEEP_EN0;
+    __IO uint32_t       SLEEP_EN1;
+    __I  uint32_t       ENABLED0;
+    __I  uint32_t       ENABLED1;
+    __I  uint32_t       INTR;
+    __IO uint32_t       INTE;
+    __IO uint32_t       INTF;
+    __I  uint32_t       INTS;
+    __I  uint32_t       resvdC8[974];
+  } SET;
+  struct {
+    CLOCKS_CLK_TypeDef  CLK[10];
+    CLOCKS_RESUS_TypeDef RESUS;
+    CLOCKS_FC0_TypeDef  FC0;
+    __IO uint32_t       WAKE_EN0;
+    __IO uint32_t       WAKE_EN1;
+    __IO uint32_t       SLEEP_EN0;
+    __IO uint32_t       SLEEP_EN1;
+    __I  uint32_t       ENABLED0;
+    __I  uint32_t       ENABLED1;
+    __I  uint32_t       INTR;
+    __IO uint32_t       INTE;
+    __IO uint32_t       INTF;
+    __I  uint32_t       INTS;
+    __I  uint32_t       resvdC8[974];
+  } CLR;
+} CLOCKS_TypeDef;
 /** @} */
 
 /**
@@ -1243,7 +1523,7 @@ typedef struct {
 #define __PADSUSER0_BASE                  (__APBPERIPH_BASE + 0x0001C000U)
 #define __PADSQSPI_BASE                   (__APBPERIPH_BASE + 0x00020000U)
 #define __PSM_BASE                        (__APBPERIPH_BASE + 0x00010000U)
-#define __TIMER_BASE                      (__APBPERIPH_BASE + 0x00054000U)
+#define __TIMER0_BASE                     (__APBPERIPH_BASE + 0x00054000U)
 #define __UART0_BASE                      (__APBPERIPH_BASE + 0x00034000U)
 #define __UART1_BASE                      (__APBPERIPH_BASE + 0x00038000U)
 #define __SPI0_BASE                       (__APBPERIPH_BASE + 0x0003C000U)
@@ -1254,6 +1534,14 @@ typedef struct {
 #define __PWM_BASE                        (__APBPERIPH_BASE + 0x00050000U)
 #define __WATCHDOG_BASE                   (__APBPERIPH_BASE + 0x00058000U)
 #define __RTC_BASE                        (__APBPERIPH_BASE + 0x0005C000U)
+#define __VREG_AND_CHIP_RESET_BASE        (__APBPERIPH_BASE + 0x00064000U)
+#define __XOSC_BASE                       (__APBPERIPH_BASE + 0x00024000U)
+#define __CLOCKS_BASE                     (__APBPERIPH_BASE + 0x00008000U)
+#define __PLL_SYS_BASE                    (__APBPERIPH_BASE + 0x00028000U)
+#define __PLL_USB_BASE                    (__APBPERIPH_BASE + 0x0002C000U)
+
+#define __XIP_CTRL_BASE                   0x14000000U
+#define __XIP_SSI_BASE                    0x18000000U
 
 #define __DMA_BASE                        (__AHBPERIPH_BASE + 0x00000000U)
 #define __USB_BASE                        (__AHBPERIPH_BASE + 0x00110000U)
@@ -1269,13 +1557,13 @@ typedef struct {
  */
 #define DMA                               ((DMA_TypeDef *)    __DMA_BASE)
 #define IO_BANK0                          ((IOUSER_TypeDef *) __IOUSER0_BASE)
-#define IO_QSPI                           ((IOUSER_TypeDef *) __IOQSPI_BASE)
+#define IO_QSPI                           ((IOQSPI_TypeDef *) __IOQSPI_BASE)
 #define PADS_BANK0                        ((PADS_TypeDef *)   __PADSUSER0_BASE)
-#define PADS_QSPI                         ((PADS_TypeDef *)   __PADSQSPI_BASE)
+#define PADS_QSPI                         ((PADS_QSPI_TypeDef *) __PADSQSPI_BASE)
 #define PSM                               ((PSM_TypeDef *)    __PSM_BASE)
 #define RESETS                            ((RESETS_TypeDef *) __RESETS_BASE)
 #define SIO                               ((SIO_TypeDef *)    __SIO_BASE)
-#define TIMER                             ((TIMER_TypeDef *)  __TIMER_BASE)
+#define TIMER0                            ((TIMER_TypeDef *)  __TIMER0_BASE)
 #define UART0                             ((UART_TypeDef *)   __UART0_BASE)
 #define UART1                             ((UART_TypeDef *)   __UART1_BASE)
 #define RTC                               ((RTC_TypeDef *)    __RTC_BASE)
@@ -1288,7 +1576,14 @@ typedef struct {
 #define PIO0                              ((PIO_TypeDef *)    __PIO0_BASE)
 #define PIO1                              ((PIO_TypeDef *)    __PIO1_BASE)
 #define USB                               ((USB_TypeDef *)    __USB_BASE)
+#define VREG_AND_CHIP_RESET               ((VREG_AND_CHIP_RESET_TypeDef *) __VREG_AND_CHIP_RESET_BASE)
 #define WATCHDOG                          ((WATCHDOG_TypeDef *) __WATCHDOG_BASE)
+#define XOSC                              ((XOSC_TypeDef *)   __XOSC_BASE)
+#define CLOCKS                            ((CLOCKS_TypeDef *) __CLOCKS_BASE)
+#define PLL_SYS                           ((PLL_TypeDef *)    __PLL_SYS_BASE)
+#define PLL_USB                           ((PLL_TypeDef *)    __PLL_USB_BASE)
+#define XIP_SSI                           ((SSI_TypeDef *)    __XIP_SSI_BASE)
+#define XIP_CTRL                          ((XIP_CTRL_TypeDef *) __XIP_CTRL_BASE)
 /** @} */
 
 /**
@@ -1400,7 +1695,7 @@ typedef struct {
 #define RESETS_ALLREG_USBCTRL             (1U << 24)
 #define RESETS_ALLREG_UART1               (1U << 23)
 #define RESETS_ALLREG_UART0               (1U << 22)
-#define RESETS_ALLREG_TIMER               (1U << 21)
+#define RESETS_ALLREG_TIMER0              (1U << 21)
 #define RESETS_ALLREG_TBMAN               (1U << 20)
 #define RESETS_ALLREG_SYSINFO             (1U << 19)
 #define RESETS_ALLREG_SYSCFG              (1U << 18)
@@ -1509,7 +1804,7 @@ typedef struct {
 
 #define SPI_SSPCPSR_CPSDVSR_Pos           0U
 #define SPI_SSPCPSR_CPSDVSR_Msk           (255U << SPI_SSPCPSR_CPSDVSR_Pos)
-#define SPI_SSPCPSR_CPSDVSR(n)            ((n) << SPI_SSPCPSR_CPSDVSR_Msk)
+#define SPI_SSPCPSR_CPSDVSR(n)            ((n) << SPI_SSPCPSR_CPSDVSR_Pos)
 
 #define SPI_SSPIMSC_TXIM_Pos              3U
 #define SPI_SSPIMSC_TXIM_Msk              (1U << SPI_SSPIMSC_TXIM_Pos)
@@ -1563,6 +1858,135 @@ typedef struct {
 #define SPI_SSPDMACR_RXDMAE_Pos           0U
 #define SPI_SSPDMACR_RXDMAE_Msk           (1U << SPI_SSPDMACR_RXDMAE_Pos)
 #define SPI_SSPDMACR_RXDMAE               SPI_SSPDMACR_RXDMAE_Msk
+/** @} */
+
+/**
+ * @name    SSI CTRLR0 bits definitions
+ * @note    See RP2040 Datasheet 4.10.13 SSI List of Registers.
+ * @{
+ */
+#define SSI_CTRLR0_DFS_Pos                0U
+#define SSI_CTRLR0_DFS_Msk                (0xFU << SSI_CTRLR0_DFS_Pos)
+#define SSI_CTRLR0_FRF_Pos                4U
+#define SSI_CTRLR0_FRF_Msk                (0x3U << SSI_CTRLR0_FRF_Pos)
+#define SSI_CTRLR0_SCPH                   (1U << 6)
+#define SSI_CTRLR0_SCPOL                  (1U << 7)
+#define SSI_CTRLR0_TMOD_Pos               8U
+#define SSI_CTRLR0_TMOD_Msk               (0x3U << SSI_CTRLR0_TMOD_Pos)
+#define SSI_CTRLR0_TMOD(n)                ((n) << SSI_CTRLR0_TMOD_Pos)
+#define SSI_CTRLR0_SLV_OE                 (1U << 10)
+#define SSI_CTRLR0_SRL                    (1U << 11)
+#define SSI_CTRLR0_CFS_Pos                12U
+#define SSI_CTRLR0_CFS_Msk                (0xFU << SSI_CTRLR0_CFS_Pos)
+#define SSI_CTRLR0_DFS_32_Pos             16U
+#define SSI_CTRLR0_DFS_32_Msk             (0x1FU << SSI_CTRLR0_DFS_32_Pos)
+#define SSI_CTRLR0_DFS_32(n)              ((n) << SSI_CTRLR0_DFS_32_Pos)
+#define SSI_CTRLR0_SPI_FRF_Pos            21U
+#define SSI_CTRLR0_SPI_FRF_Msk            (0x3U << SSI_CTRLR0_SPI_FRF_Pos)
+#define SSI_CTRLR0_SPI_FRF(n)             ((n) << SSI_CTRLR0_SPI_FRF_Pos)
+#define SSI_CTRLR0_SSTE                   (1U << 24)
+
+/** TMOD encoded values. */
+#define SSI_CTRLR0_TMOD_TX_AND_RX         0U
+#define SSI_CTRLR0_TMOD_TX_ONLY           1U
+#define SSI_CTRLR0_TMOD_RX_ONLY           2U
+#define SSI_CTRLR0_TMOD_EEPROM_READ       3U
+
+/** SPI_FRF encoded values. */
+#define SSI_CTRLR0_SPI_FRF_STD            0U
+#define SSI_CTRLR0_SPI_FRF_DUAL           1U
+#define SSI_CTRLR0_SPI_FRF_QUAD           2U
+/** @} */
+
+/**
+ * @name    SSI SR (status register) bits definitions
+ * @{
+ */
+#define SSI_SR_BUSY                       (1U << 0)
+#define SSI_SR_TFNF                       (1U << 1)
+#define SSI_SR_TFE                        (1U << 2)
+#define SSI_SR_RFNE                       (1U << 3)
+#define SSI_SR_RFF                        (1U << 4)
+#define SSI_SR_TXE                        (1U << 5)
+#define SSI_SR_DCOL                       (1U << 6)
+/** @} */
+
+/**
+ * @name    SSI SPI_CTRLR0 bits definitions
+ * @{
+ */
+#define SSI_SPI_CTRLR0_TRANS_TYPE_Pos     0U
+#define SSI_SPI_CTRLR0_TRANS_TYPE_Msk     (0x3U << SSI_SPI_CTRLR0_TRANS_TYPE_Pos)
+#define SSI_SPI_CTRLR0_TRANS_TYPE(n)      ((n) << SSI_SPI_CTRLR0_TRANS_TYPE_Pos)
+#define SSI_SPI_CTRLR0_ADDR_L_Pos         2U
+#define SSI_SPI_CTRLR0_ADDR_L_Msk         (0xFU << SSI_SPI_CTRLR0_ADDR_L_Pos)
+#define SSI_SPI_CTRLR0_ADDR_L(n)          ((n) << SSI_SPI_CTRLR0_ADDR_L_Pos)
+#define SSI_SPI_CTRLR0_INST_L_Pos         8U
+#define SSI_SPI_CTRLR0_INST_L_Msk         (0x3U << SSI_SPI_CTRLR0_INST_L_Pos)
+#define SSI_SPI_CTRLR0_INST_L(n)          ((n) << SSI_SPI_CTRLR0_INST_L_Pos)
+#define SSI_SPI_CTRLR0_WAIT_CYCLES_Pos    11U
+#define SSI_SPI_CTRLR0_WAIT_CYCLES_Msk    (0x1FU << SSI_SPI_CTRLR0_WAIT_CYCLES_Pos)
+#define SSI_SPI_CTRLR0_WAIT_CYCLES(n)     ((n) << SSI_SPI_CTRLR0_WAIT_CYCLES_Pos)
+#define SSI_SPI_CTRLR0_SPI_DDR_EN         (1U << 16)
+#define SSI_SPI_CTRLR0_INST_DDR_EN        (1U << 17)
+#define SSI_SPI_CTRLR0_SPI_RXDS_EN        (1U << 18)
+#define SSI_SPI_CTRLR0_XIP_CMD_Pos        24U
+#define SSI_SPI_CTRLR0_XIP_CMD_Msk        (0xFFU << SSI_SPI_CTRLR0_XIP_CMD_Pos)
+#define SSI_SPI_CTRLR0_XIP_CMD(n)         ((n) << SSI_SPI_CTRLR0_XIP_CMD_Pos)
+
+/** TRANS_TYPE encoded values. */
+#define SSI_SPI_CTRLR0_TRANS_TYPE_1C1A    0U
+#define SSI_SPI_CTRLR0_TRANS_TYPE_1C2A    1U
+#define SSI_SPI_CTRLR0_TRANS_TYPE_2C2A    2U
+
+/** INST_L encoded values. */
+#define SSI_SPI_CTRLR0_INST_L_NONE        0U
+#define SSI_SPI_CTRLR0_INST_L_4B          1U
+#define SSI_SPI_CTRLR0_INST_L_8B          2U
+#define SSI_SPI_CTRLR0_INST_L_16B         3U
+/** @} */
+
+/**
+ * @name    XIP_CTRL bits definitions
+ * @note    See RP2040 Datasheet 2.6.3.1 XIP Cache Control.
+ * @{
+ */
+#define XIP_CTRL_CTRL_EN                  (1U << 0)
+#define XIP_CTRL_CTRL_ERR_BADWRITE        (1U << 1)
+#define XIP_CTRL_CTRL_POWER_DOWN          (1U << 3)
+#define XIP_CTRL_STAT_FLUSH_READY         (1U << 0)
+#define XIP_CTRL_STAT_FIFO_EMPTY          (1U << 1)
+#define XIP_CTRL_STAT_FIFO_FULL           (1U << 2)
+/** @} */
+
+/**
+ * @name    PADS QSPI control bits definitions
+ * @note    See RP2040 Datasheet 2.19.6.3 PADS_QSPI.
+ * @{
+ */
+#define PADS_QSPI_SLEWFAST               (1U << 0)
+#define PADS_QSPI_SCHMITT                (1U << 1)
+#define PADS_QSPI_PDE                    (1U << 2)
+#define PADS_QSPI_PUE                    (1U << 3)
+#define PADS_QSPI_DRIVE_Pos              4U
+#define PADS_QSPI_DRIVE_Msk              (0x3U << PADS_QSPI_DRIVE_Pos)
+#define PADS_QSPI_DRIVE(n)               ((n) << PADS_QSPI_DRIVE_Pos)
+#define PADS_QSPI_IE                     (1U << 6)
+#define PADS_QSPI_OD                     (1U << 7)
+/** @} */
+
+/**
+ * @name    IO QSPI GPIO_QSPI_SS_CTRL OUTOVER values
+ * @note    See RP2040 Datasheet 2.19.6.1 IO_QSPI Register List.
+ * @{
+ */
+#define IOQSPI_CTRL_OUTOVER_Pos           8U
+#define IOQSPI_CTRL_OUTOVER_Msk           (0x3U << IOQSPI_CTRL_OUTOVER_Pos)
+#define IOQSPI_CTRL_OUTOVER(n)            ((n) << IOQSPI_CTRL_OUTOVER_Pos)
+#define IOQSPI_CTRL_OUTOVER_NORMAL        0U
+#define IOQSPI_CTRL_OUTOVER_INVERT        1U
+#define IOQSPI_CTRL_OUTOVER_LOW           2U
+#define IOQSPI_CTRL_OUTOVER_HIGH          3U
 /** @} */
 
 /**
@@ -2139,6 +2563,23 @@ typedef struct {
 /** @} */
 
 /**
+ * @name    VREG_AND_CHIP_RESET VREG register bits definitions
+ * @{
+ */
+#define VREG_ROK_Pos                      12U
+#define VREG_ROK_Msk                      (1U << VREG_ROK_Pos)
+#define VREG_ROK                          VREG_ROK_Msk
+#define VREG_VSEL_Pos                     4U
+#define VREG_VSEL_Msk                     (0xFU << VREG_VSEL_Pos)
+#define VREG_HIZ_Pos                      1U
+#define VREG_HIZ_Msk                      (1U << VREG_HIZ_Pos)
+#define VREG_HIZ                          VREG_HIZ_Msk
+#define VREG_EN_Pos                       0U
+#define VREG_EN_Msk                       (1U << VREG_EN_Pos)
+#define VREG_EN                           VREG_EN_Msk
+/** @} */
+
+/**
  * @name    I2C bits definitions
  * @{
  */
@@ -2420,7 +2861,7 @@ typedef struct {
 #define I2C_IC_SDA_HOLD_IC_SDA_TX_HOLD                   I2C_IC_SDA_HOLD_IC_SDA_TX_HOLD_Msk
 
 #define I2C_IC_TX_ABRT_SOURCE_TX_FLUSH_CNT_Pos           23U
-#define I2C_IC_TX_ABRT_SOURCE_TX_FLUSH_CNT_Msk           (0xFF8U << I2C_IC_TX_ABRT_SOURCE_TX_FLUSH_CNT_Pos)
+#define I2C_IC_TX_ABRT_SOURCE_TX_FLUSH_CNT_Msk           (0x1FFU << I2C_IC_TX_ABRT_SOURCE_TX_FLUSH_CNT_Pos)
 #define I2C_IC_TX_ABRT_SOURCE_TX_FLUSH_CNT               I2C_IC_TX_ABRT_SOURCE_TX_FLUSH_CNT_Msk
 #define I2C_IC_TX_ABRT_SOURCE_ABRT_USER_ABRT_Pos         16U
 #define I2C_IC_TX_ABRT_SOURCE_ABRT_USER_ABRT_Msk         (1U << I2C_IC_TX_ABRT_SOURCE_ABRT_USER_ABRT_Pos)
@@ -2720,6 +3161,205 @@ typedef struct {
 #define PWM_INTS_CH0_Msk                                 (1U << PWM_INTS_CH0_Pos)
 #define PWM_INTS_CH0                                     PWM_INTS_CH0_Msk
 #define PWM_INTS_CH(n)                                   (1U << n)
+/** @} */
+
+/**
+ * @name    XOSC bits definitions
+ * @{
+ */
+#define XOSC_CTRL_ENABLE_Pos              12U
+#define XOSC_CTRL_ENABLE_Msk              (0xFFFU << XOSC_CTRL_ENABLE_Pos)
+#define XOSC_CTRL_ENABLE_DISABLE          (0xD1EU << XOSC_CTRL_ENABLE_Pos)
+#define XOSC_CTRL_ENABLE_ENABLE           (0xFABU << XOSC_CTRL_ENABLE_Pos)
+#define XOSC_CTRL_FREQ_RANGE_Pos          0U
+#define XOSC_CTRL_FREQ_RANGE_Msk          (0xFFFU << XOSC_CTRL_FREQ_RANGE_Pos)
+#define XOSC_CTRL_FREQ_RANGE_1_15MHZ      (0xAA0U << XOSC_CTRL_FREQ_RANGE_Pos)
+
+#define XOSC_STATUS_STABLE_Pos            31U
+#define XOSC_STATUS_STABLE_Msk            (1U << XOSC_STATUS_STABLE_Pos)
+#define XOSC_STATUS_STABLE                XOSC_STATUS_STABLE_Msk
+#define XOSC_STATUS_BADWRITE_Pos          24U
+#define XOSC_STATUS_BADWRITE_Msk          (1U << XOSC_STATUS_BADWRITE_Pos)
+#define XOSC_STATUS_BADWRITE              XOSC_STATUS_BADWRITE_Msk
+#define XOSC_STATUS_ENABLED_Pos           12U
+#define XOSC_STATUS_ENABLED_Msk           (1U << XOSC_STATUS_ENABLED_Pos)
+#define XOSC_STATUS_ENABLED               XOSC_STATUS_ENABLED_Msk
+
+#define XOSC_DORMANT_DORMANT              0x636F6D61U
+#define XOSC_DORMANT_WAKE                 0x77616B65U
+
+#define XOSC_STARTUP_X4_Pos               20U
+#define XOSC_STARTUP_X4_Msk               (1U << XOSC_STARTUP_X4_Pos)
+#define XOSC_STARTUP_X4                   XOSC_STARTUP_X4_Msk
+#define XOSC_STARTUP_DELAY_Pos            0U
+#define XOSC_STARTUP_DELAY_Msk            (0x3FFFU << XOSC_STARTUP_DELAY_Pos)
+#define XOSC_STARTUP_DELAY(n)             ((n) << XOSC_STARTUP_DELAY_Pos)
+/** @} */
+
+/**
+ * @name    PLL bits definitions
+ * @{
+ */
+#define PLL_CS_LOCK_Pos                   31U
+#define PLL_CS_LOCK_Msk                   (1U << PLL_CS_LOCK_Pos)
+#define PLL_CS_LOCK                       PLL_CS_LOCK_Msk
+#define PLL_CS_BYPASS_Pos                 8U
+#define PLL_CS_BYPASS_Msk                 (1U << PLL_CS_BYPASS_Pos)
+#define PLL_CS_BYPASS                     PLL_CS_BYPASS_Msk
+#define PLL_CS_REFDIV_Pos                 0U
+#define PLL_CS_REFDIV_Msk                 (0x3FU << PLL_CS_REFDIV_Pos)
+#define PLL_CS_REFDIV(n)                  ((n) << PLL_CS_REFDIV_Pos)
+
+#define PLL_PWR_VCOPD_Pos                 5U
+#define PLL_PWR_VCOPD_Msk                 (1U << PLL_PWR_VCOPD_Pos)
+#define PLL_PWR_VCOPD                     PLL_PWR_VCOPD_Msk
+#define PLL_PWR_POSTDIVPD_Pos             3U
+#define PLL_PWR_POSTDIVPD_Msk             (1U << PLL_PWR_POSTDIVPD_Pos)
+#define PLL_PWR_POSTDIVPD                 PLL_PWR_POSTDIVPD_Msk
+#define PLL_PWR_DSMPD_Pos                 2U
+#define PLL_PWR_DSMPD_Msk                 (1U << PLL_PWR_DSMPD_Pos)
+#define PLL_PWR_DSMPD                     PLL_PWR_DSMPD_Msk
+#define PLL_PWR_PD_Pos                    0U
+#define PLL_PWR_PD_Msk                    (1U << PLL_PWR_PD_Pos)
+#define PLL_PWR_PD                        PLL_PWR_PD_Msk
+
+#define PLL_FBDIV_INT_Pos                 0U
+#define PLL_FBDIV_INT_Msk                 (0xFFFU << PLL_FBDIV_INT_Pos)
+#define PLL_FBDIV_INT(n)                  ((n) << PLL_FBDIV_INT_Pos)
+
+#define PLL_PRIM_POSTDIV1_Pos             16U
+#define PLL_PRIM_POSTDIV1_Msk             (0x7U << PLL_PRIM_POSTDIV1_Pos)
+#define PLL_PRIM_POSTDIV1(n)              ((n) << PLL_PRIM_POSTDIV1_Pos)
+#define PLL_PRIM_POSTDIV2_Pos             12U
+#define PLL_PRIM_POSTDIV2_Msk             (0x7U << PLL_PRIM_POSTDIV2_Pos)
+#define PLL_PRIM_POSTDIV2(n)              ((n) << PLL_PRIM_POSTDIV2_Pos)
+/** @} */
+
+/**
+ * @name    CLOCKS bits definitions
+ * @{
+ */
+/* CLK_REF CTRL */
+#define CLOCKS_CLK_REF_CTRL_SRC_Pos       0U
+#define CLOCKS_CLK_REF_CTRL_SRC_Msk       (0x3U << CLOCKS_CLK_REF_CTRL_SRC_Pos)
+#define CLOCKS_CLK_REF_CTRL_SRC_ROSC      (0x0U << CLOCKS_CLK_REF_CTRL_SRC_Pos)
+#define CLOCKS_CLK_REF_CTRL_SRC_AUX       (0x1U << CLOCKS_CLK_REF_CTRL_SRC_Pos)
+#define CLOCKS_CLK_REF_CTRL_SRC_XOSC      (0x2U << CLOCKS_CLK_REF_CTRL_SRC_Pos)
+#define CLOCKS_CLK_REF_CTRL_AUXSRC_Pos    5U
+#define CLOCKS_CLK_REF_CTRL_AUXSRC_Msk    (0x3U << CLOCKS_CLK_REF_CTRL_AUXSRC_Pos)
+
+/* CLK_SYS CTRL */
+#define CLOCKS_CLK_SYS_CTRL_SRC_Pos       0U
+#define CLOCKS_CLK_SYS_CTRL_SRC_Msk       (0x1U << CLOCKS_CLK_SYS_CTRL_SRC_Pos)
+#define CLOCKS_CLK_SYS_CTRL_SRC_REF       (0x0U << CLOCKS_CLK_SYS_CTRL_SRC_Pos)
+#define CLOCKS_CLK_SYS_CTRL_SRC_AUX       (0x1U << CLOCKS_CLK_SYS_CTRL_SRC_Pos)
+#define CLOCKS_CLK_SYS_CTRL_AUXSRC_Pos    5U
+#define CLOCKS_CLK_SYS_CTRL_AUXSRC_Msk    (0x7U << CLOCKS_CLK_SYS_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_SYS_CTRL_AUXSRC_PLL_SYS  (0x0U << CLOCKS_CLK_SYS_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_SYS_CTRL_AUXSRC_PLL_USB  (0x1U << CLOCKS_CLK_SYS_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_SYS_CTRL_AUXSRC_ROSC     (0x2U << CLOCKS_CLK_SYS_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_SYS_CTRL_AUXSRC_XOSC     (0x3U << CLOCKS_CLK_SYS_CTRL_AUXSRC_Pos)
+
+/* CLK_PERI CTRL */
+#define CLOCKS_CLK_PERI_CTRL_ENABLE_Pos   11U
+#define CLOCKS_CLK_PERI_CTRL_ENABLE_Msk   (1U << CLOCKS_CLK_PERI_CTRL_ENABLE_Pos)
+#define CLOCKS_CLK_PERI_CTRL_ENABLE       CLOCKS_CLK_PERI_CTRL_ENABLE_Msk
+#define CLOCKS_CLK_PERI_CTRL_KILL_Pos     10U
+#define CLOCKS_CLK_PERI_CTRL_KILL_Msk     (1U << CLOCKS_CLK_PERI_CTRL_KILL_Pos)
+#define CLOCKS_CLK_PERI_CTRL_KILL         CLOCKS_CLK_PERI_CTRL_KILL_Msk
+#define CLOCKS_CLK_PERI_CTRL_AUXSRC_Pos   5U
+#define CLOCKS_CLK_PERI_CTRL_AUXSRC_Msk   (0x7U << CLOCKS_CLK_PERI_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_PERI_CTRL_AUXSRC_SYS   (0x0U << CLOCKS_CLK_PERI_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_PERI_CTRL_AUXSRC_PLL_SYS (0x1U << CLOCKS_CLK_PERI_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_PERI_CTRL_AUXSRC_PLL_USB (0x2U << CLOCKS_CLK_PERI_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_PERI_CTRL_AUXSRC_ROSC  (0x3U << CLOCKS_CLK_PERI_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_PERI_CTRL_AUXSRC_XOSC  (0x4U << CLOCKS_CLK_PERI_CTRL_AUXSRC_Pos)
+
+/* CLK_USB CTRL */
+#define CLOCKS_CLK_USB_CTRL_ENABLE_Pos    11U
+#define CLOCKS_CLK_USB_CTRL_ENABLE_Msk    (1U << CLOCKS_CLK_USB_CTRL_ENABLE_Pos)
+#define CLOCKS_CLK_USB_CTRL_ENABLE        CLOCKS_CLK_USB_CTRL_ENABLE_Msk
+#define CLOCKS_CLK_USB_CTRL_KILL_Pos      10U
+#define CLOCKS_CLK_USB_CTRL_KILL_Msk      (1U << CLOCKS_CLK_USB_CTRL_KILL_Pos)
+#define CLOCKS_CLK_USB_CTRL_KILL          CLOCKS_CLK_USB_CTRL_KILL_Msk
+#define CLOCKS_CLK_USB_CTRL_AUXSRC_Pos    5U
+#define CLOCKS_CLK_USB_CTRL_AUXSRC_Msk    (0x7U << CLOCKS_CLK_USB_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_USB_CTRL_AUXSRC_PLL_USB (0x0U << CLOCKS_CLK_USB_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_USB_CTRL_AUXSRC_PLL_SYS (0x1U << CLOCKS_CLK_USB_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_USB_CTRL_AUXSRC_ROSC   (0x2U << CLOCKS_CLK_USB_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_USB_CTRL_AUXSRC_XOSC   (0x3U << CLOCKS_CLK_USB_CTRL_AUXSRC_Pos)
+
+/* CLK_ADC CTRL */
+#define CLOCKS_CLK_ADC_CTRL_ENABLE_Pos    11U
+#define CLOCKS_CLK_ADC_CTRL_ENABLE_Msk    (1U << CLOCKS_CLK_ADC_CTRL_ENABLE_Pos)
+#define CLOCKS_CLK_ADC_CTRL_ENABLE        CLOCKS_CLK_ADC_CTRL_ENABLE_Msk
+#define CLOCKS_CLK_ADC_CTRL_KILL_Pos      10U
+#define CLOCKS_CLK_ADC_CTRL_KILL_Msk      (1U << CLOCKS_CLK_ADC_CTRL_KILL_Pos)
+#define CLOCKS_CLK_ADC_CTRL_KILL          CLOCKS_CLK_ADC_CTRL_KILL_Msk
+#define CLOCKS_CLK_ADC_CTRL_AUXSRC_Pos    5U
+#define CLOCKS_CLK_ADC_CTRL_AUXSRC_Msk    (0x7U << CLOCKS_CLK_ADC_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_ADC_CTRL_AUXSRC_PLL_USB (0x0U << CLOCKS_CLK_ADC_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_ADC_CTRL_AUXSRC_PLL_SYS (0x1U << CLOCKS_CLK_ADC_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_ADC_CTRL_AUXSRC_ROSC   (0x2U << CLOCKS_CLK_ADC_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_ADC_CTRL_AUXSRC_XOSC   (0x3U << CLOCKS_CLK_ADC_CTRL_AUXSRC_Pos)
+
+/* CLK_RTC CTRL */
+#define CLOCKS_CLK_RTC_CTRL_ENABLE_Pos    11U
+#define CLOCKS_CLK_RTC_CTRL_ENABLE_Msk    (1U << CLOCKS_CLK_RTC_CTRL_ENABLE_Pos)
+#define CLOCKS_CLK_RTC_CTRL_ENABLE        CLOCKS_CLK_RTC_CTRL_ENABLE_Msk
+#define CLOCKS_CLK_RTC_CTRL_KILL_Pos      10U
+#define CLOCKS_CLK_RTC_CTRL_KILL_Msk      (1U << CLOCKS_CLK_RTC_CTRL_KILL_Pos)
+#define CLOCKS_CLK_RTC_CTRL_KILL          CLOCKS_CLK_RTC_CTRL_KILL_Msk
+#define CLOCKS_CLK_RTC_CTRL_AUXSRC_Pos    5U
+#define CLOCKS_CLK_RTC_CTRL_AUXSRC_Msk    (0x7U << CLOCKS_CLK_RTC_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_RTC_CTRL_AUXSRC_PLL_USB (0x0U << CLOCKS_CLK_RTC_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_RTC_CTRL_AUXSRC_PLL_SYS (0x1U << CLOCKS_CLK_RTC_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_RTC_CTRL_AUXSRC_ROSC   (0x2U << CLOCKS_CLK_RTC_CTRL_AUXSRC_Pos)
+#define CLOCKS_CLK_RTC_CTRL_AUXSRC_XOSC   (0x3U << CLOCKS_CLK_RTC_CTRL_AUXSRC_Pos)
+
+/* CLK DIV */
+#define CLOCKS_CLK_DIV_INT_Pos            8U
+#define CLOCKS_CLK_DIV_INT_Msk            (0xFFFFFFU << CLOCKS_CLK_DIV_INT_Pos)
+#define CLOCKS_CLK_DIV_INT(n)             ((n) << CLOCKS_CLK_DIV_INT_Pos)
+#define CLOCKS_CLK_DIV_FRAC_Pos           0U
+#define CLOCKS_CLK_DIV_FRAC_Msk           (0xFFU << CLOCKS_CLK_DIV_FRAC_Pos)
+#define CLOCKS_CLK_DIV_FRAC(n)            ((n) << CLOCKS_CLK_DIV_FRAC_Pos)
+
+/* RESUS */
+#define CLOCKS_RESUS_CTRL_CLEAR_Pos       16U
+#define CLOCKS_RESUS_CTRL_CLEAR_Msk       (1U << CLOCKS_RESUS_CTRL_CLEAR_Pos)
+#define CLOCKS_RESUS_CTRL_CLEAR           CLOCKS_RESUS_CTRL_CLEAR_Msk
+#define CLOCKS_RESUS_CTRL_FRCE_Pos        12U
+#define CLOCKS_RESUS_CTRL_FRCE_Msk        (1U << CLOCKS_RESUS_CTRL_FRCE_Pos)
+#define CLOCKS_RESUS_CTRL_FRCE            CLOCKS_RESUS_CTRL_FRCE_Msk
+#define CLOCKS_RESUS_CTRL_ENABLE_Pos      8U
+#define CLOCKS_RESUS_CTRL_ENABLE_Msk      (1U << CLOCKS_RESUS_CTRL_ENABLE_Pos)
+#define CLOCKS_RESUS_CTRL_ENABLE          CLOCKS_RESUS_CTRL_ENABLE_Msk
+#define CLOCKS_RESUS_CTRL_TIMEOUT_Pos     0U
+#define CLOCKS_RESUS_CTRL_TIMEOUT_Msk     (0xFFU << CLOCKS_RESUS_CTRL_TIMEOUT_Pos)
+#define CLOCKS_RESUS_CTRL_TIMEOUT(n)      ((n) << CLOCKS_RESUS_CTRL_TIMEOUT_Pos)
+
+#define CLOCKS_RESUS_STATUS_RESUSSED_Pos  0U
+#define CLOCKS_RESUS_STATUS_RESUSSED_Msk  (1U << CLOCKS_RESUS_STATUS_RESUSSED_Pos)
+#define CLOCKS_RESUS_STATUS_RESUSSED      CLOCKS_RESUS_STATUS_RESUSSED_Msk
+/** @} */
+
+/**
+ * @name    Clock indexes for RP2040
+ * @note    These are array indices into the CLOCKS->CLK[] register array.
+ * @{
+ */
+#define RP_CLK_GPOUT0                     0U
+#define RP_CLK_GPOUT1                     1U
+#define RP_CLK_GPOUT2                     2U
+#define RP_CLK_GPOUT3                     3U
+#define RP_CLK_REF                        4U
+#define RP_CLK_SYS                        5U
+#define RP_CLK_PERI                       6U
+#define RP_CLK_USB                        7U
+#define RP_CLK_ADC                        8U
+#define RP_CLK_RTC                        9U
+#define RP_CLK_COUNT                      10U
 /** @} */
 
 #ifdef __cplusplus

@@ -1,16 +1,24 @@
 # List of the ChibiOS generic RP2040 startup and CMSIS files.
 STARTUPSRC = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/crt1.c
-          
+
+# Second stage bootloader file, can be overridden by the project.
+RP2040_BOOT_STAGE2 ?= $(CHIBIOS)/os/common/startup/ARMCMx/devices/RP2040/bs2_default_padded_checksummed.S
+
 STARTUPASM = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/crt0_v6m.S \
-             $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/vectors.S
+             $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/vectors.S \
+             $(RP2040_BOOT_STAGE2)
 
 STARTUPINC = $(CHIBIOS)/os/common/portability/GCC \
              $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC \
              $(CHIBIOS)/os/common/startup/ARMCMx/devices/RP2040 \
              $(CHIBIOS)/os/common/ext/ARM/CMSIS/Core/Include \
+             $(CHIBIOS)/os/common/ext/RP \
              $(CHIBIOS)/os/common/ext/RP/RP2040
 
 STARTUPLD  = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/ld
+
+USE_EXCEPTIONS_STACKSIZE ?= 0x800
+USE_PROCESS_STACKSIZE    ?= 0x800
 
 # Shared variables
 ALLXASMSRC += $(STARTUPASM)

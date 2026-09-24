@@ -43,7 +43,7 @@
 /**
  * @brief   DMA channel descriptors.
  */
-const rp_dma_channel_t __rp_dma_channels[RP_DMA_CHANNELS] = {
+rp_dma_channel_t __rp_dma_channels[RP_DMA_NUM_CHANNELS] = {
   {DMA, &DMA->CH[0],  0U,  1U << 0},
   {DMA, &DMA->CH[1],  1U,  1U << 1},
   {DMA, &DMA->CH[2],  2U,  1U << 2},
@@ -56,6 +56,13 @@ const rp_dma_channel_t __rp_dma_channels[RP_DMA_CHANNELS] = {
   {DMA, &DMA->CH[9],  9U,  1U << 9},
   {DMA, &DMA->CH[10], 10U, 1U << 10},
   {DMA, &DMA->CH[11], 11U, 1U << 11}
+#if RP_DMA_NUM_CHANNELS > 12
+  ,
+  {DMA, &DMA->CH[12], 12U, 1U << 12},
+  {DMA, &DMA->CH[13], 13U, 1U << 13},
+  {DMA, &DMA->CH[14], 14U, 1U << 14},
+  {DMA, &DMA->CH[15], 15U, 1U << 15}
+#endif
 };
 
 /*===========================================================================*/
@@ -75,6 +82,13 @@ static struct {
    */
   uint32_t          c1_allocated_mask;
   /**
+   * @brief   Most urgent priority requested by a channel of each core.
+   * @note    All channels of a core share one vector, so it has to run at
+   *          the most urgent priority any of them asked for.
+   */
+  uint32_t          c0_priority;
+  uint32_t          c1_priority;
+  /**
    * @brief   DMA IRQ redirectors.
    */
   struct {
@@ -86,7 +100,7 @@ static struct {
      * @brief   DMA callback parameter.
      */
     void            *param;
-  } channels[RP_DMA_CHANNELS];
+  } channels[RP_DMA_NUM_CHANNELS];
 } dma;
 
 /*===========================================================================*/
@@ -184,7 +198,7 @@ void dmaInit(void) {
 
   dma.c0_allocated_mask = 0U;
   dma.c1_allocated_mask = 0U;
-  for (i = 0U; i < RP_DMA_CHANNELS; i++) {
+  for (i = 0U; i < RP_DMA_NUM_CHANNELS; i++) {
     dma.channels[i].func = NULL;
   }
 }
@@ -235,24 +249,33 @@ const rp_dma_channel_t *dmaChannelAllocI(uint32_t id,
       dma.channels[i].func  = func;
       dma.channels[i].param = param;
 
+      /* Releasing DMA reset if it is the 1st channel taken.*/
+      if (prevmask == 0U) {
+        rp_peripheral_unreset(RESETS_ALLREG_DMA);
+      }
+
+      /* A core's channels all share one vector, so the priority argument
+         cannot be per channel: the vector runs at the most urgent priority
+         any of its channels asked for. Enabling it only for the first
+         allocation silently discarded every later request, which made the
+         result depend on driver init order - on an RP2350 with SPI0 on core1
+         the IMU's transfers ran at whatever the first unrelated driver to
+         take a channel happened to want.*/
       if (SIO->CPUID == 0U) {
         /* Channel taken by core 0.*/
-        if (dma.c0_allocated_mask == 0U) {
+        if ((dma.c0_allocated_mask == 0U) || (priority < dma.c0_priority)) {
+          dma.c0_priority = priority;
           nvicEnableVector(RP_DMA_IRQ_0_NUMBER, priority);
         }
         dma.c0_allocated_mask |= dmachp->chnmask;
       }
       else {
         /* Channel taken by core 1.*/
-        if (dma.c1_allocated_mask == 0U) {
+        if ((dma.c1_allocated_mask == 0U) || (priority < dma.c1_priority)) {
+          dma.c1_priority = priority;
           nvicEnableVector(RP_DMA_IRQ_1_NUMBER, priority);
         }
         dma.c1_allocated_mask |= dmachp->chnmask;
-      }
-
-      /* Releasing DMA reset if it is the 1st channel taken.*/
-      if (prevmask == 0U) {
-        hal_lld_peripheral_unreset(RESETS_ALLREG_DMA);
       }
 
       return dmachp;
@@ -314,17 +337,22 @@ void dmaChannelFreeI(const rp_dma_channel_t *dmachp) {
   dmaChannelDisableX(dmachp);
   dmaChannelSetModeX(dmachp, 0U);
 
-  if (SIO->CPUID == 0U) {
-    /* Channel released by core 0.*/
+  /* Remove from whichever core mask owns this channel.
+     Handles cross-core freeing (e.g. sdcard_init on core0 stopping SPI1
+     whose DMA was allocated by the SPI1 bus thread on core1).
+     NVIC disable: only possible on the current core's own NVIC.
+     For the other core, dmaChannelDisableInterruptX() above already cleared
+     INTE0/INTE1 for this channel, so no stray IRQs will fire even if that
+     core's NVIC vector remains enabled. */
+  if (dma.c0_allocated_mask & dmachp->chnmask) {
     dma.c0_allocated_mask &= ~dmachp->chnmask;
-    if (dma.c0_allocated_mask == 0U) {
+    if (dma.c0_allocated_mask == 0U && SIO->CPUID == 0U) {
       nvicDisableVector(RP_DMA_IRQ_0_NUMBER);
     }
   }
-  else {
-    /* Channel released by core 1.*/
+  if (dma.c1_allocated_mask & dmachp->chnmask) {
     dma.c1_allocated_mask &= ~dmachp->chnmask;
-    if (dma.c1_allocated_mask == 0U) {
+    if (dma.c1_allocated_mask == 0U && SIO->CPUID == 1U) {
       nvicDisableVector(RP_DMA_IRQ_1_NUMBER);
     }
   }
@@ -335,7 +363,7 @@ void dmaChannelFreeI(const rp_dma_channel_t *dmachp) {
 
   /* Shutting down clocks that are no more required, if any.*/
   if ((dma.c0_allocated_mask | dma.c1_allocated_mask) == 0U) {
-    hal_lld_peripheral_reset(RESETS_ALLREG_DMA);
+    rp_peripheral_reset(RESETS_ALLREG_DMA);
   }
 }
 

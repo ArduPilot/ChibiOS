@@ -79,11 +79,11 @@
 #endif
 
 #if !defined(RP_SPI_SPI1_RX_DMA_CHANNEL)
-#error "RP_SPI_SPI0_RX_DMA_CHANNEL not defined in mcuconf.h"
+#error "RP_SPI_SPI1_RX_DMA_CHANNEL not defined in mcuconf.h"
 #endif
 
 #if !defined(RP_SPI_SPI1_TX_DMA_CHANNEL)
-#error "RP_SPI_SPI0_TX_DMA_CHANNEL not defined in mcuconf.h"
+#error "RP_SPI_SPI1_TX_DMA_CHANNEL not defined in mcuconf.h"
 #endif
 
 #if !defined(RP_SPI_SPI0_DMA_PRIORITY)
@@ -154,7 +154,11 @@
   /* RX DMA mode bit mask.*/                                                \
   uint32_t                  rxdmamode;                                      \
   /* TX DMA mode bit mask.*/                                                \
-  uint32_t                  txdmamode;
+  uint32_t                  txdmamode;                                      \
+  /* Transfers that ended with an SSP receive overrun.*/                     \
+  uint32_t                  rxoverruns;                                     \
+  /* Transfers torn down by spi_lld_abort().*/                              \
+  uint32_t                  aborts;
 
 /**
  * @brief   Low level fields of the SPI configuration structure.
@@ -192,9 +196,10 @@ extern "C" {
                         const void *txbuf, void *rxbuf);
   void spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf);
   void spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf);
-#if (SPI_SUPPORTS_CIRCULAR == TRUE) || defined(__DOXYGEN__)
+  /* Not gated on SPI_SUPPORTS_CIRCULAR. Upstream only needs an abort to stop
+     a circular transfer, but a transfer that timed out has to be torn down on
+     any port, and this one declares circular support FALSE.*/
   void spi_lld_abort(SPIDriver *spip);
-#endif
   uint16_t spi_lld_polled_exchange(SPIDriver *spip, uint16_t frame);
 #ifdef __cplusplus
 }
