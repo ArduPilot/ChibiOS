@@ -245,6 +245,15 @@
 #define USB_USE_WAIT                        FALSE
 #endif
 
+/**
+ * @brief   Moves EP0 request handling to thread context.
+ * @note    Not implemented, the RP USB LLD tests this switch so it needs a
+ *          defined default.
+ */
+#if !defined(USB_USE_EP0_THREAD) || defined(__DOXYGEN__)
+#define USB_USE_EP0_THREAD                  FALSE
+#endif
+
 /*===========================================================================*/
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/

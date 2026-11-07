@@ -1,0 +1,214 @@
+/*
+    ChibiOS - Copyright (C) 2006-2026 Giovanni Di Sirio.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+/**
+ * @file    RP2040/rp_clocks.c
+ * @brief   RP2040 clocks driver source.
+ * @note    See RP2040 Datasheet 2.15 Clocks
+ *
+ * @addtogroup RP_CLOCKS
+ * @{
+ */
+
+#include "hal.h"
+#include "rp_clocks.h"
+
+/*===========================================================================*/
+/* Driver local definitions.                                                 */
+/*===========================================================================*/
+
+/**
+ * @brief   Estimated ROSC frequency for early timing.
+ * @note    RP2040 ROSC varies 1.8-12 MHz, we assume ~6 MHz.
+ *          This gives roughly +/-50% accuracy which is acceptable for
+ *          safety timeouts during early clock initialization.
+ */
+#define RP_ROSC_ASSUMED_HZ      6000000U
+
+/*===========================================================================*/
+/* Driver exported variables.                                                */
+/*===========================================================================*/
+
+/*===========================================================================*/
+/* Driver local variables and types.                                         */
+/*===========================================================================*/
+
+/*===========================================================================*/
+/* Driver local functions.                                                   */
+/*===========================================================================*/
+
+#if RP_SYS_VREG_VOLTAGE > 0U
+static void delay_us(uint32_t delay) {
+  uint32_t start = TIMER0->TIMERAWL;
+
+  while ((TIMER0->TIMERAWL - start) < delay) {
+  }
+}
+#endif
+
+static void set_vreg(void) {
+#if RP_SYS_VREG_VOLTAGE > 0U
+  uint32_t current_vsel;
+
+  current_vsel = (VREG_AND_CHIP_RESET->VREG & VREG_VSEL_Msk) >> VREG_VSEL_Pos;
+  if (current_vsel < RP_SYS_VREG_VOLTAGE) {
+    VREG_AND_CHIP_RESET->VREG =
+        (VREG_AND_CHIP_RESET->VREG & ~VREG_VSEL_Msk) |
+        (RP_SYS_VREG_VOLTAGE << VREG_VSEL_Pos);
+    delay_us(RP_SYS_VREG_SETTLE_DELAY_US);
+  }
+#endif
+}
+
+/*===========================================================================*/
+/* Driver exported functions.                                                */
+/*===========================================================================*/
+
+/**
+ * @brief   Initializes all clocks.
+ * @note    Most of this is derived from the RP2040 datasheet which directly
+ *          references suggested code from the Pico SDK which is Copyright
+ *          2020 Raspberry Pi (Trading) Ltd and licensed under the
+ *          BSD-3-Clause license. We always start with ROSC and then switch
+ *          to XOSC. With the RP2040 WATCHDOG->TICK services the watchdog,
+ *          the system timer and SYSTICK.
+ * @note    See RP2040 Datasheet 2.15.3.1 Clock Instances (Table 205)
+ */
+void rp_clock_init(void) {
+
+  /* Start early tick generator for safety module timeouts. */
+  rp_peripheral_unreset(RESETS_ALLREG_TIMER0);
+
+  /* Configure tick generator for ~1 us ticks. */
+  WATCHDOG->TICK = WATCHDOG_TICK_ENABLE | (RP_ROSC_ASSUMED_HZ / RP_ROSC_ASSUMED_HZ);
+
+  /* Clear clock resus that may be in an unkown state */
+  CLOCKS->RESUS.CTRL = 0U;
+
+  rp_xosc_init();
+
+  /* Switch clk_sys and clk_ref to safe sources */
+  CLOCKS->CLR.CLK[RP_CLK_SYS].CTRL = CLOCKS_CLK_SYS_CTRL_SRC_Msk;
+  while ((CLOCKS->CLK[RP_CLK_SYS].SELECTED & 1U) == 0U) {
+    /* Wait for clk_sys to switch to clk_ref */
+  }
+  CLOCKS->CLR.CLK[RP_CLK_REF].CTRL = CLOCKS_CLK_REF_CTRL_SRC_Msk;
+  while ((CLOCKS->CLK[RP_CLK_REF].SELECTED & 1U) == 0U) {
+    /* Wait for clk_ref to switch to ROSC */
+  }
+
+  /* Initialize PLL_SYS: 12 MHz * 125 / 6 / 2 = 125 MHz. */
+  rp_pll_init(PLL_SYS, RP_PLL_SYS_REFDIV, RP_PLL_SYS_VCO_FREQ,
+              RP_PLL_SYS_POSTDIV1, RP_PLL_SYS_POSTDIV2);
+
+  /* Initialize PLL_USB: 12 MHz * 100 / 5 / 5 = 48 MHz. */
+  rp_pll_init(PLL_USB, RP_PLL_USB_REFDIV, RP_PLL_USB_VCO_FREQ,
+              RP_PLL_USB_POSTDIV1, RP_PLL_USB_POSTDIV2);
+
+  /* CLK_REF = XOSC = 12 MHz */
+  {
+    uint32_t src = CLOCKS_CLK_REF_CTRL_SRC_XOSC >> CLOCKS_CLK_REF_CTRL_SRC_Pos;
+    CLOCKS->CLK[RP_CLK_REF].DIV = 1U << 8;
+    CLOCKS->XOR.CLK[RP_CLK_REF].CTRL =
+        (CLOCKS->CLK[RP_CLK_REF].CTRL ^ (src << CLOCKS_CLK_REF_CTRL_SRC_Pos)) &
+        CLOCKS_CLK_REF_CTRL_SRC_Msk;
+    while ((CLOCKS->CLK[RP_CLK_REF].SELECTED & (1U << src)) == 0U) {
+      /* Wait for switch to XOSC */
+    }
+  }
+
+  /* Reconfigure tick generator for accurate 1 us ticks now that clk_ref
+   * is on XOSC, then raise core voltage if needed before the fast
+   * clk_sys switch.  */
+  WATCHDOG->TICK = WATCHDOG_TICK_ENABLE | (RP_XOSCCLK / 1000000U);
+  set_vreg();
+
+  /* CLK_SYS = PLL_SYS */
+  CLOCKS->CLR.CLK[RP_CLK_SYS].CTRL = CLOCKS_CLK_SYS_CTRL_SRC_Msk;
+  while ((CLOCKS->CLK[RP_CLK_SYS].SELECTED & 1U) == 0U) {
+    /* Wait for switch to clk_ref */
+  }
+  CLOCKS->XOR.CLK[RP_CLK_SYS].CTRL =
+      (CLOCKS->CLK[RP_CLK_SYS].CTRL ^ CLOCKS_CLK_SYS_CTRL_AUXSRC_PLL_SYS) &
+      CLOCKS_CLK_SYS_CTRL_AUXSRC_Msk;
+  CLOCKS->SET.CLK[RP_CLK_SYS].CTRL = CLOCKS_CLK_SYS_CTRL_SRC_AUX;
+  while ((CLOCKS->CLK[RP_CLK_SYS].SELECTED & 2U) == 0U) {
+    /* Wait for switch to aux */
+  }
+
+  /* CLK_USB = PLL_USB = 48 MHz */
+  CLOCKS->XOR.CLK[RP_CLK_USB].CTRL =
+      (CLOCKS->CLK[RP_CLK_USB].CTRL ^ CLOCKS_CLK_USB_CTRL_AUXSRC_PLL_USB) &
+      CLOCKS_CLK_USB_CTRL_AUXSRC_Msk;
+  CLOCKS->CLK[RP_CLK_USB].DIV = 1U << 8;
+  CLOCKS->SET.CLK[RP_CLK_USB].CTRL = CLOCKS_CLK_PERI_CTRL_ENABLE;
+
+  /* CLK_ADC = PLL_USB = 48 MHz */
+  CLOCKS->XOR.CLK[RP_CLK_ADC].CTRL =
+      (CLOCKS->CLK[RP_CLK_ADC].CTRL ^ CLOCKS_CLK_ADC_CTRL_AUXSRC_PLL_USB) &
+      CLOCKS_CLK_ADC_CTRL_AUXSRC_Msk;
+  CLOCKS->CLK[RP_CLK_ADC].DIV = 1U << 8;
+  CLOCKS->SET.CLK[RP_CLK_ADC].CTRL = CLOCKS_CLK_PERI_CTRL_ENABLE;
+
+  /* CLK_RTC = PLL_USB / 1024 = 46875Hz */
+  CLOCKS->XOR.CLK[RP_CLK_RTC].CTRL =
+      (CLOCKS->CLK[RP_CLK_RTC].CTRL ^ CLOCKS_CLK_RTC_CTRL_AUXSRC_PLL_USB) &
+      CLOCKS_CLK_RTC_CTRL_AUXSRC_Msk;
+  CLOCKS->CLK[RP_CLK_RTC].DIV = RP_RTC_CLK_DIV << 8;
+  CLOCKS->SET.CLK[RP_CLK_RTC].CTRL = CLOCKS_CLK_PERI_CTRL_ENABLE;
+
+  /* CLK_PERI = PLL_SYS = 125 MHz */
+  CLOCKS->XOR.CLK[RP_CLK_PERI].CTRL =
+      (CLOCKS->CLK[RP_CLK_PERI].CTRL ^ CLOCKS_CLK_PERI_CTRL_AUXSRC_SYS) &
+      CLOCKS_CLK_PERI_CTRL_AUXSRC_Msk;
+  CLOCKS->CLK[RP_CLK_PERI].DIV = 1U << 8;
+  CLOCKS->SET.CLK[RP_CLK_PERI].CTRL = CLOCKS_CLK_PERI_CTRL_ENABLE;
+
+  /* Calculate cycles for 1us tick based on clk_ref frequency. */
+  WATCHDOG->TICK = WATCHDOG_TICK_ENABLE | (RP_XOSCCLK / 1000000U);
+}
+
+/**
+ * @brief   Returns the frequency of a clock in Hz.
+ * @note    Uses compile-time constants so this function is safe to call
+ *          before BSS/DATA initialization.
+ *
+ * @param[in] clk_index     clock index (RP_CLK_xxx)
+ * @return                  clock frequency in Hz
+ */
+uint32_t rp_clock_get_hz(uint32_t clk_index) {
+
+  osalDbgAssert(clk_index < RP_CLK_COUNT, "invalid clock index");
+
+  switch (clk_index) {
+  case RP_CLK_REF:
+    return RP_CLK_REF_FREQ;
+  case RP_CLK_SYS:
+    return RP_CLK_SYS_FREQ;
+  case RP_CLK_PERI:
+    return RP_CLK_PERI_FREQ;
+  case RP_CLK_USB:
+    return RP_CLK_USB_FREQ;
+  case RP_CLK_ADC:
+    return RP_CLK_ADC_FREQ;
+  case RP_CLK_RTC:
+    return RP_CLK_RTC_FREQ;
+  default:
+    return 0U;
+  }
+}
+
+/** @} */

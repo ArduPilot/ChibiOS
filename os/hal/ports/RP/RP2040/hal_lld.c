@@ -17,12 +17,16 @@
 /**
  * @file    RP2040/hal_lld.c
  * @brief   RP2040 HAL subsystem low level driver source.
+ * @note    The Core 1 launch sequence follows the multicore launch protocol
+ *          documented in RP2040 Datasheet 2.8.2 "Launching Code On
+ *          Processor Core 1".
  *
  * @addtogroup HAL
  * @{
  */
 
 #include "hal.h"
+#include "rp_clocks.h"
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
@@ -36,7 +40,7 @@
  * @brief   CMSIS system core clock variable.
  * @note    It is declared in system_rp2040.h.
  */
-uint32_t SystemCoreClock;
+uint32_t SystemCoreClock = RP_CLK_SYS_FREQ;
 
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
@@ -47,7 +51,6 @@ uint32_t SystemCoreClock;
 /*===========================================================================*/
 
 #if RP_CORE1_START == TRUE
-/* Courtesy of Pico-SDK.*/
 static void start_core1(void) {
   extern uint32_t RP_CORE1_STACK_END;
   extern uint32_t RP_CORE1_VECTORS_TABLE;
@@ -58,13 +61,22 @@ static void start_core1(void) {
                              (uint32_t)RP_CORE1_ENTRY_POINT};
   unsigned seq;
 
-#if 0
-  /* Resetting core1.*/
-  PSM_SET->FRCE_OFF = PSM_ANY_PROC1;
-  while ((PSM->FRCE_OFF & PSM_ANY_PROC1) == 0U) {
-  }
-  PSM_CLR->FRCE_OFF = PSM_ANY_PROC1;
-#endif
+  /* Force-reset core1 via PSM before starting the FIFO launch handshake.
+   *
+   * If core1 survived a preceding soft reset (e.g. a bootloader that uses
+   * BX to jump to the application rather than SYSRESETREQ), it may still
+   * be executing application code from a previous run.  In that case the
+   * ROM FIFO handshake protocol will deadlock: core0 sends the sync
+   * sequence but core1 is not in the ROM wait-for-launch loop so it never
+   * echoes back.
+   *
+   * PSM FRCE_OFF holds core1 in reset (powered-off state).  Clearing it
+   * releases core1 into the ROM boot-path which immediately enters the
+   * wait-for-launch loop.  The PSM DONE bit falls while the core is held
+   * off, and rises again once it has been released and is running.*/
+  PSM->SET.FRCE_OFF = PSM_ANY_PROC1;         /* assert reset to core1      */
+  while (PSM->DONE & PSM_ANY_PROC1) {}       /* wait until it powers off   */
+  PSM->CLR.FRCE_OFF = PSM_ANY_PROC1;         /* release — core1 enters ROM */
 
   /* Starting core 1.*/
   seq = 0;
@@ -80,7 +92,7 @@ static void start_core1(void) {
     response = fifoBlockingRead();
     /* Checking response, going forward or back to first step.*/
     seq = cmd == response ? seq + 1U : 0U;
-  } while (seq < count_of(cmd_sequence));
+  } while (seq < 6U);
 }
 #endif
 
@@ -100,19 +112,26 @@ static void start_core1(void) {
 void hal_lld_init(void) {
 
 #if RP_NO_INIT == FALSE
-  clocks_init();
-
-  SystemCoreClock = RP_CORE_CLK;
-
-  hal_lld_peripheral_unreset(RESETS_ALLREG_BUSCTRL);
-  hal_lld_peripheral_unreset(RESETS_ALLREG_SYSINFO);
-  hal_lld_peripheral_unreset(RESETS_ALLREG_SYSCFG);
+  rp_peripheral_unreset(RESETS_ALLREG_BUSCTRL);
+  rp_peripheral_unreset(RESETS_ALLREG_SYSINFO);
+  rp_peripheral_unreset(RESETS_ALLREG_SYSCFG);
 #endif /* RP_NO_INIT */
 
-  /* Common subsystems initialization.*/
+  /* NVIC initialization.*/
+  nvicInit();
+
+  /* IRQ subsystem initialization.*/
   irqInit();
 #if defined(RP_DMA_REQUIRED)
   dmaInit();
+#endif
+#if defined(RP_PIO_REQUIRED)
+  pioInit();
+#endif
+
+  /* Bind the system timer IRQ to this core for tickless mode.*/
+#if OSAL_ST_MODE == OSAL_ST_MODE_FREERUNNING
+  stBind();
 #endif
 
 #if RP_CORE1_START == TRUE

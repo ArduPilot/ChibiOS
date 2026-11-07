@@ -52,14 +52,14 @@
 /*===========================================================================*/
 
 /**
- * @brief   Enables IRQ sources.
+ * @brief   IRQ subsystem initialization.
+ * @details Puts the IRQ controller in a known clean state before any
+ *          HAL drivers enable their individual interrupts.
  *
  * @notapi
  */
 void irqInit(void) {
 
-//  uart0_irq_init();
-//  uart1_irq_init();
 }
 
 /**
@@ -69,8 +69,6 @@ void irqInit(void) {
  */
 void irqDeinit(void) {
 
-//  uart0_irq_deinit();
-//  uart1_irq_deinit();
 }
 
 /** @} */
