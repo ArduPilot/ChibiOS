@@ -57,6 +57,10 @@
  * @note    This is required if the boot process is not reliable for whatever
  *          reason (bad ROMs, bad bootloaders, bad debuggers=.
  */
+#if !defined(CRT0_ENTRY_HOOK) || defined(__DOXYGEN__)
+#define CRT0_ENTRY_HOOK                     FALSE
+#endif
+
 #if !defined(CRT0_FORCE_MSP_INIT) || defined(__DOXYGEN__)
 #define CRT0_FORCE_MSP_INIT                 TRUE
 #endif
@@ -208,6 +212,10 @@
                 .thumb_func
                 .global _crt0_entry
 _crt0_entry:
+#if CRT0_ENTRY_HOOK == TRUE
+                ldr     R0, =__entry_hook
+                blx     R0
+#endif
                 /* Interrupts are globally masked initially.*/
                 cpsid   i
 
